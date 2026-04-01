@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Ikeja Online</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+        }
+
+        .admin-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        aside {
+            width: 280px;
+            background: linear-gradient(135deg, #1e3a5f 0%, #2d5a8c 100%);
+            color: white;
+            padding: 2rem 0 0 0;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            box-shadow: 2px 0 15px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            padding: 1.5rem;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar-header .logo {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%);
+            border-radius: 12px;
+            margin-bottom: 0.5rem;
+        }
+
+        .sidebar-header .logo i {
+            font-size: 1.8rem;
+            color: white;
+        }
+
+        .sidebar-header h2 {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-top: 0.5rem;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem 0;
+        }
+
+        .sidebar-menu li {
+            margin: 0;
+        }
+
+        .sidebar-menu button {
+            width: 100%;
+            border: none;
+            background: none;
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            padding: 0.9rem 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+            text-align: left;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            font-family: inherit;
+        }
+
+        .sidebar-menu button:hover,
+        .sidebar-menu button.active {
+            color: white;
+            background-color: rgba(255, 107, 53, 0.2);
+            border-left-color: #FF6B35;
+            padding-left: 1.7rem;
+        }
+
+        .sidebar-menu i {
+            width: 20px;
+            text-align: center;
+            font-size: 1rem;
+        }
+
+        .sidebar-footer {
+            margin-top: auto;
+            width: 100%;
+            padding: 1.5rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            flex-shrink: 0;
+        }
+
+        .sidebar-footer a {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            color: #FF6B35;
+            text-decoration: none;
+            padding: 0.8rem;
+            border-radius: 8px;
+            background: rgba(255, 107, 53, 0.1);
+            transition: all 0.3s ease;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .sidebar-footer a:hover {
+            background: rgba(255, 107, 53, 0.2);
+        }
+
+        /* Main Content */
+        main {
+            margin-left: 280px;
+            flex: 1;
+            padding: 2rem;
+            transition: margin-left 0.3s ease;
+            overflow-y: auto;
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .topbar-title h1 {
+            font-size: 1.8rem;
+            color: #1a1a1a;
+            margin-bottom: 0.3rem;
+        }
+
+        .topbar-title p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .topbar-user {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .user-avatar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%);
+            border-radius: 50%;
+            color: white;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            border-left: 4px solid #FF6B35;
+        }
+
+        .stat-card h3 {
+            color: #666;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-card .value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1a1a1a;
+        }
+
+        .stat-card .icon {
+            float: right;
+            font-size: 2.5rem;
+            opacity: 0.1;
+            color: #FF6B35;
+        }
+
+        /* Content Section */
+        .content-section {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+        }
+
+        .section-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .section-header h2 {
+            font-size: 1.4rem;
+            color: #1a1a1a;
+            margin: 0;
+        }
+
+        /* Table Styles */
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: #f9f9f9;
+        }
+
+        th {
+            padding: 1rem 1.5rem;
+            text-align: left;
+            font-weight: 600;
+            color: #666;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        td {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #f0f0f0;
+            color: #333;
+        }
+
+        tbody tr:hover {
+            background: #f9f9f9;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .badge.active {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .badge.inactive {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .action-btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .action-btn.primary {
+            background: #FF6B35;
+            color: white;
+        }
+
+        .action-btn.primary:hover {
+            background: #F7931E;
+        }
+
+        .action-btn.danger {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .action-btn.danger:hover {
+            background: #c0392b;
+        }
+
+        /* Loading & Empty States */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top-color: #FF6B35;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem 2rem;
+            color: #999;
+        }
+
+        .empty-state i {
+            font-size: 2.5rem;
+            color: #ddd;
+            margin-bottom: 1rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            aside {
+                width: 250px;
+                transform: translateX(-100%);
+            }
+
+            aside.active {
+                transform: translateX(0);
+            }
+
+            main {
+                margin-left: 0;
+                padding: 1rem;
+            }
+
+            .topbar {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+                gap: 1rem;
+            }
+
+            .stat-card {
+                padding: 1rem;
+            }
+
+            .stat-card .value {
+                font-size: 1.5rem;
+            }
+
+            th, td {
+                padding: 0.75rem;
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <script>
+        if (!localStorage.getItem('access_token') || localStorage.getItem('user_role') !== 'super_admin') {
+            window.location.href = '/login';
+        }
+    </script>
+
+    <div class="admin-container">
+        <aside id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <h2>Admin Panel</h2>
+            </div>
+
+            <ul class="sidebar-menu">
+                <li>
+                    <a href="/" class="menu-btn" style="display: flex; align-items: center; gap: 0.8rem; color: rgba(255, 255, 255, 0.7); text-decoration: none; padding: 0.9rem 1.5rem; transition: all 0.3s ease; border-left: 3px solid transparent; font-size: 0.95rem;">
+                        <i class="fas fa-globe"></i>
+                        Back to Home
+                    </a>
+                </li>
+                <li>
+                    <button onclick="setActiveTab('dashboard')" class="menu-btn active">
+                        <i class="fas fa-chart-line"></i>
+                        Dashboard
+                    </button>
+                </li>
+                <li>
+                    <button onclick="setActiveTab('users')" class="menu-btn">
+                        <i class="fas fa-users"></i>
+                        Users
+                    </button>
+                </li>
+                <li>
+                    <button onclick="setActiveTab('vendors')" class="menu-btn">
+                        <i class="fas fa-store"></i>
+                        Vendors
+                    </button>
+                </li>
+                <li>
+                    <button onclick="setActiveTab('categories')" class="menu-btn">
+                        <i class="fas fa-layer-group"></i>
+                        Categories
+                    </button>
+                </li>
+            </ul>
+
+            <div class="sidebar-footer">
+                <a href="#" onclick="logout(event)">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Logout
+                </a>
+            </div>
+        </aside>
+
+        <main>
+            <div class="topbar">
+                <div class="topbar-title">
+                    <h1>Admin Dashboard</h1>
+                    <p>Welcome to the super admin control panel</p>
+                </div>
+                <div class="topbar-user">
+                    <div class="user-avatar" id="userAvatar">A</div>
+                    <div>
+                        <strong id="userFullName">Admin</strong><br>
+                        <small>Super Administrator</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dashboard Tab -->
+            <div id="dashboard-tab" class="tab-content" style="display: block;">
+                <div class="stats-grid" id="statsGrid">
+                    <div class="stat-card">
+                        <i class="fas fa-users icon"></i>
+                        <h3>Total Users</h3>
+                        <div class="value" id="stat-users">-</div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-store icon"></i>
+                        <h3>Total Vendors</h3>
+                        <div class="value" id="stat-vendors">-</div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-shopping-cart icon"></i>
+                        <h3>Total Customers</h3>
+                        <div class="value" id="stat-customers">-</div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-box icon"></i>
+                        <h3>Total Products</h3>
+                        <div class="value" id="stat-products">-</div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-layer-group icon"></i>
+                        <h3>Total Categories</h3>
+                        <div class="value" id="stat-categories">-</div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-receipt icon"></i>
+                        <h3>Total Orders</h3>
+                        <div class="value" id="stat-orders">-</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Users Tab -->
+            <div id="users-tab" class="tab-content" style="display: none;">
+                <div class="content-section">
+                    <div class="section-header">
+                        <h2>User Management</h2>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Role</th>
+                                    <th>Status</th>
+                                    <th>Joined</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTableBody">
+                                <tr>
+                                    <td colspan="6" style="text-align: center; padding: 2rem;">
+                                        <div class="loading"></div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vendors Tab -->
+            <div id="vendors-tab" class="tab-content" style="display: none;">
+                <div class="content-section">
+                    <div class="section-header">
+                        <h2>Vendor Management</h2>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Store Name</th>
+                                    <th>Owner</th>
+                                    <th>Email</th>
+                                    <th>Products</th>
+                                    <th>Phone</th>
+                                    <th>Joined</th>
+                                </tr>
+                            </thead>
+                            <tbody id="vendorsTableBody">
+                                <tr>
+                                    <td colspan="6" style="text-align: center; padding: 2rem;">
+                                        <div class="loading"></div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Categories Tab -->
+            <div id="categories-tab" class="tab-content" style="display: none;">
+                <div class="content-section">
+                    <div class="section-header">
+                        <h2>Category Management</h2>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Slug</th>
+                                    <th>Products</th>
+                                    <th>Created</th>
+                                </tr>
+                            </thead>
+                            <tbody id="categoriesTableBody">
+                                <tr>
+                                    <td colspan="4" style="text-align: center; padding: 2rem;">
+                                        <div class="loading"></div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Initialize user info
+        const userFirstName = localStorage.getItem('user_first_name') || 'Admin';
+        const userLastName = localStorage.getItem('user_last_name') || '';
+        const userFullName = userFirstName + (userLastName ? ' ' + userLastName : '');
+        document.getElementById('userAvatar').textContent = userFirstName[0].toUpperCase();
+        document.getElementById('userFullName').textContent = userFullName;
+
+        function setActiveTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.style.display = 'none';
+            });
+
+            // Update menu buttons
+            document.querySelectorAll('.menu-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Show selected tab
+            const tabElement = document.getElementById(tabName + '-tab');
+            if (tabElement) {
+                tabElement.style.display = 'block';
+                event.target.classList.add('active');
+            }
+
+            // Load data for the tab
+            if (tabName === 'dashboard') {
+                loadStats();
+            } else if (tabName === 'users') {
+                loadUsers();
+            } else if (tabName === 'vendors') {
+                loadVendors();
+            } else if (tabName === 'categories') {
+                loadCategories();
+            }
+        }
+
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/admin/stats', {
+                    headers: {
+                        'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                    }
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    document.getElementById('stat-users').textContent = data.stats.total_users;
+                    document.getElementById('stat-vendors').textContent = data.stats.total_vendors;
+                    document.getElementById('stat-customers').textContent = data.stats.total_customers;
+                    document.getElementById('stat-products').textContent = data.stats.total_products;
+                    document.getElementById('stat-categories').textContent = data.stats.total_categories;
+                    document.getElementById('stat-orders').textContent = data.stats.total_orders;
+                }
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        async function loadUsers() {
+            try {
+                const response = await fetch('/api/admin/users', {
+                    headers: {
+                        'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                    }
+                });
+                const data = await response.json();
+
+                const tbody = document.getElementById('usersTableBody');
+                tbody.innerHTML = '';
+
+                if (data.success && data.users.length > 0) {
+                    data.users.forEach(user => {
+                        const row = document.createElement('tr');
+                        const statusBadge = user.is_active ? 'active' : 'inactive';
+                        const statusText = user.is_active ? 'Active' : 'Inactive';
+
+                        row.innerHTML = `
+                            <td><strong>${user.first_name} ${user.last_name}</strong></td>
+                            <td>${user.email}</td>
+                            <td><span class="badge" style="background: #e3f2fd; color: #1976d2;">${user.role}</span></td>
+                            <td><span class="badge ${statusBadge}">${statusText}</span></td>
+                            <td>${new Date(user.created_at).toLocaleDateString()}</td>
+                            <td>
+                                <button class="action-btn ${user.is_active ? 'danger' : 'primary'}" onclick="toggleUserStatus(${user.id}, ${user.is_active})">
+                                    ${user.is_active ? 'Disable' : 'Enable'}
+                                </button>
+                            </td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 2rem;">No users found</td></tr>';
+                }
+            } catch (error) {
+                console.error('Error loading users:', error);
+            }
+        }
+
+        async function loadVendors() {
+            try {
+                const response = await fetch('/api/admin/vendors', {
+                    headers: {
+                        'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                    }
+                });
+                const data = await response.json();
+
+                const tbody = document.getElementById('vendorsTableBody');
+                tbody.innerHTML = '';
+
+                if (data.success && data.vendors.length > 0) {
+                    data.vendors.forEach(vendor => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td><strong>${vendor.store_name}</strong></td>
+                            <td>${vendor.user_name}</td>
+                            <td>${vendor.user_email}</td>
+                            <td><span class="badge" style="background: #f3e5f5; color: #7b1fa2;">${vendor.product_count}</span></td>
+                            <td>${vendor.phone || '-'}</td>
+                            <td>${new Date(vendor.created_at).toLocaleDateString()}</td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 2rem;">No vendors found</td></tr>';
+                }
+            } catch (error) {
+                console.error('Error loading vendors:', error);
+            }
+        }
+
+        async function loadCategories() {
+            try {
+                const response = await fetch('/api/admin/categories', {
+                    headers: {
+                        'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                    }
+                });
+                const data = await response.json();
+
+                const tbody = document.getElementById('categoriesTableBody');
+                tbody.innerHTML = '';
+
+                if (data.success && data.categories.length > 0) {
+                    data.categories.forEach(category => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td><strong>${category.name}</strong></td>
+                            <td><code>${category.slug}</code></td>
+                            <td><span class="badge" style="background: #e8f5e9; color: #2e7d32;">${category.product_count}</span></td>
+                            <td>${new Date(category.created_at).toLocaleDateString()}</td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 2rem;">No categories found</td></tr>';
+                }
+            } catch (error) {
+                console.error('Error loading categories:', error);
+            }
+        }
+
+        async function toggleUserStatus(userId, currentStatus) {
+            try {
+                const response = await fetch(`/api/admin/users/${userId}/toggle-status`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                    }
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    loadUsers();
+                } else {
+                    alert('Error updating user status');
+                }
+            } catch (error) {
+                console.error('Error toggling user status:', error);
+            }
+        }
+
+        function logout(event) {
+            event.preventDefault();
+            localStorage.clear();
+            window.location.href = '/login';
+        }
+
+        // Load initial data
+        window.addEventListener('load', () => {
+            loadStats();
+        });
+    </script>
+</body>
+</html>

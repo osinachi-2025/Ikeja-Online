@@ -1,0 +1,14 @@
+flask
+flask-wtf
+flask-sqlalchemy
+flask-migrate
+flask-cors
+flask-jwt-extended
+werkzeug
+python-slugify
+requests
+pytest
+resend
+redis
+celery
+requests

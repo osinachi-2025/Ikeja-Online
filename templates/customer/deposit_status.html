@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deposit History - Ikeja Online</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+        }
+
+        .dashboard-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        aside {
+            width: 280px;
+            background: linear-gradient(135deg, #1e3a5f 0%, #2d5a8c 100%);
+            color: white;
+            padding: 2rem 0;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            box-shadow: 2px 0 15px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+        }
+
+        .sidebar-header {
+            padding: 0 1.5rem;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .sidebar-header .logo {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%);
+            border-radius: 12px;
+            margin-bottom: 0.5rem;
+        }
+
+        .sidebar-header .logo i {
+            font-size: 1.8rem;
+            color: white;
+        }
+
+        .sidebar-header h2 {
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+        }
+
+        .sidebar-menu li {
+            margin: 0;
+        }
+
+        .sidebar-menu a {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            padding: 1rem 1.5rem;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+
+        .sidebar-menu a:hover,
+        .sidebar-menu a.active {
+            color: white;
+            background-color: rgba(255, 107, 53, 0.2);
+            border-left-color: #FF6B35;
+            padding-left: 1.7rem;
+        }
+
+        .sidebar-menu i {
+            width: 24px;
+            text-align: center;
+            font-size: 1.2rem;
+        }
+
+        .sidebar-footer {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            padding: 1.5rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar-footer a {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            color: #FF6B35;
+            text-decoration: none;
+            padding: 0.8rem;
+            border-radius: 8px;
+            background: rgba(255, 107, 53, 0.1);
+            transition: all 0.3s ease;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .sidebar-footer a:hover {
+            background: rgba(255, 107, 53, 0.2);
+        }
+
+        /* Main Content */
+        main {
+            margin-left: 280px;
+            flex: 1;
+            padding: 2rem;
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .topbar-title h1 {
+            font-size: 1.8rem;
+            color: #1a1a1a;
+            margin-bottom: 0.3rem;
+        }
+
+        .topbar-title p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .topbar-user {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .wallet-input-group {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .wallet-display {
+            background: #f8f9fa;
+            border: 1.5px solid rgba(255, 107, 53, 0.3);
+            padding: 0.5rem 1.2rem 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #FF6B35;
+            cursor: not-allowed;
+            width: 85px;
+            height: 32px;
+            text-align: right;
+            transition: all 0.3s ease;
+            line-height: 1.2;
+        }
+
+        .wallet-display:disabled {
+            background: #f8f9fa;
+            color: #FF6B35;
+        }
+
+        .wallet-plus-btn-link {
+            position: absolute;
+            right: 3px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 26px;
+            height: 26px;
+            background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%);
+            border-radius: 5px;
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .wallet-plus-btn-link:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(255, 107, 53, 0.4);
+        }
+
+        .wallet-plus-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.85rem;
+            font-weight: 700;
+            width: 100%;
+            height: 100%;
+            line-height: 1;
+        }
+
+
+
+
+
+        .user-avatar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%);
+            border-radius: 50%;
+            color: white;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .user-info {
+            text-align: right;
+        }
+
+        .user-info strong {
+            color: #1a1a1a;
+            display: block;
+        }
+
+        .user-info small {
+            color: #999;
+        }
+
+        /* Content Section */
+        .content-section {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .section-header {
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .section-header h2 {
+            font-size: 1.5rem;
+            color: #1a1a1a;
+        }
+
+        .deposit-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .deposit-table thead {
+            background: #f5f5f5;
+        }
+
+        .deposit-table th {
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: #1a1a1a;
+            border-bottom: 2px solid #e0e0e0;
+            font-size: 0.9rem;
+        }
+
+        .deposit-table td {
+            padding: 1rem;
+            border-bottom: 1px solid #e0e0e0;
+            color: #666;
+        }
+
+        .deposit-table tbody tr:hover {
+            background: #f9f9f9;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .status-completed {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-failed {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .amount-cell {
+            color: #FF6B35;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: #999;
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.3;
+            display: block;
+        }
+
+        .empty-state p {
+            margin-bottom: 1.5rem;
+            font-size: 1.05rem;
+        }
+
+        .empty-state a {
+            display: inline-block;
+            background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .empty-state a:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 2rem;
+            height: 2rem;
+            border: 3px solid #e0e0e0;
+            border-top-color: #FF6B35;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 1rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            aside {
+                display: none;
+            }
+
+            main {
+                margin-left: 0;
+                padding: 1rem;
+            }
+
+            .topbar {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .topbar-user {
+                width: 100%;
+                flex-wrap: wrap;
+                gap: 0.8rem;
+                justify-content: center;
+            }
+
+            .wallet-input-group {
+                width: auto;
+                flex-direction: row;
+            }
+
+            .wallet-display {
+                width: 80px;
+                font-size: 0.75rem;
+                height: 30px;
+            }
+
+            .wallet-plus-btn-link {
+                width: 24px;
+                height: 24px;
+            }
+
+            .deposit-table {
+                font-size: 0.9rem;
+            }
+
+            .deposit-table th,
+            .deposit-table td {
+                padding: 0.7rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <script>
+        if (!localStorage.getItem('access_token')) {
+            window.location.href = '/login';
+        }
+    </script>
+
+    <div class="dashboard-container">
+        <aside id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fas fa-shopping-bag"></i>
+                </div>
+                <h2>Customer</h2>
+            </div>
+
+            <ul class="sidebar-menu">
+                <li>
+                    <a href="/">
+                        <i class="fas fa-globe"></i>
+                        Back to Home
+                    </a>
+                </li>
+                <li>
+                    <a href="/customer/dashboard">
+                        <i class="fas fa-home"></i>
+                        Dashboard
+                    </a>
+                </li>
+                <li>
+                    <a href="/browse-products">
+                        <i class="fas fa-store"></i>
+                        Browse Products
+                    </a>
+                </li>
+                <li>
+                    <a href="/customer/my-orders">
+                        <i class="fas fa-receipt"></i>
+                        My Orders
+                    </a>
+                </li>
+                <li>
+                    <a href="/customer/deposit-status" class="active">
+                        <i class="fas fa-history"></i>
+                        Deposit History
+                    </a>
+                </li>
+                <li>
+                    <a href="#">
+                        <i class="fas fa-heart"></i>
+                        Wishlist
+                    </a>
+                </li>
+                <li>
+                    <a href="/customer/deposit" style="background: rgba(255, 107, 53, 0.15); border-left-color: #FF6B35; color: #FF6B35; font-weight: 600;">
+                        <i class="fas fa-wallet"></i>
+                        Add Deposit
+                    </a>
+                </li>
+                <li>
+                    <a href="/customer-settings">
+                        <i class="fas fa-cog"></i>
+                        Settings
+                    </a>
+                </li>
+            </ul>
+
+            <div class="sidebar-footer">
+                <a href="#" onclick="logout(event)">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Logout
+                </a>
+            </div>
+        </aside>
+
+        <main>
+            <div class="topbar">
+                <div class="topbar-title">
+                    <h1>Deposit History</h1>
+                    <p>View all your deposit transactions</p>
+                </div>
+                <div class="topbar-user">
+                    <div class="wallet-input-group">
+                        <input type="text" class="wallet-display" id="topWalletBalance" value="₦0.00" disabled>
+                        <a href="/customer/deposit" class="wallet-plus-btn-link" title="Add funds">
+                            <span class="wallet-plus-btn">+</span>
+                        </a>
+                    </div>
+                    <div class="user-avatar" id="userAvatar">U</div>
+                    <div class="user-info">
+                        <strong id="userFullName">User</strong>
+                        <small id="userEmail">customer@email.com</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-section">
+                <div class="section-header">
+                    <h2>All Deposits</h2>
+                </div>
+
+                <div id="depositsContainer">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>Loading deposits...</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            loadUserInfo();
+            loadWalletBalance();
+            loadDeposits();
+        });
+
+        function loadUserInfo() {
+            const userData = JSON.parse(localStorage.getItem('user_data') || '{}');
+            
+            if (userData.first_name) {
+                const initials = (userData.first_name[0] + (userData.last_name ? userData.last_name[0] : '')).toUpperCase();
+                document.getElementById('userAvatar').textContent = initials;
+                document.getElementById('userFullName').textContent = userData.first_name + (userData.last_name ? ' ' + userData.last_name : '');
+                document.getElementById('userEmail').textContent = userData.email || 'customer@email.com';
+            }
+        }
+
+        async function loadWalletBalance() {
+            try {
+                const response = await fetch('/api/wallet', {
+                    headers: {
+                        'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                    }
+                });
+                const data = await response.json();
+                
+                if(data.success) {
+                    const balance = parseFloat(data.balance || 0);
+                    const formattedBalance = '₦' + balance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                    document.getElementById('topWalletBalance').value = formattedBalance;
+                }
+            } catch(error) {
+                console.error('Error loading wallet balance:', error);
+            }
+        }
+
+        async function loadDeposits() {
+            try {
+                const response = await fetch('/api/customer/deposits', {
+                    headers: {
+                        'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                    }
+                });
+
+                const data = await response.json();
+
+                if(!data.success) {
+                    document.getElementById('depositsContainer').innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <p>${data.message || 'Failed to load deposits'}</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                const deposits = data.deposits || [];
+
+                if(deposits.length === 0) {
+                    document.getElementById('depositsContainer').innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-history"></i>
+                            <p>You haven't made any deposits yet</p>
+                            <a href="/customer/deposit">Make Your First Deposit</a>
+                        </div>
+                    `;
+                    return;
+                }
+
+                let html = `
+                    <table class="deposit-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Amount</th>
+                                <th>Reference</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+
+                deposits.forEach(deposit => {
+                    const date = new Date(deposit.created_at);
+                    const formattedDate = date.toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+
+                    const statusClass = `status-${deposit.status}`;
+                    const statusText = deposit.status.charAt(0).toUpperCase() + deposit.status.slice(1);
+
+                    html += `
+                        <tr>
+                            <td>${formattedDate}</td>
+                            <td class="amount-cell">₦${parseFloat(deposit.amount).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                            <td><small>${deposit.reference_number}</small></td>
+                            <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                        </tr>
+                    `;
+                });
+
+                html += `
+                        </tbody>
+                    </table>
+                `;
+
+                document.getElementById('depositsContainer').innerHTML = html;
+
+            } catch(error) {
+                console.error('Error loading deposits:', error);
+                document.getElementById('depositsContainer').innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <p>Error loading deposits. Please try again.</p>
+                    </div>
+                `;
+            }
+        }
+
+        function logout(event) {
+            event.preventDefault();
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('user_data');
+            window.location.href = '/login';
+        }
+    </script>
+</body>
+</html>

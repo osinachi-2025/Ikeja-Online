@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - Ikeja Online</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+        }
+
+        .dashboard-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        aside {
+            width: 280px;
+            background: linear-gradient(135deg, #1e3a5f 0%, #2d5a8c 100%);
+            color: white;
+            padding: 2rem 0;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            box-shadow: 2px 0 15px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        }
+
+        .sidebar-header {
+            padding: 0 1.5rem;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .sidebar-header .logo {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%);
+            border-radius: 12px;
+            margin-bottom: 0.5rem;
+        }
+
+        .sidebar-header .logo i {
+            font-size: 1.8rem;
+            color: white;
+        }
+
+        .sidebar-header h2 {
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+        }
+
+        .sidebar-menu li {
+            margin: 0;
+        }
+
+        .sidebar-menu a {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            padding: 1rem 1.5rem;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+
+        .sidebar-menu a:hover,
+        .sidebar-menu a.active {
+            color: white;
+            background-color: rgba(255, 107, 53, 0.2);
+            border-left-color: #FF6B35;
+            padding-left: 1.7rem;
+        }
+
+        .sidebar-menu i {
+            width: 24px;
+            text-align: center;
+            font-size: 1.2rem;
+        }
+
+        .sidebar-footer {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            padding: 1.5rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar-footer a {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            color: #FF6B35;
+            text-decoration: none;
+            padding: 0.8rem;
+            border-radius: 8px;
+            background: rgba(255, 107, 53, 0.1);
+            transition: all 0.3s ease;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .sidebar-footer a:hover {
+            background: rgba(255, 107, 53, 0.2);
+        }
+
+        /* Main Content */
+        main {
+            margin-left: 280px;
+            flex: 1;
+            padding: 2rem;
+            transition: margin-left 0.3s ease;
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .topbar-title h1 {
+            font-size: 1.8rem;
+            color: #1a1a1a;
+            margin-bottom: 0.3rem;
+        }
+
+        .topbar-title p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .topbar-user {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .user-avatar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%);
+            border-radius: 50%;
+            color: white;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .user-info {
+            text-align: right;
+        }
+
+        .user-info strong {
+            color: #1a1a1a;
+            display: block;
+        }
+
+        .user-info small {
+            color: #999;
+        }
+
+        /* Settings Content */
+        .settings-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+        }
+
+        .settings-header {
+            background: linear-gradient(135deg, #1e3a5f 0%, #2d5a8c 100%);
+            padding: 2rem;
+            color: white;
+        }
+
+        .settings-header h2 {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin: 0;
+            font-size: 1.5rem;
+        }
+
+        .settings-header p {
+            margin-top: 0.5rem;
+            opacity: 0.9;
+            font-size: 0.95rem;
+        }
+
+        .settings-content {
+            padding: 2rem;
+        }
+
+        /* Form Sections */
+        .form-section {
+            margin-bottom: 2.5rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .form-section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 1.5rem;
+        }
+
+        .section-title i {
+            color: #FF6B35;
+            font-size: 1.3rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group:last-child {
+            margin-bottom: 0;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #333;
+            font-size: 0.95rem;
+        }
+
+        label .required {
+            color: #e74c3c;
+            margin-left: 0.2rem;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="tel"],
+        textarea {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            background-color: #fafafa;
+        }
+
+        input[type="text"]:focus,
+        input[type="email"]:focus,
+        input[type="tel"]:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #FF6B35;
+            background-color: white;
+            box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+        }
+
+        input[type="text"]:disabled,
+        input[type="email"]:disabled,
+        input[type="tel"]:disabled,
+        textarea:disabled {
+            background-color: #f0f0f0;
+            color: #999;
+            cursor: not-allowed;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .input-hint {
+            font-size: 0.8rem;
+            color: #999;
+            margin-top: 0.3rem;
+        }
+
+        .char-count {
+            font-size: 0.8rem;
+            color: #999;
+            margin-top: 0.3rem;
+            text-align: right;
+        }
+
+        /* Buttons */
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+            border: 1px solid #e0e0e0;
+        }
+
+        .btn-secondary:hover {
+            background: #e8e8e8;
+        }
+
+        /* Alerts */
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .alert-icon {
+            flex-shrink: 0;
+            font-size: 1.1rem;
+        }
+
+        .alert-content {
+            flex: 1;
+        }
+
+        .alert-title {
+            font-weight: 600;
+            margin-bottom: 0.2rem;
+        }
+
+        .alert-message {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .alert-success {
+            background-color: #d4edda;
+            border-left: 4px solid #28a745;
+            color: #155724;
+        }
+
+        .alert-success .alert-icon {
+            color: #28a745;
+        }
+
+        .alert-error {
+            background-color: #f8d7da;
+            border-left: 4px solid #dc3545;
+            color: #721c24;
+        }
+
+        .alert-error .alert-icon {
+            color: #dc3545;
+        }
+
+        .alert-info {
+            background-color: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            color: #0c5460;
+        }
+
+        .alert-info .alert-icon {
+            color: #17a2b8;
+        }
+
+        .alert-close {
+            background: none;
+            border: none;
+            color: inherit;
+            cursor: pointer;
+            font-size: 1.2rem;
+            padding: 0;
+            opacity: 0.7;
+            transition: opacity 0.3s ease;
+        }
+
+        .alert-close:hover {
+            opacity: 1;
+        }
+
+        /* Loading State */
+        .loading {
+            display: inline-block;
+            position: relative;
+            width: 1rem;
+            height: 1rem;
+        }
+
+        .loading::after {
+            content: " ";
+            display: block;
+            width: 0.8rem;
+            height: 0.8rem;
+            margin: 0.1rem;
+            border-radius: 50%;
+            border: 2px solid currentColor;
+            border-color: currentColor transparent currentColor transparent;
+            animation: loading 1.2s linear infinite;
+        }
+
+        @keyframes loading {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Menu Toggle */
+        .menu-toggle {
+            display: none;
+            background: linear-gradient(135deg, #1e3a5f 0%, #2d5a8c 100%);
+            border: none;
+            color: #FF6B35;
+            font-size: 1.3rem;
+            cursor: pointer;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 1001;
+            width: 45px;
+            height: 45px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .menu-toggle:hover {
+            background: linear-gradient(135deg, #2d5a8c 0%, #3d6a9c 100%);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+            transform: scale(1.05);
+        }
+
+        .menu-toggle:active {
+            transform: scale(0.95);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .dashboard-container {
+                flex-wrap: wrap;
+            }
+
+            aside {
+                width: 250px;
+                transform: translateX(-100%);
+            }
+
+            aside.active {
+                transform: translateX(0);
+            }
+
+            main {
+                margin-left: 0;
+                padding: 1rem;
+                width: 100%;
+            }
+
+            .topbar {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+
+            .topbar-user {
+                justify-content: center;
+            }
+
+            .user-info {
+                text-align: center;
+            }
+
+            .settings-header {
+                padding: 1.5rem;
+            }
+
+            .settings-content {
+                padding: 1.5rem;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .topbar-title h1 {
+                font-size: 1.3rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            aside {
+                width: 100%;
+            }
+
+            .sidebar-header {
+                padding: 1rem;
+            }
+
+            main {
+                padding: 0.75rem;
+            }
+
+            .topbar {
+                margin-bottom: 1rem;
+                padding: 1rem;
+            }
+
+            .topbar-title h1 {
+                font-size: 1.1rem;
+            }
+
+            .settings-header {
+                padding: 1rem;
+            }
+
+            .settings-content {
+                padding: 1rem;
+            }
+
+            .section-title {
+                font-size: 1.05rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <script>
+        // Check authentication before page loads
+        if (!localStorage.getItem('access_token')) {
+            window.location.href = '/login';
+        }
+    </script>
+    <button class="menu-toggle" onclick="toggleSidebar()">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <div class="dashboard-container">
+        <aside id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fas fa-shopping-bag"></i>
+                </div>
+                <h2>Customer</h2>
+            </div>
+
+            <ul class="sidebar-menu">
+                <li>
+                    <a href="/customer/dashboard">
+                        <i class="fas fa-home"></i>
+                        Dashboard
+                    </a>
+                </li>
+                <li>
+                    <a href="/browse-products">
+                        <i class="fas fa-store"></i>
+                        Browse Products
+                    </a>
+                </li>
+                <li>
+                    <a href="#">
+                        <i class="fas fa-receipt"></i>
+                        My Orders
+                    </a>
+                </li>
+                <li>
+                    <a href="#">
+                        <i class="fas fa-heart"></i>
+                        Wishlist
+                    </a>
+                </li>
+                <li>
+                    <a href="/customer-settings" class="active">
+                        <i class="fas fa-cog"></i>
+                        Settings
+                    </a>
+                </li>
+            </ul>
+
+            <div class="sidebar-footer">
+                <a href="#" onclick="logout(event)">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Logout
+                </a>
+            </div>
+        </aside>
+
+        <main>
+            <div class="topbar">
+                <div class="topbar-title">
+                    <h1>Settings</h1>
+                    <p>Manage your account information and preferences</p>
+                </div>
+                <div class="topbar-user">
+                    <div class="user-avatar" id="userAvatar">U</div>
+                    <div class="user-info">
+                        <strong id="userFullName">User</strong>
+                        <small id="userEmail">customer@email.com</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alerts Container -->
+            <div id="alertContainer"></div>
+
+            <!-- Settings Form -->
+            <div class="settings-container">
+                <div class="settings-header">
+                    <h2>
+                        <i class="fas fa-user-cog"></i>
+                        Account Settings
+                    </h2>
+                    <p>Update your contact information and billing address</p>
+                </div>
+
+                <div class="settings-content">
+                    <!-- Phone Number Section -->
+                    <div class="form-section">
+                        <div class="section-title">
+                            <i class="fas fa-phone-alt"></i>
+                            Phone Number
+                        </div>
+
+                        <form id="phoneForm">
+                            <div class="form-group">
+                                <label for="phone">
+                                    Phone Number
+                                    <span class="required">*</span>
+                                </label>
+                                <div class="input-wrapper">
+                                    <input 
+                                        type="tel" 
+                                        id="phone" 
+                                        name="phone" 
+                                        placeholder="Enter your phone number (e.g., +234 812 345 6789)"
+                                        pattern="[0-9\+\-\s\(\)]+"
+                                        required
+                                    >
+                                </div>
+                                <div class="input-hint">
+                                    <i class="fas fa-info-circle"></i> 
+                                    Include country code if applicable
+                                </div>
+                            </div>
+
+                            <div class="button-group">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i>
+                                    Save Phone Number
+                                </button>
+                                <button type="reset" class="btn btn-secondary">
+                                    <i class="fas fa-undo"></i>
+                                    Clear
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Billing Address Section -->
+                    <div class="form-section">
+                        <div class="section-title">
+                            <i class="fas fa-map-marker-alt"></i>
+                            Billing Address
+                        </div>
+
+                        <form id="addressForm">
+                            <div class="form-group">
+                                <label for="address">
+                                    Billing Address
+                                    <span class="required">*</span>
+                                </label>
+                                <div class="input-wrapper">
+                                    <textarea 
+                                        id="address" 
+                                        name="address" 
+                                        placeholder="Enter your complete billing address (street address, apartment/suite, city, state, postal code, country)"
+                                        required
+                                        maxlength="255"
+                                    ></textarea>
+                                </div>
+                                <div class="char-count">
+                                    <span id="charCount">0</span>/255 characters
+                                </div>
+                                <div class="input-hint">
+                                    <i class="fas fa-info-circle"></i> 
+                                    Provide your complete address for accurate delivery
+                                </div>
+                            </div>
+
+                            <div class="button-group">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i>
+                                    Save Billing Address
+                                </button>
+                                <button type="reset" class="btn btn-secondary">
+                                    <i class="fas fa-undo"></i>
+                                    Clear
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Initialize user info from localStorage
+        const userFirstName = localStorage.getItem('user_first_name') || 'User';
+        const userLastName = localStorage.getItem('user_last_name') || '';
+        const userFullName = userFirstName + (userLastName ? ' ' + userLastName : '');
+        const userEmail = localStorage.getItem('user_email') || 'customer@email.com';
+        
+        document.getElementById('userAvatar').textContent = userFirstName[0].toUpperCase();
+        document.getElementById('userFullName').textContent = userFullName;
+        document.getElementById('userEmail').textContent = userEmail;
+
+        // Sidebar toggle
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('active');
+        }
+
+        // Close sidebar when clicking outside on mobile
+        document.addEventListener('click', (e) => {
+            const sidebar = document.getElementById('sidebar');
+            const menuToggle = document.querySelector('.menu-toggle');
+            if (!sidebar.contains(e.target) && !menuToggle.contains(e.target) && sidebar.classList.contains('active')) {
+                sidebar.classList.remove('active');
+            }
+        });
+
+        // Character counter for address field
+        const addressField = document.getElementById('address');
+        const charCount = document.getElementById('charCount');
+        addressField.addEventListener('input', () => {
+            charCount.textContent = addressField.value.length;
+        });
+
+        // Load customer data on page load
+        window.addEventListener('load', () => {
+            loadCustomerSettings();
+        });
+
+        // Load existing customer settings
+        async function loadCustomerSettings() {
+            try {
+                const response = await fetch('/customer/settings', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': 'Bearer ' + localStorage.getItem('access_token'),
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.phone) {
+                        document.getElementById('phone').value = data.phone;
+                    }
+                    if (data.address) {
+                        document.getElementById('address').value = data.address;
+                        charCount.textContent = data.address.length;
+                    }
+                } else if (response.status === 404) {
+                    // Settings endpoint not found yet, this is acceptable
+                    console.log('Settings endpoint not yet implemented on backend');
+                }
+            } catch (error) {
+                console.error('Error loading customer settings:', error);
+            }
+        }
+
+        // Phone Form Submission
+        document.getElementById('phoneForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const phone = document.getElementById('phone').value.trim();
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const originalBtnContent = submitBtn.innerHTML;
+
+            if (!phone) {
+                showAlert('Please enter a phone number', 'error');
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="loading"></span> Saving...';
+
+            try {
+                const response = await fetch('/customer/update-phone', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + localStorage.getItem('access_token'),
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ phone })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showAlert('Phone number updated successfully!', 'success');
+                    document.getElementById('phoneForm').reset();
+                } else {
+                    showAlert(data.message || 'Failed to update phone number', 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showAlert('An error occurred while saving phone number', 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnContent;
+            }
+        });
+
+        // Address Form Submission
+        document.getElementById('addressForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const address = document.getElementById('address').value.trim();
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const originalBtnContent = submitBtn.innerHTML;
+
+            if (!address) {
+                showAlert('Please enter a billing address', 'error');
+                return;
+            }
+
+            if (address.length < 10) {
+                showAlert('Address must be at least 10 characters long', 'error');
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="loading"></span> Saving...';
+
+            try {
+                const response = await fetch('/customer/update-address', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + localStorage.getItem('access_token'),
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ address })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showAlert('Billing address updated successfully!', 'success');
+                    document.getElementById('addressForm').reset();
+                    charCount.textContent = '0';
+                } else {
+                    showAlert(data.message || 'Failed to update billing address', 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showAlert('An error occurred while saving billing address', 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnContent;
+            }
+        });
+
+        // Alert Helper Function
+        function showAlert(message, type = 'info') {
+            const alertContainer = document.getElementById('alertContainer');
+            const alertId = 'alert-' + Date.now();
+            
+            const alertIcon = {
+                success: 'fas fa-check-circle',
+                error: 'fas fa-exclamation-circle',
+                info: 'fas fa-info-circle'
+            };
+
+            const alertHTML = `
+                <div class="alert alert-${type}" id="${alertId}">
+                    <div class="alert-icon">
+                        <i class="${alertIcon[type]}"></i>
+                    </div>
+                    <div class="alert-content">
+                        <div class="alert-title">${type === 'success' ? 'Success' : type === 'error' ? 'Error' : 'Info'}</div>
+                        <div class="alert-message">${message}</div>
+                    </div>
+                    <button class="alert-close" onclick="document.getElementById('${alertId}').remove()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+
+            alertContainer.insertAdjacentHTML('beforeend', alertHTML);
+
+            // Auto-dismiss success alerts after 5 seconds
+            if (type === 'success') {
+                setTimeout(() => {
+                    const alert = document.getElementById(alertId);
+                    if (alert) {
+                        alert.style.animation = 'slideIn 0.3s ease reverse';
+                        setTimeout(() => alert.remove(), 300);
+                    }
+                }, 5000);
+            }
+        }
+
+        // Logout function
+        function logout(event) {
+            event.preventDefault();
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('user_first_name');
+            localStorage.removeItem('user_last_name');
+            localStorage.removeItem('user_email');
+            window.location.href = '/login';
+        }
+    </script>
+</body>
+</html>

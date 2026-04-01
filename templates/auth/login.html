@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Login - Ikeja Online</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.2/css/bootstrap.min.css" integrity="sha512-8rzlferDg10E0pjRkwKLtD6nHxlrMKs9x4NYss+vL+KAtVnYxt3dMbS4mM2S1K55j2i6u+4AyncDw2cYmvyf/w==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3H0DqSl8Gyj8w0gYVjcWw16nB3dWDVhJ8+7Tq1WNcGJNDg+lD0lz5rrBcFW3G80v9LCRb5bHlhQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #0f2d28 0%, #1a3a2e 50%, #0d5a52 100%);
+            background-image: 
+                url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1200"><defs><pattern id="modern-grid" x="0" y="0" width="60" height="60" patternUnits="userSpaceOnUse"><circle cx="30" cy="30" r="2" fill="rgba(255,255,255,0.08)"/><path d="M10,30 Q30,20 50,30" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="0.5"/></pattern></defs><rect width="1200" height="1200" fill="url(%23modern-grid)"/><circle cx="100" cy="200" r="150" fill="rgba(255,107,53,0.08)" opacity="0.5"/><circle cx="1100" cy="900" r="200" fill="rgba(255,107,53,0.06)" opacity="0.3"/></svg>');
+            background-size: cover;
+            background-attachment: fixed;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 1rem;
+        }
+
+        .login-container {
+            width: 100%;
+            max-width: 500px;
+            animation: slideUp 0.6s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .login-card {
+            background: linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(255,255,255,0.95) 100%),
+                        url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600"><defs><pattern id="dots-subtle" x="0" y="0" width="50" height="50" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1.5" fill="rgba(255,107,53,0.04)"/></pattern></defs><rect width="1200" height="600" fill="url(%23dots-subtle)"/></svg>');
+            background-size: cover, auto;
+            border-radius: 20px;
+            box-shadow: 0 50px 100px rgba(0, 0, 0, 0.4), 0 0 1px rgba(255,255,255,0.1) inset;
+            padding: 3rem 2.5rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .brand-header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .brand-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%);
+            border-radius: 16px;
+            margin-bottom: 1.2rem;
+            box-shadow: 0 12px 30px rgba(255, 107, 53, 0.3);
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        .brand-icon i {
+            color: white;
+            font-size: 2.5rem;
+        }
+
+        .brand-header h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #1a1a1a;
+            margin-bottom: 0.3rem;
+            letter-spacing: -0.5px;
+        }
+
+        .brand-header p {
+            color: #666;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin-bottom: 0.6rem;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: #FF6B35;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.9rem 1.2rem;
+            border: 2px solid #e5e5e5;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #333;
+        }
+
+        .form-control:focus {
+            outline: none;
+            background-color: white;
+            border-color: #FF6B35;
+            box-shadow: 0 0 0 5px rgba(255, 107, 53, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .form-control::placeholder {
+            color: #999;
+            font-weight: 500;
+        }
+
+        .input-group {
+            position: relative;
+            display: flex;
+        }
+
+        .input-group .form-control {
+            flex: 1;
+            padding-right: 2.75rem;
+        }
+
+        .input-group-text {
+            position: absolute;
+            right: 1.2rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #FF6B35;
+            cursor: pointer;
+            padding: 0;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .input-group-text:hover {
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .d-flex {
+            display: flex;
+        }
+
+        .justify-content-between {
+            justify-content: space-between;
+        }
+
+        .align-items-center {
+            align-items: center;
+        }
+
+        .mb-3 {
+            margin-bottom: 1.5rem;
+        }
+
+        .remember-me {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .form-check-input {
+            width: 1.3rem;
+            height: 1.3rem;
+            margin-top: 0;
+            cursor: pointer;
+            accent-color: #FF6B35;
+            flex-shrink: 0;
+            border: 2px solid #e5e5e5;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+
+        .form-check-input:hover {
+            border-color: #FF6B35;
+        }
+
+        .form-check-input:checked {
+            background: #FF6B35;
+            border-color: #FF6B35;
+        }
+
+        .form-check-label {
+            cursor: pointer;
+            color: #666;
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin: 0;
+        }
+
+        .forgot-password {
+            text-align: right;
+        }
+
+        .forgot-password a {
+            color: #FF6B35;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .forgot-password a:hover {
+            color: #E85A25;
+            text-decoration: underline;
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 1.1rem 2rem;
+            background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-weight: 800;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            margin-top: 1.5rem;
+            box-shadow: 0 15px 30px rgba(255, 107, 53, 0.35);
+            cursor: pointer;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-login::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: rgba(255,255,255,0.2);
+            transition: left 0.3s ease;
+        }
+
+        .btn-login:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 20px 40px rgba(255, 107, 53, 0.4);
+            color: white;
+        }
+
+        .btn-login:hover::before {
+            left: 100%;
+        }
+
+        .btn-login:active {
+            transform: translateY(-1px);
+        }
+
+        .signup-link {
+            text-align: center;
+            margin-top: 1.5rem;
+            color: #666;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .signup-link a {
+            color: #FF6B35;
+            text-decoration: none;
+            font-weight: 700;
+            transition: color 0.3s ease;
+        }
+
+        .signup-link a:hover {
+            color: #E85A25;
+        }
+
+        .alert {
+            border-radius: 10px;
+            border: none;
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            font-size: 0.9rem;
+            animation: slideDown 0.4s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .alert-danger {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: #991b1b;
+            border-left: 4px solid #EF4444;
+        }
+
+        .footer-text {
+            text-align: center;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #eee;
+            font-size: 0.85rem;
+            color: #999;
+        }
+
+        .footer-text p {
+            margin: 0;
+        }
+
+        .password-toggle {
+            cursor: pointer;
+        }
+
+        @media (max-width: 768px) {
+            .login-card {
+                padding: 2rem 1.5rem;
+                border-radius: 15px;
+            }
+
+            .brand-header {
+                margin-bottom: 2rem;
+            }
+
+            .brand-header h1 {
+                font-size: 1.6rem;
+            }
+
+            .brand-icon {
+                width: 70px;
+                height: 70px;
+            }
+
+            .brand-icon i {
+                font-size: 2rem;
+            }
+
+            .form-group {
+                margin-bottom: 1.2rem;
+            }
+
+            .form-control {
+                padding: 0.8rem 1rem;
+                font-size: 0.9rem;
+            }
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding: 0.5rem;
+            }
+
+            .login-card {
+                padding: 1.5rem;
+                border-radius: 12px;
+            }
+
+            .brand-header {
+                margin-bottom: 1.5rem;
+            }
+
+            .brand-header h1 {
+                font-size: 1.4rem;
+            }
+
+            .brand-header p {
+                font-size: 0.9rem;
+            }
+
+            .brand-icon {
+                width: 60px;
+                height: 60px;
+                margin-bottom: 1rem;
+            }
+
+            .brand-icon i {
+                font-size: 1.8rem;
+            }
+
+            .form-group {
+                margin-bottom: 1rem;
+            }
+
+            .form-label {
+                font-size: 0.8rem;
+                margin-bottom: 0.5rem;
+            }
+
+            .form-control {
+                padding: 0.75rem 0.9rem;
+                font-size: 0.9rem;
+            }
+
+            .btn-login {
+                padding: 0.9rem 1.2rem;
+                margin-top: 1.2rem;
+                font-size: 0.9rem;
+            }
+
+            .signup-link {
+                font-size: 0.85rem;
+                margin-top: 1rem;
+            }
+
+            .footer-text {
+                margin-top: 1rem;
+                padding-top: 1rem;
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    
+    <div class="login-container">
+        <div class="login-card">
+            <!-- Brand Header -->
+            <div class="brand-header">
+                <div class="brand-icon">
+                    <i class="fas fa-user"></i>
+                </div>
+                <h1>Ikeja Online</h1>
+                <p>Merchant and Customer Login</p>
+            </div>
+
+            <!-- Error/Success Messages -->
+            <div id="alertContainer"></div>
+            {% if error %}
+            <div class="alert alert-danger" role="alert">
+                <i class="fas fa-exclamation-circle me-2"></i>{{ error }}
+            </div>
+            {% endif %}
+
+            <!-- Login Form -->
+            <form id="loginForm">
+                <!-- Email -->
+                <div class="form-group">
+                    <label for="email" class="form-label">Email Address</label>
+                    <div class="input-group">
+                        <input type="email" class="form-control" id="email" name="email" required placeholder="user@ikejaonline.com" autofocus>
+                        <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                    </div>
+                </div>
+
+                <!-- Password -->
+                <div class="form-group">
+                    <label for="password" class="form-label">Password</label>
+                    <div class="input-group">
+                        <input type="password" class="form-control" id="password" name="password" required placeholder="Enter your password">
+                        <span class="input-group-text password-toggle" onclick="togglePassword()">
+                            <i class="fas fa-eye" id="password-icon"></i>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Remember Me & Forgot Password -->
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="form-check remember-me">
+                        <input class="form-check-input" type="checkbox" id="remember" name="remember">
+                        <label class="form-check-label" for="remember">
+                            Remember me
+                        </label>
+                    </div>
+                    <div class="forgot-password">
+                        <a href="#"><i class="fas fa-question-circle me-1"></i>Need help?</a>
+                    </div>
+                </div>
+
+                <!-- Login Button -->
+                <button type="submit" class="btn btn-login" id="loginBtn">
+                    <i class="fas fa-sign-in-alt me-2"></i>Log In
+                </button>
+
+                <!-- Signup Link -->
+                <div class="signup-link">
+                    Don't have an account? <a href="{{ url_for('register') }}">Register here</a>
+                </div>
+            </form>
+
+            <!-- Footer -->
+            <div style="text-align: center; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid #eee; font-size: 0.85rem; color: #999;">
+                <p>Ikeja Online &copy; 2026. All rights reserved.</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function togglePassword() {
+            const pwd = document.getElementById('password');
+            const icon = document.getElementById('password-icon');
+            if (pwd.type === 'password') {
+                pwd.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                pwd.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+
+        // Handle login form submission
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const loginBtn = document.getElementById('loginBtn');
+            
+            loginBtn.disabled = true;
+            loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Logging in...';
+            
+            try {
+                const formData = new FormData();
+                formData.append('email', email);
+                formData.append('password', password);
+                
+                const response = await fetch('{{ url_for("login") }}', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    // Store token and user info in localStorage
+                    localStorage.setItem('access_token', data.access_token);
+                    localStorage.setItem('user_role', data.role);
+                    localStorage.setItem('user_id', data.user_id);
+                    localStorage.setItem('user_first_name', data.first_name);
+                    localStorage.setItem('user_last_name', data.last_name);
+                    
+                    // Redirect based on role
+                    if (data.role === 'super_admin') {
+                        window.location.href = '/admin/dashboard';
+                    } else if (data.role === 'vendor') {
+                        window.location.href = '{{ url_for("vendor_dashboard") }}';
+                    } else if (data.role === 'customer') {
+                        window.location.href = '{{ url_for("customer_dashboard") }}';
+                    }
+                } else {
+                    showAlert(data.message || 'Login failed', 'danger');
+                    loginBtn.disabled = false;
+                    loginBtn.innerHTML = '<i class="fas fa-sign-in-alt me-2"></i>Log In';
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                showAlert('An error occurred. Please try again.', 'danger');
+                loginBtn.disabled = false;
+                loginBtn.innerHTML = '<i class="fas fa-sign-in-alt me-2"></i>Log In';
+            }
+        });
+
+        function showAlert(message, type) {
+            const alertContainer = document.getElementById('alertContainer');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type} alert-dismissible fade show`;
+            alert.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            alertContainer.appendChild(alert);
+            setTimeout(() => alert.remove(), 5000);
+        }
+    </script>
+</body>
+</html>
