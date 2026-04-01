@@ -14,8 +14,8 @@ from slugify import slugify
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
-app.config['SECRET_KEY'] = 'your_secret_key'
-app.config['JWT_SECRET_KEY'] = 'your_jwt_secret_key'
+app.config['SECRET_KEY'] = 'Hackeye@1999SecretKey'
+app.config['JWT_SECRET_KEY'] = '89421a71f05092d8311486c018417e22'
 app.config['JWT_TOKEN_LOCATION'] = ['headers']
 app.config['JWT_HEADER_NAME'] = 'Authorization'
 app.config['JWT_HEADER_TYPE'] = 'Bearer'
@@ -30,7 +30,7 @@ CORS(app, supports_credentials=True)
 # File upload configuration
 UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'uploads', 'products')
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
-MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
+MAX_FILE_SIZE = 5 * 1024 * 1024  
 
 VENDOR_UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'uploads', 'vendors')
 
