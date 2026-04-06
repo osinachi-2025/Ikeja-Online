@@ -385,44 +385,132 @@
 
             main {
                 margin-left: 0;
-                padding: 1rem;
+                padding: 0.75rem;
             }
 
             .topbar {
                 flex-direction: column;
-                gap: 1rem;
+                gap: 0.5rem;
+                padding: 0.75rem;
+                margin-bottom: 0.75rem;
+            }
+
+            .topbar-title h1 {
+                font-size: 1.1rem;
+            }
+
+            .topbar-title p {
+                font-size: 0.75rem;
             }
 
             .topbar-user {
                 width: 100%;
                 flex-wrap: wrap;
-                gap: 0.8rem;
+                gap: 0.5rem;
                 justify-content: center;
             }
 
             .wallet-input-group {
                 width: auto;
                 flex-direction: row;
+                gap: 0.5rem;
             }
 
             .wallet-display {
-                width: 80px;
+                width: 110px;
+                font-size: 0.7rem;
+                height: 32px;
+            }
+
+            .wallet-plus-btn-link {
+                width: 28px;
+                height: 28px;
+                font-size: 0.85rem;
+            }
+
+            .user-info {
+                font-size: 0.85rem;
+            }
+
+            .deposit-table {
+                font-size: 0.8rem;
+            }
+
+            .deposit-table th,
+            .deposit-table td {
+                padding: 0.65rem;
+            }
+
+            .deposit-table th {
+                font-weight: 600;
+            }
+
+            .status-badge {
+                padding: 0.3rem 0.6rem;
                 font-size: 0.75rem;
-                height: 30px;
+                border-radius: 4px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            main {
+                padding: 0.5rem;
+            }
+
+            .topbar {
+                padding: 0.5rem;
+                margin-bottom: 0.5rem;
+            }
+
+            .topbar-title h1 {
+                font-size: 0.95rem;
+            }
+
+            .topbar-title p {
+                font-size: 0.65rem;
+            }
+
+            .topbar-user {
+                gap: 0.4rem;
+            }
+
+            .wallet-display {
+                width: 100px;
+                font-size: 0.65rem;
+                height: 28px;
             }
 
             .wallet-plus-btn-link {
                 width: 24px;
                 height: 24px;
+                font-size: 0.75rem;
+            }
+
+            .user-info {
+                font-size: 0.75rem;
             }
 
             .deposit-table {
-                font-size: 0.9rem;
+                font-size: 0.7rem;
             }
 
             .deposit-table th,
             .deposit-table td {
-                padding: 0.7rem;
+                padding: 0.5rem;
+            }
+
+            .deposit-table th {
+                font-size: 0.68rem;
+            }
+
+            .status-badge {
+                padding: 0.25rem 0.4rem;
+                font-size: 0.65rem;
+            }
+
+            .deposit-header {
+                flex-direction: column;
+                gap: 0.5rem;
             }
         }
     </style>

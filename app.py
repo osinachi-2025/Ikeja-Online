@@ -21,8 +21,8 @@ app.config['JWT_HEADER_NAME'] = 'Authorization'
 app.config['JWT_HEADER_TYPE'] = 'Bearer'
 app.config['TEST_PUBLIC_KEY'] = 'pk_test_0796eb2919d007e2cf058300da852181a60418d0'
 app.config['TEST_SECRET_KEY'] = 'sk_test_8fea2fcf8335cb9211c11b03ae81d79f7c9a165c'
-RESEND_API_KEY = os.getenv('RESEND_API_KEY', 're_934p2bp1_ESLnDfgtAcAof3MTn9rCQBHE')
-RESEND_URL = 'https://api.resend.com/emails'
+app.config['RESEND_API_KEY'] = os.getenv('RESEND_API_KEY', 're_934p2bp1_ESLnDfgtAcAof3MTn9rCQBHE')
+app.config['RESEND_URL'] = 'https://api.resend.com/emails'
 
 # Enable CORS
 CORS(app, supports_credentials=True)

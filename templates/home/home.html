@@ -181,6 +181,27 @@
             color: white;
             font-weight: 700;
             font-size: 0.9rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .user-avatar:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 15px rgba(255,107,53,0.4);
+        }
+
+        #userAvatarLink {
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        #userAvatarLink:hover .user-avatar {
+            transform: scale(1.1);
+            box-shadow: 0 4px 15px rgba(255,107,53,0.4);
+        }
+
+        #userAvatarLink:hover .user-info strong {
+            color: var(--orange);
         }
 
         .user-info {
@@ -209,7 +230,7 @@
             font-size: 0.85rem;
             transition: var(--transition);
             text-decoration: none;
-            display: inline-block;
+            display: none;
             box-shadow: 0 2px 10px rgba(255,107,53,0.2);
         }
 
@@ -433,6 +454,126 @@
         @keyframes shimmer {
             0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
             100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeInRight {
+            from {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes fadeInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ==================== ANIMATION UTILITIES ==================== */
+        .fade-in.animate {
+            animation: fadeIn 1.2s ease-out forwards;
+        }
+
+        .fade-in-right.animate {
+            animation: fadeInRight 1.2s ease-out forwards;
+        }
+
+        .fade-in-left.animate {
+            animation: fadeInLeft 1.2s ease-out forwards;
+        }
+
+        .fade-in-up.animate {
+            animation: fadeInUp 1.2s ease-out forwards;
+        }
+
+        .fade-in-down.animate {
+            animation: fadeInDown 1.2s ease-out forwards;
+        }
+
+        .slide-in-up.animate {
+            animation: slideInUp 1.2s ease-out forwards;
+        }
+
+        .slide-in-down.animate {
+            animation: slideInDown 1.2s ease-out forwards;
+        }
+
+        /* Animation delays */
+        .delay-1 { animation-delay: 0.15s; }
+        .delay-2 { animation-delay: 0.3s; }
+        .delay-3 { animation-delay: 0.45s; }
+        .delay-4 { animation-delay: 0.6s; }
+        .delay-5 { animation-delay: 0.75s; }
+
+        /* Hidden state for elements waiting to animate */
+        [data-animate] {
+            opacity: 0;
+        }
+
+        [data-animate].animate {
+            opacity: 1;
         }
 
         .hero-visual i {
@@ -1649,6 +1790,7 @@
                 padding: 12px 20px;
                 border-radius: 0;
                 border: 1px solid transparent;
+                transition: var(--transition);
             }
 
             .menu-toggle {
@@ -1667,7 +1809,14 @@
                 width: 100%;
             }
 
+            .user-profile.active #userAvatarLink {
+                flex-direction: column;
+                text-align: center;
+                transition: var(--transition);
+            }
+
             .wallet-input-group {
+                display: none !important;
                 width: auto;
                 flex-direction: row;
             }
@@ -1680,10 +1829,27 @@
             .wallet-plus-btn-link {
                 width: 28px;
                 height: 28px;
+                transition: var(--transition);
             }
 
             .user-info {
-                display: none;
+                display: flex;
+                flex-direction: column;
+                text-align: center;
+                transition: var(--transition);
+            }
+
+            .user-info strong {
+                color: var(--white);
+                font-size: 0.75rem;
+                transition: var(--transition);
+            }
+
+            .user-avatar {
+                display: flex;
+                width: 40px;
+                height: 40px;
+                transition: var(--transition);
             }
 
             .btn-dashboard {
@@ -1693,10 +1859,15 @@
                 justify-content: center;
             }
 
+            .btn-dashboard {
+                display: inline-flex !important;
+            }
+
             .btn-logout {
                 width: 100%;
                 padding: 6px 12px;
                 font-size: 0.8rem;
+                display: inline-flex !important;
             }
 
             .hero-content {
@@ -1706,11 +1877,13 @@
             }
 
             .hero-text h1 {
-                font-size: 2.2rem;
+                font-size: 1.8rem;
+                transition: var(--transition);
             }
 
             .hero-text p {
-                font-size: 1rem;
+                font-size: 0.9rem;
+                transition: var(--transition);
             }
 
             .hero-buttons {
@@ -1720,15 +1893,18 @@
             .btn-primary, .btn-secondary {
                 width: 100%;
                 text-align: center;
+                transition: var(--transition);
             }
 
             .hero-visual {
-                height: 300px;
-                font-size: 3rem;
+                height: 250px;
+                font-size: 2.5rem;
+                transition: var(--transition);
             }
 
             .section-header h2 {
-                font-size: 2rem;
+                font-size: 1.6rem;
+                transition: var(--transition);
             }
 
             .categories-grid {
@@ -1758,10 +1934,6 @@
                 display: none;
             }
 
-            .user-avatar {
-                display: none;
-            }
-
             .cart-icon-container {
                 justify-content: flex-end;
                 padding-left: 30px;
@@ -1775,18 +1947,23 @@
             }
             .header-inner {
                 padding: 12px 0;
+                transition: var(--transition);
             }
 
             .brand {
-                font-size: 1.3rem;
+                font-size: 1.1rem;
+                transition: var(--transition);
             }
 
             .hero-text h1 {
-                font-size: 1.8rem;
+                font-size: 1.4rem;
+                transition: var(--transition);
             }
 
             .hero-text p {
-                font-size: 0.95rem;
+                font-size: 0.8rem;
+                line-height: 1.5;
+                transition: var(--transition);
             }
 
             .categories-grid {
@@ -1794,7 +1971,23 @@
             }
 
             .section-header h2 {
-                font-size: 1.6rem;
+                font-size: 1.3rem;
+                transition: var(--transition);
+            }
+
+            .nav a {
+                font-size: 0.85rem;
+                transition: var(--transition);
+            }
+
+            .feature-card h3 {
+                font-size: 1rem;
+                transition: var(--transition);
+            }
+
+            .feature-card p {
+                font-size: 0.85rem;
+                transition: var(--transition);
             }
 
             .stats-section {
@@ -1820,25 +2013,25 @@
     <!-- HEADER / NAV -->
     <header class="site-header">
         <div class="container header-inner">
-            <a class="brand" href="/">
+            <a class="brand fade-in-left" href="/">
                 <i class="fas fa-shopping-bag"></i>
                 Ikeja<span>ONLINE</span>
             </a>
             <nav class="nav" id="nav">
-                <a href="/" class="active">Home</a>
-                <a href="#products">Products</a>
-                <a href="#features">Why Ikeja</a>
-                <a href="#contact">Contact</a>
+                <a href="/" class="active fade-in delay-1">Home</a>
+                <a href="#products" class="fade-in delay-2">Products</a>
+                <a href="#features" class="fade-in delay-3">Why Ikeja</a>
+                <a href="#contact" class="fade-in delay-4">Contact</a>
             </nav>
-            <div class="cart-icon-container">
+            <div class="cart-icon-container fade-in delay-3">
                 <button class="cart-icon-btn" id="cartToggle" aria-label="Shopping cart">
                     <i class="fas fa-shopping-cart"></i>
                     <div id="cartCount">0</div>
                 </button>
             </div>
             <div class="auth-buttons" id="authButtons">
-                <a href="/login" class="btn-signin">Sign In</a>
-                <a href="/register" class="btn-signup">Get Started</a>
+                <a href="/login" class="btn-signin fade-in delay-4">Sign In</a>
+                <a href="/register" class="btn-signup fade-in delay-5">Get Started</a>
             </div>
             <div class="user-profile" id="userProfile">
                 <div class="wallet-input-group" id="walletBtn" style="display: none;">
@@ -1847,12 +2040,12 @@
                         <span class="wallet-plus-btn">+</span>
                     </a>
                 </div>
-                <div class="user-avatar" id="userAvatar">U</div>
-                <div class="user-info">
-                    <a href="/customer/dashboard" style="color: var(--white); font-weight: 600; text-decoration: none;">
+                <a href="#" id="userAvatarLink" style="text-decoration: none; display: flex; align-items: center; gap: 12px;">
+                    <div class="user-avatar" id="userAvatar">U</div>
+                    <div class="user-info">
                         <strong id="userName">User</strong>
-                    </a>
-                </div>
+                    </div>
+                </a>
             </div>
             <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">☰</button>
         </div>
@@ -1862,19 +2055,19 @@
     <section class="hero">
         <div class="container">
             <div class="hero-content">
-                <div class="hero-text">
+                <div class="hero-text fade-in-left">
                     <h1>Welcome to <span>Ikeja Online</span></h1>
                     <p>Your premier destination for quality electronics and premium tech products. Discover thousands of products from verified vendors, enjoy competitive prices, and shop with confidence.</p>
                     <div class="hero-buttons">
-                        <a href="/browse-products" class="btn-primary">
+                        <a href="/browse-products" class="btn-primary fade-in-up delay-2">
                             <i class="fas fa-shopping-cart"></i> Browse Products
                         </a>
-                        <a href="/register" class="btn-secondary">
+                        <a href="/register" class="btn-secondary fade-in-up delay-3">
                             <i class="fas fa-user-plus"></i> Become a Vendor
                         </a>
                     </div>
                 </div>
-                <div class="hero-image">
+                <div class="hero-image fade-in-right">
                     <div class="hero-visual">
                         <i class="fas fa-laptop"></i>
                     </div>
@@ -1886,28 +2079,28 @@
     <!-- FEATURES SECTION -->
     <section id="features">
         <div class="container features">
-            <div class="feature-card">
+            <div class="feature-card fade-in-up delay-1">
                 <div class="feature-icon">
                     <i class="fas fa-shield-alt"></i>
                 </div>
                 <h3>Secure Shopping</h3>
                 <p>Shop with confidence on our secure platform with buyer protection and verified sellers.</p>
             </div>
-            <div class="feature-card">
+            <div class="feature-card fade-in-up delay-2">
                 <div class="feature-icon">
                     <i class="fas fa-shipping-fast"></i>
                 </div>
                 <h3>Fast Shipping</h3>
                 <p>Quick and reliable delivery across Nigeria with real-time tracking for all orders.</p>
             </div>
-            <div class="feature-card">
+            <div class="feature-card fade-in-up delay-3">
                 <div class="feature-icon">
                     <i class="fas fa-headset"></i>
                 </div>
                 <h3>24/7 Support</h3>
                 <p>Our dedicated support team is here to help you anytime, anywhere with any questions.</p>
             </div>
-            <div class="feature-card">
+            <div class="feature-card fade-in-up delay-4">
                 <div class="feature-icon">
                     <i class="fas fa-star"></i>
                 </div>
@@ -1920,18 +2113,18 @@
     <!-- PRODUCTS BROWSE SECTION -->
     <section class="products-browse-section" id="products">
         <div class="container">
-            <div class="section-header">
+            <div class="section-header fade-in-down">
                 <h2>Explore <span>Products</span></h2>
                 <p>Browse through different categories and discover premium electronics available in our marketplace</p>
             </div>
 
-            <button class="back-to-categories-btn" id="backBtn">
+            <button class="back-to-categories-btn fade-in-left" id="backBtn">
                 <i class="fas fa-arrow-left"></i> Back to Categories
             </button>
 
-            <div class="categories-header" id="categoriesHeader">
+            <div class="categories-header fade-in-down" id="categoriesHeader">
                 <span></span>
-                <a href="/categories" class="show-all-btn" id="showAllBtn">
+                <a href="/categories" class="show-all-btn fade-in-right">
                     <i class="fas fa-expand"></i> Show All Categories
                 </a>
             </div>
@@ -1955,19 +2148,19 @@
     <!-- STATS SECTION -->
     <div class="container">
         <section class="stats-section">
-            <div class="stat-item">
+            <div class="stat-item fade-in-up delay-1">
                 <h3 id="vendorCount">0+</h3>
                 <p>Verified Vendors</p>
             </div>
-            <div class="stat-item">
+            <div class="stat-item fade-in-up delay-2">
                 <h3 id="productCount">0+</h3>
                 <p>Premium Products</p>
             </div>
-            <div class="stat-item">
+            <div class="stat-item fade-in-up delay-3">
                 <h3 id="categoryCount">0+</h3>
                 <p>Product Categories</p>
             </div>
-            <div class="stat-item">
+            <div class="stat-item fade-in-up delay-4">
                 <h3>24/7</h3>
                 <p>Customer Support</p>
             </div>
@@ -1977,10 +2170,10 @@
     <!-- CTA SECTION -->
     <section class="cta-section">
         <div class="container">
-            <div class="cta-content">
+            <div class="cta-content fade-in-up">
                 <h2>Ready to Start Shopping?</h2>
                 <p>Join thousands of satisfied customers enjoying the best shopping experience online.</p>
-                <a href="/browse-products" class="btn-primary">
+                <a href="/browse-products" class="btn-primary fade-in-up delay-1">
                     <i class="fas fa-arrow-right"></i> Start Shopping Now
                 </a>
             </div>
@@ -2091,7 +2284,7 @@
     <footer class="footer" id="contact">
         <div class="container">
             <div class="footer-content">
-                <div class="footer-column">
+                <div class="footer-column fade-in-left delay-1">
                     <h4>About Ikeja Online</h4>
                     <p style="color: var(--muted); margin-bottom: 20px;">Premium electronics and tech marketplace connecting quality products with satisfied customers across Nigeria.</p>
                     <div class="footer-social">
@@ -2102,7 +2295,7 @@
                     </div>
                 </div>
 
-                <div class="footer-column">
+                <div class="footer-column fade-in-up delay-2">
                     <h4>Quick Links</h4>
                     <a href="/">Home</a>
                     <a href="/browse-products">Browse Products</a>
@@ -2110,7 +2303,7 @@
                     <a href="/register">Sign Up</a>
                 </div>
 
-                <div class="footer-column">
+                <div class="footer-column fade-in-up delay-3">
                     <h4>For Vendors</h4>
                     <a href="/register">Become a Vendor</a>
                     <a href="#">Seller Guidelines</a>
@@ -2118,7 +2311,7 @@
                     <a href="#">Vendor Support</a>
                 </div>
 
-                <div class="footer-column">
+                <div class="footer-column fade-in-right delay-4">
                     <h4>Support</h4>
                     <a href="#">Help Center</a>
                     <a href="#">Contact Us</a>
@@ -2128,7 +2321,7 @@
                 </div>
             </div>
 
-            <div class="footer-bottom">
+            <div class="footer-bottom fade-in">
                 <p>&copy; 2024 Ikeja Online. All rights reserved.</p>
                 <div style="display: flex; gap: 20px; flex-wrap: wrap;">
                     <a href="#" style="text-decoration: none; color: var(--muted);">Privacy Policy</a>
@@ -2149,8 +2342,6 @@
             
             const authButtons = document.getElementById('authButtons');
             const userProfile = document.getElementById('userProfile');
-            const dashboardBtn = document.getElementById('dashboardBtn');
-            const logoutBtn = document.getElementById('logoutBtn');
 
             if (token && firstName) {
                 // User is logged in
@@ -2162,21 +2353,22 @@
                 document.getElementById('userName').textContent = fullName;
                 document.getElementById('userAvatar').textContent = firstName[0].toUpperCase();
                 
+                // Store dashboard URL in userAvatarLink for click handler
+                const userAvatarLink = document.getElementById('userAvatarLink');
+                if (role === 'vendor') {
+                    userAvatarLink.dataset.dashboardUrl = '/vendor/dashboard';
+                } else if (role === 'customer') {
+                    userAvatarLink.dataset.dashboardUrl = '/customer/dashboard';
+                } else if (role === 'super_admin') {
+                    userAvatarLink.dataset.dashboardUrl = '/admin/dashboard';
+                } else {
+                    // Default to customer dashboard if role is unknown
+                    userAvatarLink.dataset.dashboardUrl = '/customer/dashboard';
+                }
+                
                 // Load wallet if customer
                 if (role === 'customer') {
                     loadWallet(token);
-                }
-                
-                // Set dashboard link based on role
-                if (role === 'vendor') {
-                    dashboardBtn.dataset.dashboardUrl = '/vendor/dashboard';
-                } else if (role === 'customer') {
-                    dashboardBtn.dataset.dashboardUrl = '/customer/dashboard';
-                } else if (role === 'super_admin') {
-                    dashboardBtn.dataset.dashboardUrl = '/admin/dashboard';
-                } else {
-                    // Default to customer dashboard if role is unknown
-                    dashboardBtn.dataset.dashboardUrl = '/customer/dashboard';
                 }
             } else {
                 // User is not logged in
@@ -2219,23 +2411,24 @@
             window.location.href = '/';
         }
 
-        // Add logout event listener
+        // Add event listeners
         document.addEventListener('DOMContentLoaded', () => {
             checkAuth();
             
-            const dashboardBtn = document.getElementById('dashboardBtn');
-            dashboardBtn.addEventListener('click', (e) => {
+            const userAvatarLink = document.getElementById('userAvatarLink');
+            const userAvatar = document.getElementById('userAvatar');
+            
+            // Avatar click handler - navigate to dashboard
+            userAvatarLink.addEventListener('click', (e) => {
                 e.preventDefault();
-                const dashboardUrl = dashboardBtn.dataset.dashboardUrl;
+                const dashboardUrl = userAvatarLink.dataset.dashboardUrl;
                 if (dashboardUrl) {
                     window.location.href = dashboardUrl;
                 }
             });
-            
-            document.getElementById('logoutBtn').addEventListener('click', (e) => {
-                e.preventDefault();
-                logout();
-            });
+
+            // Make avatar cursor pointer to indicate it's clickable
+            userAvatar.style.cursor = 'pointer';
         });
 
         // Menu toggle for mobile
@@ -2331,7 +2524,8 @@
 
             categoriesToShow.forEach((category, index) => {
                 const tab = document.createElement('button');
-                tab.className = `category-tab ${index === 0 ? 'active' : ''}`;
+                const animationDelay = ['delay-1', 'delay-2', 'delay-3', 'delay-4', 'delay-5'][index] || 'delay-5';
+                tab.className = `category-tab fade-in-up ${animationDelay} ${index === 0 ? 'active' : ''}`;
                 tab.dataset.categoryId = category.id;
                 tab.dataset.categorySlug = category.slug;
                 
@@ -2414,9 +2608,10 @@
                 productsGrid.innerHTML = '';
 
                 if (data.success && data.products && data.products.length > 0) {
-                    data.products.forEach(product => {
+                    data.products.forEach((product, index) => {
                         const card = document.createElement('div');
-                        card.className = 'product-card-item';
+                        const animationDelay = ['delay-1', 'delay-2', 'delay-3', 'delay-4', 'delay-5'][index % 5] || 'delay-5';
+                        card.className = `product-card-item fade-in-up ${animationDelay}`;
                         card.style.cursor = 'pointer';
 
                         // Use product image or placeholder
@@ -2495,6 +2690,30 @@
                     }
                 }
             });
+        });
+
+        // Intersection Observer for scroll animations - with replay capability
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -100px 0px'
+        };
+
+        const animationObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    // Element is in view - add animation
+                    entry.target.classList.add('animate');
+                } else {
+                    // Element is out of view - remove animation so it can replay
+                    entry.target.classList.remove('animate');
+                }
+            });
+        }, observerOptions);
+
+        // Mark all animation elements and observe them
+        document.querySelectorAll('.fade-in, .fade-in-right, .fade-in-left, .fade-in-up, .fade-in-down, .slide-in-up, .slide-in-down').forEach(el => {
+            el.setAttribute('data-animate', 'true');
+            animationObserver.observe(el);
         });
     </script>
 
