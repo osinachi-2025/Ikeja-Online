@@ -13,17 +13,14 @@ import os
 from slugify import slugify
 
 app = Flask(__name__)
-
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///ikeja_online.db')
-
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'Hackeye@1999SecretKey')
-app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', '89421a71f05092d8311486c018417e22')
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///ikeja_online.db'
+app.config['SECRET_KEY'] = 'Hackeye@1999SecretKey'
+app.config['JWT_SECRET_KEY'] = '89421a71f05092d8311486c018417e22'
 app.config['JWT_TOKEN_LOCATION'] = ['headers']
 app.config['JWT_HEADER_NAME'] = 'Authorization'
 app.config['JWT_HEADER_TYPE'] = 'Bearer'
-app.config['TEST_PUBLIC_KEY'] = os.getenv('TEST_PUBLIC_KEY', 'pk_test_0796eb2919d007e2cf058300da852181a60418d0')
-app.config['TEST_SECRET_KEY'] = os.getenv('TEST_SECRET_KEY', 'sk_test_8fea2fcf8335cb9211c11b03ae81d79f7c9a165c')
+app.config['TEST_PUBLIC_KEY'] = 'pk_test_0796eb2919d007e2cf058300da852181a60418d0'
+app.config['TEST_SECRET_KEY'] = 'sk_test_8fea2fcf8335cb9211c11b03ae81d79f7c9a165c'
 app.config['RESEND_API_KEY'] = os.getenv('RESEND_API_KEY', 're_934p2bp1_ESLnDfgtAcAof3MTn9rCQBHE')
 app.config['RESEND_URL'] = 'https://api.resend.com/emails'
 
