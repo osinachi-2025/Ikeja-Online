@@ -3342,7 +3342,7 @@ def get_wishlist():
                 store_name = product.vendor.store_name
             
             # Get primary image
-            image_url = '/static/images/placeholder.png'
+            image_url = '/static/uploads/products/placeholder.png'
             if product.images:
                 primary_image = next((img for img in product.images if img.is_primary), None)
                 if primary_image:

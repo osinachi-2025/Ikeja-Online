@@ -80,7 +80,7 @@ class WishlistManager {
                     id: product.id,
                     name: product.name,
                     price: product.price,
-                    image: product.image || '/static/images/placeholder.png',
+                    image: product.image || '/static/uploads/products/placeholder.png',
                     store_name: product.store_name || 'Unknown',
                     added_date: new Date().toISOString()
                 });
