@@ -13,7 +13,7 @@ import os
 from slugify import slugify
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///ikeja_online.db')
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///ikeja_online.db'
 app.config['SECRET_KEY'] = 'Hackeye@1999SecretKey'
 app.config['JWT_SECRET_KEY'] = '89421a71f05092d8311486c018417e22'
 app.config['JWT_TOKEN_LOCATION'] = ['headers']
