@@ -253,6 +253,19 @@
             box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
         }
 
+        .form-group input:disabled,
+        .form-group select:disabled,
+        .form-group textarea:disabled {
+            background-color: #f5f5f5;
+            color: #999;
+            cursor: not-allowed;
+            border-color: #d0d0d0;
+        }
+
+        .form-group select:disabled {
+            background-image: linear-gradient(to right, #999 0%, #999 100%);
+        }
+
         .form-group textarea {
             resize: vertical;
             min-height: 120px;
@@ -262,6 +275,11 @@
             color: #999;
             margin-top: 0.3rem;
             font-size: 0.85rem;
+        }
+
+        .form-group select:disabled + small {
+            color: #FF6B35;
+            font-weight: 500;
         }
 
         /* Image Upload Section */
@@ -727,9 +745,9 @@
                         <div class="form-group">
                             <label for="category">Product Category <span class="required">*</span></label>
                             <select id="category" name="category" required>
-                                <option value="">Select a category</option>
+                                <option value="">Loading categories...</option>
                             </select>
-                            <small>Choose the category that best fits your product</small>
+                            <small>Category cannot be changed after product creation</small>
                         </div>
 
                         <div class="form-group">
@@ -867,17 +885,31 @@
             return parseInt(pathParts[pathParts.length - 1]);
         }
 
-        // Load categories
+        // Load categories from API
         async function loadCategories() {
             try {
-                const token = localStorage.getItem('access_token');
-                const response = await fetch('/api/products', {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                
-                // For now, we'll fetch from add-product endpoint indirectly
-                // In production, you might create a dedicated /api/categories endpoint
-                showAlert('Categories loaded', 'success');
+                const response = await fetch('/api/categories');
+                const data = await response.json();
+
+                if (data.success && data.categories) {
+                    categories = data.categories;
+                    const categorySelect = document.getElementById('category');
+                    
+                    // Clear existing options (except the first placeholder)
+                    categorySelect.innerHTML = '<option value="">Select a category</option>';
+                    
+                    // Add categories to dropdown
+                    categories.forEach(category => {
+                        const option = document.createElement('option');
+                        option.value = category.id;
+                        option.textContent = category.name;
+                        categorySelect.appendChild(option);
+                    });
+                    
+                    console.log('Categories loaded successfully');
+                } else {
+                    console.error('Failed to load categories:', data.message);
+                }
             } catch (error) {
                 console.error('Error loading categories:', error);
             }
@@ -885,6 +917,9 @@
 
         // Load product data
         async function loadProduct() {
+            // First load categories
+            await loadCategories();
+            
             productId = getProductId();
             const token = localStorage.getItem('access_token');
 
@@ -898,6 +933,8 @@
                 if (response.ok && data.success) {
                     populateForm(data.product);
                     displayExistingImages(data.product.images);
+                    // Disable category field after loading product
+                    document.getElementById('category').disabled = true;
                 } else {
                     showAlert(data.message || 'Failed to load product', 'error');
                     setTimeout(() => window.location.href = '/my-products', 2000);

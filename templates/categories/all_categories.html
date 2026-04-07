@@ -186,11 +186,18 @@
         .user-info {
             display: flex;
             flex-direction: column;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .user-info:hover strong {
+            color: var(--orange);
         }
 
         .user-info strong {
             color: var(--white);
             font-size: 0.95rem;
+            transition: var(--transition);
         }
 
         .user-info small {
@@ -272,51 +279,78 @@
         }
 
         .category-card {
-            background: linear-gradient(135deg, rgba(212,175,55,0.05), rgba(255,107,53,0.05));
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
             border: 1px solid rgba(212,175,55,0.2);
             border-radius: var(--radius);
-            padding: 32px 20px;
+            padding: 0;
             text-align: center;
             cursor: pointer;
             transition: var(--transition);
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            min-height: 220px;
+            justify-content: flex-end;
+            min-height: 280px;
             text-decoration: none;
             color: inherit;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .category-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.7) 100%);
+            z-index: 1;
         }
 
         .category-card:hover {
             border-color: var(--orange);
             transform: translateY(-8px);
-            box-shadow: 0 15px 40px rgba(255,107,53,0.2);
-            background: linear-gradient(135deg, rgba(212,175,55,0.1), rgba(255,107,53,0.08));
+            box-shadow: 0 15px 40px rgba(255,107,53,0.3);
+        }
+
+        .category-card:hover::before {
+            background: linear-gradient(180deg, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.6) 100%);
+        }
+
+        .category-info {
+            position: relative;
+            z-index: 2;
+            padding: 20px;
+            width: 100%;
         }
 
         .category-icon {
-            font-size: 3.5rem;
+            font-size: 3rem;
             color: var(--gold);
-            margin-bottom: 16px;
+            margin-bottom: 12px;
             transition: var(--transition);
+            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
         }
 
         .category-card:hover .category-icon {
-            color: var(--orange);
-            transform: scale(1.15);
+            color: var(--white);
+            transform: scale(1.2);
+            text-shadow: 0 4px 15px rgba(255,107,53,0.6);
         }
 
         .category-name {
             font-weight: 700;
             font-size: 1.1rem;
-            margin-bottom: 12px;
+            margin-bottom: 8px;
             color: var(--white);
         }
 
         .category-count {
-            font-size: 0.9rem;
-            color: var(--muted);
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.8);
             font-weight: 500;
         }
 
@@ -634,13 +668,38 @@
 
             .user-profile.active {
                 display: flex;
-                flex-direction: column;
+                flex-direction: row;
                 align-items: center;
-                gap: 10px;
+                gap: 15px;
+                width: auto;
+            }
+
+            .user-avatar {
+                display: none;
             }
 
             .user-info {
+                display: flex;
+                flex-direction: column;
+                transition: var(--transition);
+            }
+
+            .user-info strong {
+                color: var(--white);
+                font-size: 0.95rem;
+                transition: var(--transition);
+            }
+
+            .user-info small {
                 display: none;
+            }
+
+            .btn-dashboard {
+                display: none !important;
+            }
+
+            .btn-logout {
+                display: none !important;
             }
 
             .section-header h1 {
@@ -650,6 +709,18 @@
             .categories-grid {
                 grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
                 gap: 16px;
+            }
+
+            .category-card {
+                min-height: 240px;
+            }
+
+            .category-icon {
+                font-size: 2.8rem;
+            }
+
+            .category-name {
+                font-size: 1rem;
             }
         }
 
@@ -672,17 +743,25 @@
             }
 
             .category-card {
-                padding: 20px 12px;
-                min-height: 180px;
+                min-height: 200px;
+            }
+
+            .category-info {
+                padding: 15px;
             }
 
             .category-icon {
-                font-size: 2.5rem;
-                margin-bottom: 10px;
+                font-size: 2.2rem;
+                margin-bottom: 6px;
             }
 
             .category-name {
-                font-size: 0.95rem;
+                font-size: 0.9rem;
+                margin-bottom: 4px;
+            }
+
+            .category-count {
+                font-size: 0.75rem;
             }
         }
 
@@ -1154,6 +1233,7 @@
                 <a href="/browse-products">Products</a>
                 <a href="/#contact">Contact</a>
             </nav>
+            
             <div class="auth-buttons" id="authButtons">
                 <a href="/login" class="btn-signin">Sign In</a>
                 <a href="/register" class="btn-signup">Get Started</a>
@@ -1329,6 +1409,63 @@
             return categoryIcons[slug] || 'fas fa-box';
         }
 
+        // Category image mapping using Unsplash API
+        function getImageForCategory(categoryName) {
+            const categoryLower = categoryName.toLowerCase();
+            const imageMap = {
+                'smartphones': 'https://images.unsplash.com/photo-1511707267537-b85faf00021e?w=500&h=400&fit=crop',
+                'phones': 'https://images.unsplash.com/photo-1556656793-08538906a9f8?w=500&h=400&fit=crop',
+                'tablets': 'https://images.unsplash.com/photo-1561070791-2526d30994b5?w=500&h=400&fit=crop',
+                'laptops': 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=500&h=400&fit=crop',
+                'desktops': 'https://images.unsplash.com/photo-1593642632823-8f785ba67e45?w=500&h=400&fit=crop',
+                'cameras': 'https://images.unsplash.com/photo-1452587925148-ce544e77e70d?w=500&h=400&fit=crop',
+                'headphones': 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&h=400&fit=crop',
+                'audio equipment': 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&h=400&fit=crop',
+                'smart watches': 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&h=400&fit=crop',
+                'smartwatches': 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&h=400&fit=crop',
+                'fitness trackers': 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&h=400&fit=crop',
+                'gaming': 'https://images.unsplash.com/photo-1538481143235-6c34bbb0d5ad?w=500&h=400&fit=crop',
+                'gaming consoles': 'https://images.unsplash.com/photo-1606813907291-d86efa9b94db?w=500&h=400&fit=crop',
+                'monitors': 'https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=500&h=400&fit=crop',
+                'displays': 'https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=500&h=400&fit=crop',
+                'keyboards': 'https://images.unsplash.com/photo-1612198188060-c7c2a3b66eae?w=500&h=400&fit=crop',
+                'keyboard': 'https://images.unsplash.com/photo-1587829191301-72f86e0932e5?w=500&h=400&fit=crop',
+                'mouse': 'https://images.unsplash.com/photo-1527814050087-3793815479db?w=500&h=400&fit=crop',
+                'tools & hardware': 'https://images.unsplash.com/photo-1680095354075-dNPaBEG5Efg?w=500&h=400&fit=crop',
+                'drones': 'https://images.unsplash.com/photo-1579829366248-204fe8413f31?w=500&h=400&fit=crop',
+                'printers & scanners': 'https://images.unsplash.com/photo-1587825140708-dfaf72ae4b04?w=500&h=400&fit=crop',
+                'networking equipment': 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=500&h=400&fit=crop',
+                'software & games': 'https://images.unsplash.com/photo-1606813907291-d86efa9b94db?w=500&h=400&fit=crop',
+                'office electronics': 'https://images.unsplash.com/photo-1593642632823-8f785ba67e45?w=500&h=400&fit=crop',
+                'wearable technology': 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&h=400&fit=crop',
+                'smart home devices': 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=500&h=400&fit=crop',
+                'virtual reality (vr)': 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=500&h=400&fit=crop',
+                'augmented reality (ar)': 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=500&h=400&fit=crop',
+                '3d printing': 'https://images.unsplash.com/photo-1569163139394-de4798aa62b3?w=500&h=400&fit=crop',
+                'automotive electronics': 'https://images.unsplash.com/photo-1494976866556-6812c080a650?w=500&h=400&fit=crop',
+                'streaming devices': 'https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?w=500&h=400&fit=crop',
+                'power banks & chargers': 'https://images.unsplash.com/photo-1609091839311-d5365f9ff1c5?w=500&h=400&fit=crop',
+                'processors': 'https://images.unsplash.com/photo-1591290621749-2e635e73ce0d?w=500&h=400&fit=crop',
+                'components(gpu,cpu,ram)': 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=500&h=400&fit=crop',
+                'other electronics': 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=500&h=400&fit=crop'
+            };
+
+            // Try direct match first
+            if (imageMap[categoryLower]) {
+                return imageMap[categoryLower];
+            }
+
+            // Try partial match
+            for (const [key, value] of Object.entries(imageMap)) {
+                if (categoryLower.includes(key) || key.includes(categoryLower)) {
+                    return value;
+                }
+            }
+
+            // Default fallback
+            return 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=500&h=400&fit=crop';
+        }
+
         // Check authentication and update header
         function checkAuth() {
             const token = localStorage.getItem('access_token');
@@ -1351,17 +1488,17 @@
                 document.getElementById('userName').textContent = fullName;
                 document.getElementById('userAvatar').textContent = firstName[0].toUpperCase();
                 
-                // Set dashboard link based on role
+                // Determine dashboard URL based on role
+                let dashboardUrl = '/customer/dashboard';
                 if (role === 'vendor') {
-                    dashboardBtn.dataset.dashboardUrl = '/vendor/dashboard';
-                } else if (role === 'customer') {
-                    dashboardBtn.dataset.dashboardUrl = '/customer/dashboard';
+                    dashboardUrl = '/vendor/dashboard';
                 } else if (role === 'super_admin') {
-                    dashboardBtn.dataset.dashboardUrl = '/admin/dashboard';
-                } else {
-                    // Default to customer dashboard if role is unknown
-                    dashboardBtn.dataset.dashboardUrl = '/customer/dashboard';
+                    dashboardUrl = '/admin/dashboard';
                 }
+                
+                // Store dashboard URL for use in click handlers
+                dashboardBtn.dataset.dashboardUrl = dashboardUrl;
+                userProfile.dataset.dashboardUrl = dashboardUrl;
             } else {
                 // User is not logged in
                 authButtons.style.display = 'flex';
@@ -1385,6 +1522,10 @@
             checkAuth();
             
             const dashboardBtn = document.getElementById('dashboardBtn');
+            const userProfile = document.getElementById('userProfile');
+            const userInfo = document.querySelector('.user-info');
+            
+            // Dashboard button click handler
             dashboardBtn.addEventListener('click', (e) => {
                 e.preventDefault();
                 const dashboardUrl = dashboardBtn.dataset.dashboardUrl;
@@ -1392,6 +1533,17 @@
                     window.location.href = dashboardUrl;
                 }
             });
+            
+            // User info click handler (for mobile view)
+            if (userInfo) {
+                userInfo.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const dashboardUrl = userProfile.dataset.dashboardUrl;
+                    if (dashboardUrl) {
+                        window.location.href = dashboardUrl;
+                    }
+                });
+            }
             
             document.getElementById('logoutBtn').addEventListener('click', (e) => {
                 e.preventDefault();
@@ -1434,14 +1586,20 @@
                         card.dataset.categoryName = category.name;
                         
                         const icon = getIconForCategory(category.name);
+                        const image = getImageForCategory(category.name);
                         const productCount = category.product_count || 0;
                         
+                        // Set background image
+                        card.style.backgroundImage = `url('${image}')`;
+                        
                         card.innerHTML = `
-                            <div class="category-icon">
-                                <i class="${icon}"></i>
+                            <div class="category-info">
+                                <div class="category-icon">
+                                    <i class="${icon}"></i>
+                                </div>
+                                <div class="category-name">${category.name}</div>
+                                <div class="category-count">${productCount} ${productCount === 1 ? 'product' : 'products'}</div>
                             </div>
-                            <div class="category-name">${category.name}</div>
-                            <div class="category-count">${productCount} ${productCount === 1 ? 'product' : 'products'}</div>
                         `;
 
                         card.addEventListener('click', () => {
