@@ -31,6 +31,8 @@ class Vendors (db.Model):
     store_slug = db.Column(db.String(100), unique=True, nullable=True)
     phone = db.Column(db.String(20), nullable=True)
     logo_url = db.Column(db.String(255), nullable=True)
+    logo_data = db.Column(db.LargeBinary, nullable=True)  # Binary logo data
+    logo_mime_type = db.Column(db.String(50), default='image/jpeg')  # MIME type
     address = db.Column(db.String(255), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     user = db.relationship('Users', backref=db.backref('vendors', uselist=False))
@@ -76,7 +78,10 @@ class Product_Images (db.Model):
     __tablename__ = 'product_images'
     id = db.Column(db.Integer, primary_key=True)
     product_id = db.Column(db.Integer, db.ForeignKey('products.id'), nullable=False)
-    image_url = db.Column(db.String(255), nullable=False)
+    image_url = db.Column(db.String(255), nullable=True)  # For backward compatibility
+    image_data = db.Column(db.LargeBinary, nullable=True)  # Binary image data
+    mime_type = db.Column(db.String(50), default='image/jpeg')  # MIME type
+    filename = db.Column(db.String(255), nullable=True)  # Original filename
     is_primary = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     product = db.relationship('Products', backref=db.backref('images', lazy=True))

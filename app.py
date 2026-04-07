@@ -187,15 +187,34 @@ def get_mime_type(filename):
 def save_image_to_db(file, product_id=None, is_primary=False):
     """Save uploaded file as binary data to database"""
     try:
-        if not file or not allowed_file(file.filename):
+        # Validate file exists and is allowed
+        if not file:
+            print("Error: File is None")
+            return None
+            
+        if not file.filename:
+            print("Error: File has no filename")
+            return None
+            
+        if not allowed_file(file.filename):
+            print(f"Error: File type not allowed: {file.filename}")
             return None
         
         # Read file content as binary
-        file.seek(0)
-        image_data = file.read()
+        try:
+            file.seek(0)
+            image_data = file.read()
+        except Exception as e:
+            print(f"Error reading file data: {str(e)}")
+            return None
+        
+        if not image_data:
+            print("Error: No data read from file")
+            return None
         
         # Check file size
         if len(image_data) > MAX_FILE_SIZE:
+            print(f"Error: File size {len(image_data)} exceeds maximum {MAX_FILE_SIZE}")
             return None
         
         # Determine MIME type
@@ -210,23 +229,44 @@ def save_image_to_db(file, product_id=None, is_primary=False):
             is_primary=is_primary
         )
         
+        print(f"Successfully created Product_Images object for {file.filename}")
         return product_image
     except Exception as e:
         print(f"Error saving image to database: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return None
 
 def save_vendor_logo_to_db(file, vendor):
     """Save vendor logo as binary data to database"""
     try:
-        if not file or not allowed_file(file.filename):
+        if not file:
+            print("Error: File is None")
+            return False
+            
+        if not file.filename:
+            print("Error: File has no filename")
+            return False
+            
+        if not allowed_file(file.filename):
+            print(f"Error: File type not allowed: {file.filename}")
             return False
         
         # Read file content as binary
-        file.seek(0)
-        logo_data = file.read()
+        try:
+            file.seek(0)
+            logo_data = file.read()
+        except Exception as e:
+            print(f"Error reading file data: {str(e)}")
+            return False
+        
+        if not logo_data:
+            print("Error: No data read from file")
+            return False
         
         # Check file size
         if len(logo_data) > MAX_FILE_SIZE:
+            print(f"Error: File size {len(logo_data)} exceeds maximum {MAX_FILE_SIZE}")
             return False
         
         # Determine MIME type
@@ -236,9 +276,12 @@ def save_vendor_logo_to_db(file, vendor):
         vendor.logo_data = logo_data
         vendor.logo_mime_type = mime_type
         
+        print(f"Successfully saved vendor logo: {file.filename}")
         return True
     except Exception as e:
         print(f"Error saving vendor logo to database: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return False
 
 @app.route('/')
@@ -474,14 +517,21 @@ def add_product_api():
         # Handle image uploads - now using BYTEA storage
         files = request.files.getlist('product_images')
         
+        print(f"DEBUG: Received {len(files)} files")
+        for i, f in enumerate(files):
+            print(f"DEBUG: File {i}: name='{f.filename}', size={len(f.read()) if f else 0}")
+            f.seek(0)  # Reset file pointer
+        
         if not files or files[0].filename == '':
             db.session.rollback()
             return jsonify({'error': 'Bad Request', 'message': 'At least one product image is required'}), 400
         
         image_count = 0
+        errors = []
         for index, file in enumerate(files):
-            if file and allowed_file(file.filename):
+            if file and file.filename:
                 try:
+                    print(f"DEBUG: Processing image {index}: {file.filename}")
                     # Save image as binary data to database
                     product_image = save_image_to_db(
                         file,
@@ -492,13 +542,24 @@ def add_product_api():
                     if product_image:
                         db.session.add(product_image)
                         image_count += 1
+                        print(f"DEBUG: Successfully added image {index}")
+                    else:
+                        error_msg = f"Failed to process image {index}: {file.filename}"
+                        print(f"DEBUG: {error_msg}")
+                        errors.append(error_msg)
                 except Exception as e:
-                    print(f"Error processing image: {str(e)}")
+                    error_msg = f"Error processing image {index}: {str(e)}"
+                    print(f"DEBUG: {error_msg}")
+                    errors.append(error_msg)
                     continue
+            else:
+                print(f"DEBUG: Skipping file {index} - file is None or has no filename")
         
         if image_count == 0:
             db.session.rollback()
-            return jsonify({'error': 'Bad Request', 'message': 'No valid images were uploaded'}), 400
+            error_details = '; '.join(errors) if errors else 'No valid images were provided'
+            print(f"DEBUG: Image upload failed - {error_details}")
+            return jsonify({'error': 'Bad Request', 'message': f'No valid images were uploaded. {error_details}'}), 400
         
         db.session.commit()
         
@@ -659,15 +720,22 @@ def update_product(product_id):
         # Handle image uploads if provided - now using BYTEA storage
         files = request.files.getlist('product_images')
         if files and files[0].filename != '':
+            print(f"DEBUG: Update - Received {len(files)} files")
+            for i, f in enumerate(files):
+                print(f"DEBUG: Update - File {i}: name='{f.filename}', size={len(f.read()) if f else 0}")
+                f.seek(0)  # Reset file pointer
+            
             # Delete existing images from database
             for image in product.images:
                 db.session.delete(image)
             
             # Add new images as binary data
             image_count = 0
+            errors = []
             for index, file in enumerate(files):
-                if file and allowed_file(file.filename):
+                if file and file.filename:
                     try:
+                        print(f"DEBUG: Update - Processing image {index}: {file.filename}")
                         # Save image as binary data to database
                         product_image = save_image_to_db(
                             file,
@@ -678,9 +746,21 @@ def update_product(product_id):
                         if product_image:
                             db.session.add(product_image)
                             image_count += 1
+                            print(f"DEBUG: Update - Successfully added image {index}")
+                        else:
+                            error_msg = f"Failed to process image {index}: {file.filename}"
+                            print(f"DEBUG: Update - {error_msg}")
+                            errors.append(error_msg)
                     except Exception as e:
-                        print(f"Error processing image: {str(e)}")
+                        error_msg = f"Error processing image {index}: {str(e)}"
+                        print(f"DEBUG: Update - {error_msg}")
+                        errors.append(error_msg)
                         continue
+            
+            if image_count == 0:
+                error_details = '; '.join(errors) if errors else 'No valid images were provided'
+                print(f"DEBUG: Update - Image upload failed: {error_details}")
+                return jsonify({'error': 'Bad Request', 'message': f'No valid images were uploaded. {error_details}'}), 400
         
         db.session.commit()
         
