@@ -171,7 +171,78 @@ def add_claims_to_access_token(identity):
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+# Image handling utilities for BYTEA storage
+def get_mime_type(filename):
+    """Determine MIME type from filename extension"""
+    ext = filename.rsplit('.', 1)[1].lower() if '.' in filename else 'jpeg'
+    mime_types = {
+        'jpg': 'image/jpeg',
+        'jpeg': 'image/jpeg',
+        'png': 'image/png',
+        'gif': 'image/gif',
+        'webp': 'image/webp'
+    }
+    return mime_types.get(ext, 'image/jpeg')
+
+def save_image_to_db(file, product_id=None, is_primary=False):
+    """Save uploaded file as binary data to database"""
+    try:
+        if not file or not allowed_file(file.filename):
+            return None
+        
+        # Read file content as binary
+        file.seek(0)
+        image_data = file.read()
+        
+        # Check file size
+        if len(image_data) > MAX_FILE_SIZE:
+            return None
+        
+        # Determine MIME type
+        mime_type = get_mime_type(file.filename)
+        
+        # Create Product_Images record with binary data
+        product_image = Product_Images(
+            product_id=product_id,
+            image_data=image_data,
+            mime_type=mime_type,
+            filename=secure_filename(file.filename),
+            is_primary=is_primary
+        )
+        
+        return product_image
+    except Exception as e:
+        print(f"Error saving image to database: {str(e)}")
+        return None
+
+def save_vendor_logo_to_db(file, vendor):
+    """Save vendor logo as binary data to database"""
+    try:
+        if not file or not allowed_file(file.filename):
+            return False
+        
+        # Read file content as binary
+        file.seek(0)
+        logo_data = file.read()
+        
+        # Check file size
+        if len(logo_data) > MAX_FILE_SIZE:
+            return False
+        
+        # Determine MIME type
+        mime_type = get_mime_type(file.filename)
+        
+        # Update vendor logo in database
+        vendor.logo_data = logo_data
+        vendor.logo_mime_type = mime_type
+        
+        return True
+    except Exception as e:
+        print(f"Error saving vendor logo to database: {str(e)}")
+        return False
+
 @app.route('/')
+
 def home():
     return render_template('/home/home.html')
 
@@ -400,7 +471,7 @@ def add_product_api():
         db.session.add(new_product)
         db.session.flush()  # Flush to get the product ID
         
-        # Handle image uploads
+        # Handle image uploads - now using BYTEA storage
         files = request.files.getlist('product_images')
         
         if not files or files[0].filename == '':
@@ -410,23 +481,20 @@ def add_product_api():
         image_count = 0
         for index, file in enumerate(files):
             if file and allowed_file(file.filename):
-                # Generate unique filename
-                original_ext = os.path.splitext(file.filename)[1]
-                filename = f"{slug}-{new_product.id}-{image_count}{original_ext}"
-                filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-                
-                # Save file
-                file.save(filepath)
-                
-                # Create product image record
-                image_url = f"/static/uploads/products/{filename}"
-                product_image = Product_Images(
-                    product_id=new_product.id,
-                    image_url=image_url,
-                    is_primary=(index == 0)  # First image is primary
-                )
-                db.session.add(product_image)
-                image_count += 1
+                try:
+                    # Save image as binary data to database
+                    product_image = save_image_to_db(
+                        file,
+                        product_id=new_product.id,
+                        is_primary=(index == 0)
+                    )
+                    
+                    if product_image:
+                        db.session.add(product_image)
+                        image_count += 1
+                except Exception as e:
+                    print(f"Error processing image: {str(e)}")
+                    continue
         
         if image_count == 0:
             db.session.rollback()
@@ -480,7 +548,7 @@ def get_vendor_products():
                     'created_at': product.created_at.isoformat(),
                     'category_id': product.category_id,
                     'category_name': product.category.name if product.category else 'Uncategorized',
-                    'images': [{'id': img.id, 'url': img.image_url, 'is_primary': img.is_primary} for img in product.images]
+                    'images': [{'id': img.id, 'url': f'/api/product-image/{img.id}', 'is_primary': img.is_primary} for img in product.images]
                 }
                 products_data.append(product_dict)
             except Exception as e:
@@ -523,7 +591,7 @@ def get_product(product_id):
         'created_at': product.created_at.isoformat(),
         'category_id': product.category_id,
         'category_name': product.category.name,
-        'images': [{'id': img.id, 'url': img.image_url, 'is_primary': img.is_primary} for img in product.images]
+        'images': [{'id': img.id, 'url': f'/api/product-image/{img.id}', 'is_primary': img.is_primary} for img in product.images]
     }
     
     return jsonify({'success': True, 'product': product_dict}), 200
@@ -588,35 +656,31 @@ def update_product(product_id):
         product.status = status
         product.category_id = category_id
         
-        # Handle image uploads if provided
+        # Handle image uploads if provided - now using BYTEA storage
         files = request.files.getlist('product_images')
         if files and files[0].filename != '':
-            # Delete existing images
+            # Delete existing images from database
             for image in product.images:
-                try:
-                    os.remove(os.path.join(app.config['UPLOAD_FOLDER'], os.path.basename(image.image_url)))
-                except:
-                    pass
                 db.session.delete(image)
             
-            # Add new images
+            # Add new images as binary data
             image_count = 0
             for index, file in enumerate(files):
                 if file and allowed_file(file.filename):
-                    original_ext = os.path.splitext(file.filename)[1]
-                    filename = f"{product.slug}-{product.id}-{image_count}{original_ext}"
-                    filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-                    
-                    file.save(filepath)
-                    
-                    image_url = f"/static/uploads/products/{filename}"
-                    product_image = Product_Images(
-                        product_id=product.id,
-                        image_url=image_url,
-                        is_primary=(index == 0)
-                    )
-                    db.session.add(product_image)
-                    image_count += 1
+                    try:
+                        # Save image as binary data to database
+                        product_image = save_image_to_db(
+                            file,
+                            product_id=product.id,
+                            is_primary=(index == 0)
+                        )
+                        
+                        if product_image:
+                            db.session.add(product_image)
+                            image_count += 1
+                    except Exception as e:
+                        print(f"Error processing image: {str(e)}")
+                        continue
         
         db.session.commit()
         
@@ -674,6 +738,89 @@ def delete_product(product_id):
         db.session.rollback()
         print(f"Error deleting product: {str(e)}")
         return jsonify({'error': 'Server Error', 'message': f'Failed to delete product: {str(e)}'}), 500
+
+
+# SERVE product images from BYTEA database
+@app.route('/api/product-image/<int:image_id>', methods=['GET'])
+def get_product_image(image_id):
+    """Retrieve and serve product image from database (BYTEA)"""
+    try:
+        product_image = Product_Images.query.get(image_id)
+        
+        if not product_image:
+            abort(404)
+        
+        # Use binary data from database if available, fallback to URL
+        if product_image.image_data:
+            response = make_response(product_image.image_data)
+            response.headers['Content-Type'] = product_image.mime_type
+            response.headers['Content-Disposition'] = f'inline; filename={product_image.filename}'
+            return response
+        elif product_image.image_url:
+            # Fallback for backward compatibility with file-based storage
+            return redirect(product_image.image_url)
+        else:
+            abort(404)
+    
+    except Exception as e:
+        print(f"Error retrieving image: {str(e)}")
+        abort(500)
+
+
+@app.route('/api/product-images/<int:product_id>', methods=['GET'])
+def get_product_images(product_id):
+    """Get all images for a product as JSON with image IDs for retrieval"""
+    try:
+        product = Products.query.get(product_id)
+        
+        if not product:
+            return jsonify({'error': 'Not Found', 'message': 'Product not found'}), 404
+        
+        images = Product_Images.query.filter_by(product_id=product_id).all()
+        
+        images_data = []
+        for img in images:
+            images_data.append({
+                'id': img.id,
+                'url': f'/api/product-image/{img.id}',  # URL to retrieve binary data
+                'filename': img.filename,
+                'mime_type': img.mime_type,
+                'is_primary': img.is_primary,
+                'created_at': img.created_at.isoformat()
+            })
+        
+        return jsonify({'images': images_data}), 200
+    
+    except Exception as e:
+        print(f"Error getting product images: {str(e)}")
+        return jsonify({'error': 'Server Error', 'message': str(e)}), 500
+
+
+# SERVE vendor logos from BYTEA database
+@app.route('/api/vendor-logo/<int:vendor_id>', methods=['GET'])
+def get_vendor_logo(vendor_id):
+    """Retrieve and serve vendor logo from database (BYTEA)"""
+    try:
+        vendor = Vendors.query.get(vendor_id)
+        
+        if not vendor:
+            abort(404)
+        
+        # Use binary data from database if available, fallback to URL
+        if vendor.logo_data:
+            response = make_response(vendor.logo_data)
+            response.headers['Content-Type'] = vendor.logo_mime_type
+            response.headers['Content-Disposition'] = f'inline; filename=logo'
+            return response
+        elif vendor.logo_url:
+            # Fallback for backward compatibility with file-based storage
+            return redirect(vendor.logo_url)
+        else:
+            abort(404)
+    
+    except Exception as e:
+        print(f"Error retrieving vendor logo: {str(e)}")
+        abort(500)
 
 
 @app.route('/customer/dashboard')
@@ -1563,8 +1710,10 @@ def get_products():
         # Get primary image if available, otherwise first image
         image_url = None
         if product.images:
-            primary_image = next((img.image_url for img in product.images if img.is_primary), None)
-            image_url = primary_image or product.images[0].image_url
+            primary_image = next((img.id for img in product.images if img.is_primary), None)
+            image_id = primary_image or (product.images[0].id if product.images else None)
+            if image_id:
+                image_url = f'/api/product-image/{image_id}'
         
         product_dict = {
             'id': product.id,
@@ -1572,7 +1721,7 @@ def get_products():
             'description': product.description,
             'price': product.price,
             'image': image_url,
-            'images': [image.image_url for image in product.images],
+            'images': [f'/api/product-image/{image.id}' for image in product.images],
             'store_name': store_name
         }
         product_list.append(product_dict)
@@ -1613,16 +1762,11 @@ def vendor_settings():
         
         logo_file = request.files.get('logo')
         if logo_file and allowed_file(logo_file.filename):
-            # Generate unique filename
-            original_ext = os.path.splitext(logo_file.filename)[1]
-            filename = f"vendor-{vendor.id}-logo{original_ext}"
-            filepath = os.path.join(app.config['VENDOR_UPLOAD_FOLDER'], filename)
-            
-            # Save file
-            logo_file.save(filepath)
-            
-            # Update logo URL
-            vendor.logo_url = f"/static/uploads/vendors/{filename}"
+            # Save logo as binary data to database
+            if save_vendor_logo_to_db(logo_file, vendor):
+                print("Logo saved to database successfully")
+            else:
+                print("Failed to save logo to database")
         
         db.session.commit()
         
@@ -1656,7 +1800,7 @@ def get_vendor_settings():
             'store_description': vendor.store_description,
             'phone': vendor.phone,
             'address': vendor.address,
-            'logo_url': vendor.logo_url
+            'logo_url': f'/api/vendor-logo/{vendor.id}' if vendor.logo_data or vendor.logo_url else None
         }
     }), 200
 
@@ -2514,8 +2658,10 @@ def get_product_details(product_id):
         # Get primary image if available
         image_url = None
         if product.images:
-            primary_image = next((img.image_url for img in product.images if img.is_primary), None)
-            image_url = primary_image or product.images[0].image_url
+            primary_image = next((img.id for img in product.images if img.is_primary), None)
+            image_id = primary_image or (product.images[0].id if product.images else None)
+            if image_id:
+                image_url = f'/api/product-image/{image_id}'
         
         product_dict = {
             'id': product.id,
@@ -2914,8 +3060,10 @@ def get_products_by_category(category_id):
             # Get primary image if available
             image_url = None
             if product.images:
-                primary_image = next((img.image_url for img in product.images if img.is_primary), None)
-                image_url = primary_image or product.images[0].image_url
+                primary_image = next((img.id for img in product.images if img.is_primary), None)
+                image_id = primary_image or (product.images[0].id if product.images else None)
+                if image_id:
+                    image_url = f'/api/product-image/{image_id}'
             
             product_dict = {
                 'id': product.id,
