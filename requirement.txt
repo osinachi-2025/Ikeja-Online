@@ -29,3 +29,4 @@ WTForms==3.2.1
 gunicorn
 psycopg2
 flask-mail
+sendgrid

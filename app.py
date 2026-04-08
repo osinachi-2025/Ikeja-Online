@@ -1,16 +1,19 @@
 from flask import Flask, render_template, request, redirect, url_for, jsonify, send_from_directory, abort, flash, session, make_response, g, after_this_request, current_app,send_file
 from flask_migrate import Migrate
 import requests
-import resend
 from io import BytesIO
 from flask_cors import CORS
 from models import db, Roles, Users, Vendors, Customers, Categories, Products, Product_Images, Orders, Order_Items, Reviews, Payments, Wishlists, Wishlist_Items, Wallet, Deposits, VendorWallet, WalletTransaction, CustomerWalletTransaction, VendorWalletTransaction, VendorWithdrawal, VendorDeposit
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
-from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity, decode_token
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 from datetime import datetime
 import os
 from slugify import slugify
+from jwt import ExpiredSignatureError, InvalidTokenError
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///ikeja_online.db'
@@ -21,8 +24,10 @@ app.config['JWT_HEADER_NAME'] = 'Authorization'
 app.config['JWT_HEADER_TYPE'] = 'Bearer'
 app.config['TEST_PUBLIC_KEY'] = 'pk_test_0796eb2919d007e2cf058300da852181a60418d0'
 app.config['TEST_SECRET_KEY'] = 'sk_test_8fea2fcf8335cb9211c11b03ae81d79f7c9a165c'
-app.config['RESEND_API_KEY'] = os.getenv('RESEND_API_KEY', 're_934p2bp1_ESLnDfgtAcAof3MTn9rCQBHE')
-app.config['RESEND_URL'] = 'https://api.resend.com/emails'
+
+# Gmail SMTP Configuration
+app.config['GMAIL_EMAIL'] = os.getenv('GMAIL_EMAIL', 'chibuikemclinic@gmail.com')
+app.config['GMAIL_PASSWORD'] = os.getenv('GMAIL_PASSWORD', 'bkgr yndz vukl zeas')  # Use Gmail App Password, not regular password
 
 # Enable CORS
 CORS(app, supports_credentials=True)
@@ -45,28 +50,671 @@ db.init_app(app)
 jwt = JWTManager(app)
 migrate = Migrate(app, db)
 
+print(f"[STARTUP] Gmail Configuration:")
+print(f"[STARTUP] Email: {app.config['GMAIL_EMAIL']}")
+print(f"[STARTUP] Password configured: {'Yes' if app.config['GMAIL_PASSWORD'] != 'your-app-password-here' else 'No (Using default placeholder)'}")
 
 def send_email(to_email, subject, html_content):
-    """Send email using Resend API"""
+    """Send email using Gmail SMTP"""
     try:
-        headers = {
-            "Authorization": f'Bearer {RESEND_API_KEY}',
-            "Content-Type": "application/json"
-        }
+        print(f"\n{'='*80}")
+        print(f"[EMAIL] ===== ATTEMPTING TO SEND EMAIL VIA GMAIL SMTP =====")
+        print(f"[EMAIL] To: {to_email}")
+        print(f"[EMAIL] Subject: {subject}")
+        print(f"[EMAIL] Recipient email valid: {bool(to_email and '@' in to_email)}")
         
-        payload ={
-            "from": "Ikeja Online <noreply@localhost:5000>",
-            "to": to_email,
-            "subject": subject,
-            "html": html_content
-        }
+        # Validate email
+        if not to_email or '@' not in to_email:
+            print(f"[EMAIL] ✗ ERROR: Invalid email address: {to_email}")
+            print(f"{'='*80}\n")
+            return None
         
-        response = requests.post(RESEND_URL, json=payload, headers=headers)
+        # Get Gmail credentials
+        gmail_email = app.config.get('GMAIL_EMAIL')
+        gmail_password = app.config.get('GMAIL_PASSWORD')
         
-        return response.json()
+        if not gmail_email or not gmail_password:
+            print(f"[EMAIL] ✗ ERROR: Gmail credentials not configured")
+            print(f"{'='*80}\n")
+            return None
+        
+        if gmail_password == 'your-app-password-here':
+            print(f"[EMAIL] ✗ ERROR: Please set GMAIL_PASSWORD environment variable")
+            print(f"[EMAIL] Note: Use Gmail App Password (not your regular password)")
+            print(f"{'='*80}\n")
+            return None
+        
+        print(f"[EMAIL] Gmail Email: {gmail_email}")
+        print(f"[EMAIL] Password configured: Yes")
+        
+        # Create email message
+        message = MIMEMultipart('alternative')
+        message['Subject'] = subject
+        message['From'] = f"Ikeja Online <{gmail_email}>"
+        message['To'] = to_email
+        
+        # Attach HTML content
+        html_part = MIMEText(html_content, 'html')
+        message.attach(html_part)
+        
+        print(f"[EMAIL] ✓ Message object created successfully")
+        
+        # Send via Gmail SMTP
+        print(f"[EMAIL] Connecting to Gmail SMTP server...")
+        server = smtplib.SMTP_SSL('smtp.gmail.com', 465, timeout=10)
+        print(f"[EMAIL] ✓ Connected to Gmail SMTP server")
+        
+        print(f"[EMAIL] Logging in with Gmail credentials...")
+        server.login(gmail_email, gmail_password)
+        print(f"[EMAIL] ✓ Logged in successfully")
+        
+        print(f"[EMAIL] Sending email...")
+        server.sendmail(gmail_email, to_email, message.as_string())
+        server.quit()
+        
+        print(f"[EMAIL] ✓✓✓ EMAIL SENT SUCCESSFULLY TO {to_email}")
+        print(f"{'='*80}\n")
+        return {"success": True, "message": "Email sent successfully"}
     
     except Exception as e:
-        print(f"Error sending email: {str(e)}")
+        print(f"[EMAIL] ✗✗✗ EXCEPTION OCCURRED!")
+        print(f"[EMAIL] Exception Type: {type(e).__name__}")
+        print(f"[EMAIL] Exception Message: {str(e)}")
+        import traceback
+        print(f"[EMAIL] Full Traceback:")
+        traceback.print_exc()
+        print(f"{'='*80}\n")
+        return None
+
+
+def generate_email_verification_token(user_id):
+    """Generate a JWT token for email verification (valid for 24 hours)"""
+    try:
+        from datetime import timedelta
+        token = create_access_token(
+            identity=str(user_id),
+            expires_delta=timedelta(hours=24),
+            additional_claims={"type": "email_verification"}
+        )
+        return token
+    except Exception as e:
+        print(f"[TOKEN] Error generating verification token: {str(e)}")
+        return None
+
+
+def send_verification_email(user_email, user_name, verification_token):
+    """Send email verification link to user"""
+    try:
+        # Create verification link
+        verification_url = f"http://localhost:5000/verify-email/{verification_token}"
+        
+        html_content = f"""
+        <html>
+            <body style="font-family: Arial, sans-serif; background-color: #f5f5f5; padding: 20px;">
+                <div style="max-width: 600px; margin: 0 auto; background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                    <h2 style="color: #FF6B35; margin-bottom: 20px;">Confirm Your Email Address</h2>
+                    <p style="color: #333; font-size: 16px; line-height: 1.6;">Hi {user_name},</p>
+                    <p style="color: #333; font-size: 16px; line-height: 1.6;">Thank you for registering with Ikeja Online! Please confirm your email address by clicking the button below:</p>
+                    
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="{verification_url}" style="display: inline-block; background-color: #FF6B35; color: white; padding: 15px 40px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px;">
+                            Verify Email Address
+                        </a>
+                    </div>
+                    
+                    <p style="color: #666; font-size: 14px; line-height: 1.6;">Or copy and paste this link in your browser:</p>
+                    <p style="color: #FF6B35; font-size: 12px; word-break: break-all; background-color: #f9f9f9; padding: 10px; border-radius: 5px;">
+                        {verification_url}
+                    </p>
+                    
+                    <p style="color: #666; font-size: 14px; line-height: 1.6; margin-top: 20px;">This link will expire in 24 hours.</p>
+                    
+                    <p style="color: #999; font-size: 12px; margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
+                        If you didn't create this account, please ignore this email.<br>
+                        <strong>Ikeja Online Support Team</strong>
+                    </p>
+                </div>
+            </body>
+        </html>
+        """
+        
+        return send_email(user_email, "Confirm Your Email Address - Ikeja Online", html_content)
+    
+    except Exception as e:
+        print(f"[EMAIL-VERIFICATION] Error sending verification email: {str(e)}")
+        return None
+
+
+# ==================== PASSWORD RESET EMAIL ====================
+def send_password_reset_email(user_email, user_name, reset_token):
+    """Send password reset link to user"""
+    try:
+        reset_url = f"http://localhost:5000/reset-password/{reset_token}"
+        
+        html_content = f"""
+        <html>
+            <body style="font-family: Arial, sans-serif; background-color: #f5f5f5; padding: 20px;">
+                <div style="max-width: 600px; margin: 0 auto; background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                    <h2 style="color: #FF6B35; margin-bottom: 20px;">Reset Your Password</h2>
+                    <p style="color: #333; font-size: 16px; line-height: 1.6;">Hi {user_name},</p>
+                    <p style="color: #333; font-size: 16px; line-height: 1.6;">We received a request to reset your password. Click the button below to create a new password:</p>
+                    
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="{reset_url}" style="display: inline-block; background-color: #FF6B35; color: white; padding: 15px 40px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px;">
+                            Reset Password
+                        </a>
+                    </div>
+                    
+                    <p style="color: #666; font-size: 14px; line-height: 1.6;">Or copy and paste this link:</p>
+                    <p style="color: #FF6B35; font-size: 12px; word-break: break-all; background-color: #f9f9f9; padding: 10px; border-radius: 5px;">
+                        {reset_url}
+                    </p>
+                    
+                    <p style="color: #666; font-size: 14px; line-height: 1.6; margin-top: 20px;">This link will expire in 1 hour.</p>
+                    
+                    <div style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; border-radius: 5px;">
+                        <p style="color: #856404; font-size: 14px; margin: 0;">
+                            <strong>Security Tip:</strong> If you didn't request this, you can safely ignore this email. Your password will remain unchanged.
+                        </p>
+                    </div>
+                    
+                    <p style="color: #999; font-size: 12px; margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
+                        <strong>Ikeja Online Support Team</strong>
+                    </p>
+                </div>
+            </body>
+        </html>
+        """
+        
+        return send_email(user_email, "Reset Your Password - Ikeja Online", html_content)
+    
+    except Exception as e:
+        print(f"[PASSWORD-RESET] Error sending password reset email: {str(e)}")
+        return None
+
+
+# ==================== ORDER CONFIRMATION EMAIL ====================
+def send_order_confirmation_email(customer_email, customer_name, order_ref, items_details, total_amount):
+    """Send order confirmation email to customer"""
+    try:
+        order_tracking_url = f"http://localhost:5000/my-orders/{order_ref}"
+        
+        items_html = ""
+        for item in items_details:
+            items_html += f"""
+            <tr>
+                <td style="padding: 10px; border-bottom: 1px solid #eee;">{item['product_name']}</td>
+                <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">{item['quantity']}</td>
+                <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">₦{item['price_at_purchase']:,.2f}</td>
+                <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">₦{item['quantity'] * item['price_at_purchase']:,.2f}</td>
+            </tr>
+            """
+        
+        html_content = f"""
+        <html>
+            <body style="font-family: Arial, sans-serif; background-color: #f5f5f5; padding: 20px;">
+                <div style="max-width: 600px; margin: 0 auto; background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                    <h2 style="color: #FF6B35; margin-bottom: 20px;">Order Confirmation</h2>
+                    <p style="color: #333; font-size: 16px; line-height: 1.6;">Hi {customer_name},</p>
+                    <p style="color: #333; font-size: 16px; line-height: 1.6;">Thank you for your order! We're processing your purchase and will send you a shipping notification soon.</p>
+                    
+                    <div style="background-color: #f9f9f9; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                        <p style="color: #666; margin: 5px 0;"><strong>Order Reference:</strong> {order_ref}</p>
+                        <p style="color: #666; margin: 5px 0;"><strong>Order Date:</strong> {datetime.now().strftime('%B %d, %Y')}</p>
+                    </div>
+                    
+                    <h3 style="color: #333; margin-top: 25px; margin-bottom: 15px;">Order Items:</h3>
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="background-color: #FF6B35; color: white;">
+                                <th style="padding: 10px; text-align: left;">Product</th>
+                                <th style="padding: 10px; text-align: center;">Qty</th>
+                                <th style="padding: 10px; text-align: right;">Price</th>
+                                <th style="padding: 10px; text-align: right;">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {items_html}
+                        </tbody>
+                    </table>
+                    
+                    <div style="text-align: right; margin-top: 20px; border-top: 2px solid #FF6B35; padding-top: 15px;">
+                        <h2 style="color: #FF6B35; margin: 0;">Total: ₦{total_amount:,.2f}</h2>
+                    </div>
+                    
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="{order_tracking_url}" style="display: inline-block; background-color: #FF6B35; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+                            Track Your Order
+                        </a>
+                    </div>
+                    
+                    <p style="color: #999; font-size: 12px; margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
+                        If you have any questions, please contact our support team.<br>
+                        <strong>Ikeja Online Support Team</strong>
+                    </p>
+                </div>
+            </body>
+        </html>
+        """
+        
+        return send_email(customer_email, f"Order Confirmation - {order_ref}", html_content)
+    
+    except Exception as e:
+        print(f"[ORDER-CONFIRMATION] Error sending order confirmation email: {str(e)}")
+        return None
+
+
+# ==================== ORDER SHIPPED EMAIL ====================
+def send_order_shipped_email(customer_email, customer_name, order_ref, tracking_number=None, shipping_status='shipped'):
+    """Send order shipping status update to customer"""
+    try:
+        order_tracking_url = f"http://localhost:5000/my-orders/{order_ref}"
+        
+        # Define status-specific content
+        status_config = {
+            'pending': {
+                'title': 'Your Order Has Been Received!',
+                'heading': 'Order Received & Being Prepared',
+                'message': 'Your order has been received and we are preparing it for shipment.',
+                'bg_color': '#cce5ff',
+                'border_color': '#0066cc',
+                'text_color': '#003399',
+                'delivery_time': '1-2 business days'
+            },
+            'shipped': {
+                'title': 'Your Order Has Been Shipped!',
+                'heading': 'Order Shipped',
+                'message': 'Great news! Your order has been shipped and is on its way to you.',
+                'bg_color': '#d4edda',
+                'border_color': '#28a745',
+                'text_color': '#155724',
+                'delivery_time': '5-7 business days'
+            },
+            'en_route': {
+                'title': 'Your Order Is On The Way!',
+                'heading': 'Order In Transit',
+                'message': 'Your order is currently in transit and will be delivered soon.',
+                'bg_color': '#ffe5cc',
+                'border_color': '#ff9800',
+                'text_color': '#cc6600',
+                'delivery_time': '1-3 business days'
+            },
+            'delivered': {
+                'title': 'Your Order Has Been Delivered!',
+                'heading': 'Order Delivered',
+                'message': 'Your order has been successfully delivered. Thank you for your purchase!',
+                'bg_color': '#d4edda',
+                'border_color': '#28a745',
+                'text_color': '#155724',
+                'delivery_time': 'Completed'
+            }
+        }
+        
+        # Get status config, default to shipped if not found
+        config = status_config.get(shipping_status, status_config['shipped'])
+        
+        tracking_info = ""
+        if tracking_number:
+            tracking_info = f"""
+            <p style="color: #333; font-size: 16px; line-height: 1.6;">
+                <strong>Tracking Number:</strong> {tracking_number}
+            </p>
+            """
+        
+        html_content = f"""
+        <html>
+            <body style="font-family: Arial, sans-serif; background-color: #f5f5f5; padding: 20px;">
+                <div style="max-width: 600px; margin: 0 auto; background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                    <h2 style="color: #FF6B35; margin-bottom: 20px;">{config['title']}</h2>
+                    <p style="color: #333; font-size: 16px; line-height: 1.6;">Hi {customer_name},</p>
+                    <p style="color: #333; font-size: 16px; line-height: 1.6;">{config['message']}</p>
+                    
+                    <div style="background-color: {config['bg_color']}; border-left: 4px solid {config['border_color']}; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                        <p style="color: {config['text_color']}; margin: 5px 0;"><strong>Order Reference:</strong> {order_ref}</p>
+                        <p style="color: {config['text_color']}; margin: 5px 0;"><strong>Status:</strong> {shipping_status.replace('_', ' ').title()}</p>
+                        {tracking_info}
+                    </div>
+                    
+                    <p style="color: #333; font-size: 16px; line-height: 1.6;">You can track your order status in real-time:</p>
+                    
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="{order_tracking_url}" style="display: inline-block; background-color: #FF6B35; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+                            View Order Details
+                        </a>
+                    </div>
+                    
+                    <p style="color: #666; font-size: 14px; line-height: 1.6;">
+                        Expected delivery: {config['delivery_time']}. Please keep an eye on your shipment status.
+                    </p>
+                    
+                    <p style="color: #999; font-size: 12px; margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
+                        If you have any questions, please contact our support team.<br>
+                        <strong>Ikeja Online Support Team</strong>
+                    </p>
+                </div>
+            </body>
+        </html>
+        """
+        
+        return send_email(customer_email, f"{config['heading']} - {order_ref}", html_content)
+    
+    except Exception as e:
+        print(f"[ORDER-STATUS] Error sending order status email: {str(e)}")
+        return None
+
+
+# ==================== PAYMENT CONFIRMATION EMAIL ====================
+def send_payment_confirmation_email(customer_email, customer_name, order_ref, amount, payment_method):
+    """Send payment confirmation email to customer"""
+    try:
+        html_content = f"""
+        <html>
+            <body style="font-family: Arial, sans-serif; background-color: #f5f5f5; padding: 20px;">
+                <div style="max-width: 600px; margin: 0 auto; background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                    <h2 style="color: #28a745; margin-bottom: 20px;">Payment Confirmed</h2>
+                    <p style="color: #333; font-size: 16px; line-height: 1.6;">Hi {customer_name},</p>
+                    <p style="color: #333; font-size: 16px; line-height: 1.6;">Your payment has been successfully processed!</p>
+                    
+                    <div style="background-color: #d4edda; border-left: 4px solid #28a745; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                        <p style="color: #155724; margin: 5px 0;"><strong>Order Reference:</strong> {order_ref}</p>
+                        <p style="color: #155724; margin: 5px 0;"><strong>Amount Paid:</strong> ₦{amount:,.2f}</p>
+                        <p style="color: #155724; margin: 5px 0;"><strong>Payment Method:</strong> {payment_method}</p>
+                        <p style="color: #155724; margin: 5px 0;"><strong>Date:</strong> {datetime.now().strftime('%B %d, %Y %H:%M:%S')}</p>
+                    </div>
+                    
+                    <p style="color: #333; font-size: 16px; line-height: 1.6;">
+                        Your order has been confirmed and will be prepared for shipment shortly. You will receive a shipping notification once your order is dispatched.
+                    </p>
+                    
+                    <p style="color: #666; font-size: 14px; line-height: 1.6; margin-top: 20px;">
+                        <strong>Receipt Reference:</strong> {order_ref}-{datetime.now().strftime('%f')[:6].upper()}
+                    </p>
+                    
+                    <p style="color: #999; font-size: 12px; margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
+                        If you have any questions about your payment, please contact our support team.<br>
+                        <strong>Ikeja Online Support Team</strong>
+                    </p>
+                </div>
+            </body>
+        </html>
+        """
+        
+        return send_email(customer_email, f"Payment Confirmation - {order_ref}", html_content)
+    
+    except Exception as e:
+        print(f"[PAYMENT-CONFIRMATION] Error sending payment confirmation email: {str(e)}")
+        return None
+
+
+# ==================== VENDOR PAYOUT EMAIL ====================
+def send_vendor_payout_email(vendor_email, vendor_name, payout_amount, payout_method):
+    """Send vendor payout/withdrawal confirmation email"""
+    try:
+        html_content = f"""
+        <html>
+            <body style="font-family: Arial, sans-serif; background-color: #f5f5f5; padding: 20px;">
+                <div style="max-width: 600px; margin: 0 auto; background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                    <h2 style="color: #FF6B35; margin-bottom: 20px;">Payout Processed</h2>
+                    <p style="color: #333; font-size: 16px; line-height: 1.6;">Hi {vendor_name},</p>
+                    <p style="color: #333; font-size: 16px; line-height: 1.6;">Your payout has been successfully processed and transferred to your account!</p>
+                    
+                    <div style="background-color: #d4edda; border-left: 4px solid #28a745; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                        <p style="color: #155724; margin: 5px 0;"><strong>Payout Amount:</strong> ₦{payout_amount:,.2f}</p>
+                        <p style="color: #155724; margin: 5px 0;"><strong>Payment Method:</strong> {payout_method}</p>
+                        <p style="color: #155724; margin: 5px 0;"><strong>Date Processed:</strong> {datetime.now().strftime('%B %d, %Y')}</p>
+                        <p style="color: #155724; margin: 5px 0;"><strong>Status:</strong> Completed</p>
+                    </div>
+                    
+                    <p style="color: #333; font-size: 16px; line-height: 1.6;">
+                        The funds should appear in your account within 1-2 business days, depending on your bank's processing time.
+                    </p>
+                    
+                    <p style="color: #666; font-size: 14px; line-height: 1.6;">
+                        Keep this email for your records.
+                    </p>
+                    
+                    <p style="color: #999; font-size: 12px; margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
+                        If you have any questions about your payout, please contact our vendor support team.<br>
+                        <strong>Ikeja Online Vendor Support</strong>
+                    </p>
+                </div>
+            </body>
+        </html>
+        """
+        
+        return send_email(vendor_email, "Payout Processed - Ikeja Online", html_content)
+    
+    except Exception as e:
+        print(f"[VENDOR-PAYOUT] Error sending vendor payout email: {str(e)}")
+        return None
+
+
+# ==================== ACCOUNT CONFIRMATION EMAIL ====================
+def send_account_confirmation_email(user_email, user_name, action_type, confirmation_token):
+    """Send account confirmation email for sensitive changes"""
+    try:
+        confirmation_url = f"http://localhost:5000/confirm-action/{confirmation_token}"
+        
+        action_descriptions = {
+            'email_change': 'Email Address Change',
+            'password_change': 'Password Change',
+            'profile_update': 'Profile Update'
+        }
+        
+        action_desc = action_descriptions.get(action_type, 'Account Update')
+        
+        html_content = f"""
+        <html>
+            <body style="font-family: Arial, sans-serif; background-color: #f5f5f5; padding: 20px;">
+                <div style="max-width: 600px; margin: 0 auto; background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                    <h2 style="color: #FF6B35; margin-bottom: 20px;">Confirm {action_desc}</h2>
+                    <p style="color: #333; font-size: 16px; line-height: 1.6;">Hi {user_name},</p>
+                    <p style="color: #333; font-size: 16px; line-height: 1.6;">We need you to confirm a recent change to your account. Click the button below to confirm:</p>
+                    
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="{confirmation_url}" style="display: inline-block; background-color: #FF6B35; color: white; padding: 15px 40px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px;">
+                            Confirm {action_desc}
+                        </a>
+                    </div>
+                    
+                    <p style="color: #666; font-size: 14px; line-height: 1.6;">Or copy and paste this link:</p>
+                    <p style="color: #FF6B35; font-size: 12px; word-break: break-all; background-color: #f9f9f9; padding: 10px; border-radius: 5px;">
+                        {confirmation_url}
+                    </p>
+                    
+                    <p style="color: #666; font-size: 14px; line-height: 1.6; margin-top: 20px;">This link will expire in 24 hours.</p>
+                    
+                    <div style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; border-radius: 5px;">
+                        <p style="color: #856404; font-size: 14px; margin: 0;">
+                            <strong>Security:</strong> If you didn't make this request, please ignore this email and your account will remain unchanged.
+                        </p>
+                    </div>
+                    
+                    <p style="color: #999; font-size: 12px; margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
+                        <strong>Ikeja Online Support Team</strong>
+                    </p>
+                </div>
+            </body>
+        </html>
+        """
+        
+        return send_email(user_email, f"Confirm {action_desc} - Ikeja Online", html_content)
+    
+    except Exception as e:
+        print(f"[ACCOUNT-CONFIRMATION] Error sending account confirmation email: {str(e)}")
+        return None
+
+
+# ==================== VENDOR PRODUCT ORDERED EMAIL ====================
+def send_product_ordered_email(vendor_email, vendor_name, store_name, products_info, order_ref, customer_name, order_total):
+    """Send order notification to vendor when their products are ordered"""
+    try:
+        vendor_dashboard_url = "http://localhost:5000/vendor/dashboard"
+        
+        # Build product table
+        products_html = ""
+        vendor_total = 0
+        for product in products_info:
+            product_total = product['quantity'] * product['price']
+            vendor_total += product_total
+            products_html += f"""
+            <tr>
+                <td style="padding: 10px; border-bottom: 1px solid #eee;">{product['product_name']}</td>
+                <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">{product['quantity']}</td>
+                <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">₦{product['price']:,.2f}</td>
+                <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">₦{product_total:,.2f}</td>
+            </tr>
+            """
+        
+        html_content = f"""
+        <html>
+            <body style="font-family: Arial, sans-serif; background-color: #f5f5f5; padding: 20px;">
+                <div style="max-width: 600px; margin: 0 auto; background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                    <h2 style="color: #FF6B35; margin-bottom: 20px;">🎉 New Order for Your Store!</h2>
+                    <p style="color: #333; font-size: 16px; line-height: 1.6;">Hi {vendor_name},</p>
+                    <p style="color: #333; font-size: 16px; line-height: 1.6;">Great news! You have received a new order from a customer. Here are the details:</p>
+                    
+                    <div style="background-color: #f0f8ff; border-left: 4px solid #FF6B35; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                        <p style="color: #333; margin: 5px 0;"><strong>Store:</strong> {store_name if store_name else vendor_name}</p>
+                        <p style="color: #333; margin: 5px 0;"><strong>Order Reference:</strong> {order_ref}</p>
+                        <p style="color: #333; margin: 5px 0;"><strong>Customer Name:</strong> {customer_name}</p>
+                        <p style="color: #333; margin: 5px 0;"><strong>Order Date:</strong> {datetime.now().strftime('%B %d, %Y')}</p>
+                    </div>
+                    
+                    <h3 style="color: #333; margin-top: 25px; margin-bottom: 15px;">Order Items:</h3>
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                        <thead>
+                            <tr style="background-color: #f5f5f5;">
+                                <th style="padding: 10px; text-align: left; border-bottom: 2px solid #FF6B35;">Product</th>
+                                <th style="padding: 10px; text-align: center; border-bottom: 2px solid #FF6B35;">Qty</th>
+                                <th style="padding: 10px; text-align: right; border-bottom: 2px solid #FF6B35;">Price</th>
+                                <th style="padding: 10px; text-align: right; border-bottom: 2px solid #FF6B35;">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {products_html}
+                        </tbody>
+                    </table>
+                    
+                    <div style="background-color: #e8f5e9; border-left: 4px solid #28a745; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                        <p style="color: #1b5e20; margin: 5px 0;"><strong>Your Earnings:</strong> ₦{vendor_total:,.2f}</p>
+                        <p style="color: #666; font-size: 14px; margin: 5px 0;">Funds will be added to your wallet after order fulfillment.</p>
+                    </div>
+                    
+                    <p style="color: #333; font-size: 16px; line-height: 1.6; margin-top: 20px;"><strong>Next Steps:</strong></p>
+                    <ul style="color: #666; font-size: 14px; line-height: 1.8;">
+                        <li>Review the order details</li>
+                        <li>Prepare the items for shipment</li>
+                        <li>Update the shipping status when you dispatch the order</li>
+                        <li>Include tracking information if available</li>
+                    </ul>
+                    
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="{vendor_dashboard_url}" style="display: inline-block; background-color: #FF6B35; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+                            View in Vendor Dashboard
+                        </a>
+                    </div>
+                    
+                    <p style="color: #666; font-size: 14px; line-height: 1.6;">
+                        Please handle this order promptly to ensure customer satisfaction.
+                    </p>
+                    
+                    <p style="color: #999; font-size: 12px; margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
+                        Questions? Contact our support team.<br>
+                        <strong>Ikeja Online Seller Support</strong>
+                    </p>
+                </div>
+            </body>
+        </html>
+        """
+        
+        return send_email(vendor_email, f"New Order Notification - {order_ref}", html_content)
+    
+    except Exception as e:
+        print(f"[VENDOR-ORDER] Error sending vendor product ordered email: {str(e)}")
+        return None
+
+
+# ==================== LOW STOCK ALERT EMAIL ====================
+def send_low_stock_alert_email(vendor_email, vendor_name, store_name, low_stock_products):
+    """Send low stock alert email to vendor when products fall below 5 units"""
+    try:
+        vendor_dashboard_url = "http://localhost:5000/vendor/products"
+        
+        # Build low stock products table
+        products_html = ""
+        for product in low_stock_products:
+            products_html += f"""
+            <tr>
+                <td style="padding: 10px; border-bottom: 1px solid #eee;">{product['product_name']}</td>
+                <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">{product['stock_quantity']}</td>
+                <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">₦{product['price']:,.2f}</td>
+            </tr>
+            """
+        
+        html_content = f"""
+        <html>
+            <body style="font-family: Arial, sans-serif; background-color: #f5f5f5; padding: 20px;">
+                <div style="max-width: 600px; margin: 0 auto; background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                    <h2 style="color: #FF6B35; margin-bottom: 20px;">⚠️ Low Stock Alert!</h2>
+                    <p style="color: #333; font-size: 16px; line-height: 1.6;">Hi {vendor_name},</p>
+                    <p style="color: #333; font-size: 16px; line-height: 1.6;">Some of your products have low stock levels (below 5 units). Please restock them to avoid losing sales.</p>
+                    
+                    <div style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                        <p style="color: #856404; margin: 5px 0;"><strong>Store:</strong> {store_name if store_name else vendor_name}</p>
+                        <p style="color: #856404; margin: 5px 0;"><strong>Alert Triggered:</strong> {datetime.now().strftime('%B %d, %Y at %I:%M %p')}</p>
+                    </div>
+                    
+                    <h3 style="color: #333; margin-top: 25px; margin-bottom: 15px;">Low Stock Products:</h3>
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                        <thead>
+                            <tr style="background-color: #f5f5f5;">
+                                <th style="padding: 10px; text-align: left; border-bottom: 2px solid #FF6B35;">Product Name</th>
+                                <th style="padding: 10px; text-align: center; border-bottom: 2px solid #FF6B35;">Current Stock</th>
+                                <th style="padding: 10px; text-align: right; border-bottom: 2px solid #FF6B35;">Price</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {products_html}
+                        </tbody>
+                    </table>
+                    
+                    <p style="color: #333; font-size: 16px; line-height: 1.6;"><strong>Why This Matters:</strong></p>
+                    <ul style="color: #666; font-size: 14px; line-height: 1.8;">
+                        <li>Products with low stock may not appear in search results</li>
+                        <li>Customers prefer items with available inventory</li>
+                        <li>Running out of stock means losing potential sales</li>
+                        <li>Restock these items to maintain customer satisfaction</li>
+                    </ul>
+                    
+                    <div style="background-color: #e8f5e9; border-left: 4px solid #28a745; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                        <p style="color: #1b5e20; margin: 5px 0;"><strong>Action Required:</strong></p>
+                        <p style="color: #666; font-size: 14px; margin: 5px 0;">Click the button below to update your product inventory.</p>
+                    </div>
+                    
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="{vendor_dashboard_url}" style="display: inline-block; background-color: #FF6B35; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+                            Update Inventory
+                        </a>
+                    </div>
+                    
+                    <p style="color: #666; font-size: 14px; line-height: 1.6;">
+                        Keep your inventory updated to maximize sales and maintain excellent customer service.
+                    </p>
+                    
+                    <p style="color: #999; font-size: 12px; margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
+                        This is an automated alert from Ikeja Online.<br>
+                        <strong>Ikeja Online Seller Support</strong>
+                    </p>
+                </div>
+            </body>
+        </html>
+        """
+        
+        return send_email(vendor_email, f"Low Stock Alert - {store_name if store_name else vendor_name}", html_content)
+    
+    except Exception as e:
+        print(f"[LOW-STOCK] Error sending low stock alert email: {str(e)}")
         return None
 
 # Initialize database and default data
@@ -289,6 +937,320 @@ def save_vendor_logo_to_db(file, vendor):
 def home():
     return render_template('/home/home.html')
 
+@app.route('/verify-gmail')
+def verify_gmail():
+    """Verify Gmail SMTP configuration"""
+    try:
+        gmail_email = app.config.get('GMAIL_EMAIL')
+        gmail_password = app.config.get('GMAIL_PASSWORD')
+        
+        result = {
+            "gmail_email_configured": bool(gmail_email),
+            "gmail_email": gmail_email if gmail_email else "Not configured",
+            "gmail_password_configured": bool(gmail_password) and gmail_password != 'your-app-password-here'
+        }
+        
+        if not gmail_email or not gmail_password:
+            return jsonify({
+                **result,
+                "status": "ERROR",
+                "message": "Gmail email or password is not configured"
+            }), 400
+        
+        if gmail_password == 'your-app-password-here':
+            return jsonify({
+                **result,
+                "status": "ERROR",
+                "message": "Gmail password is still using placeholder. Please set GMAIL_PASSWORD environment variable.",
+                "note": "Use Gmail App Password (not your regular Gmail password)"
+            }), 400
+        
+        # Try to connect to Gmail SMTP
+        try:
+            server = smtplib.SMTP_SSL('smtp.gmail.com', 465, timeout=10)
+            server.login(gmail_email, gmail_password)
+            server.quit()
+            result["gmail_connection"] = "Successfully connected and authenticated"
+        except Exception as e:
+            result["gmail_connection"] = f"ERROR: {str(e)}"
+            return jsonify({
+                **result,
+                "status": "ERROR",
+                "message": f"Failed to connect to Gmail SMTP: {str(e)}"
+            }), 400
+        
+        return jsonify({
+            **result,
+            "status": "SUCCESS",
+            "message": "Gmail SMTP is configured correctly and connection successful"
+        }), 200
+        
+    except Exception as e:
+        return jsonify({
+            "status": "ERROR",
+            "message": f"Verification failed: {str(e)}"
+        }), 500
+
+
+@app.route('/test-email')
+def test_email():
+    """Test email sending functionality via Gmail SMTP"""
+    try:
+        test_email_addr = request.args.get('email', 'test@example.com')
+        
+        print(f"\n{'='*80}")
+        print(f"[TEST-EMAIL] ===== TESTING EMAIL FUNCTIONALITY =====" )
+        print(f"[TEST-EMAIL] Test recipient: {test_email_addr}")
+        
+        # Verify configuration first
+        gmail_email = app.config.get('GMAIL_EMAIL')
+        gmail_password = app.config.get('GMAIL_PASSWORD')
+        
+        if not gmail_email or not gmail_password:
+            return jsonify({
+                'success': False,
+                'message': 'Gmail credentials not configured',
+                'debug_info': 'Check GMAIL_EMAIL and GMAIL_PASSWORD environment variables'
+            }), 500
+        
+        if gmail_password == 'your-app-password-here':
+            return jsonify({
+                'success': False,
+                'message': 'Gmail password is using placeholder value',
+                'debug_info': 'Set GMAIL_PASSWORD environment variable to your Gmail App Password'
+            }), 500
+        
+        print(f"[TEST-EMAIL] Gmail email: {gmail_email}")
+        print(f"[TEST-EMAIL] Creating email message...")
+        
+        # Create test email message
+        message = MIMEMultipart('alternative')
+        message['Subject'] = 'Test Email - Ikeja Online'
+        message['From'] = f"Ikeja Online <{gmail_email}>"
+        message['To'] = test_email_addr
+        
+        html_content = '''<h2>Test Email - Ikeja Online</h2>
+        <p>If you received this, email sending is working correctly!</p>
+        <p>Timestamp: ''' + datetime.now().isoformat() + '''</p>'''
+        
+        html_part = MIMEText(html_content, 'html')
+        message.attach(html_part)
+        
+        print(f"[TEST-EMAIL] Message created, connecting to Gmail SMTP...")
+        
+        server = smtplib.SMTP_SSL('smtp.gmail.com', 465, timeout=10)
+        print(f"[TEST-EMAIL] Connected to Gmail SMTP")
+        
+        server.login(gmail_email, gmail_password)
+        print(f"[TEST-EMAIL] Logged in successfully")
+        
+        print(f"[TEST-EMAIL] Sending test email to {test_email_addr}...")
+        server.sendmail(gmail_email, test_email_addr, message.as_string())
+        server.quit()
+        
+        print(f"[TEST-EMAIL] Test email sent successfully")
+        print(f"{'='*80}\n")
+        
+        return jsonify({
+            'success': True,
+            'message': f'Test email sent successfully to {test_email_addr}',
+            'debug_info': f'Sent from: {gmail_email}'
+        }), 200
+        
+    except Exception as e:
+        print(f"[TEST-EMAIL] EXCEPTION: {type(e).__name__}: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        print(f"{'='*80}\n")
+        
+        return jsonify({
+            'success': False,
+            'message': f'Error sending test email: {str(e)}',
+            'error_type': type(e).__name__,
+            'debug_info': 'Check console logs for full traceback'
+        }), 500
+
+
+@app.route('/verify-email/<token>', methods=['GET'])
+@app.route('/verify-email/<token>/', methods=['GET'])
+def verify_email(token):
+    """Verify user email via link"""
+    try:
+        # Decode token
+        decoded_token = decode_token(token)
+        user_id = decoded_token.get('sub')
+        token_type = decoded_token.get('type')
+        
+        # Validate token type
+        if token_type != 'email_verification':
+            flash('Invalid verification link.', 'danger')
+            return redirect(url_for('login'))
+        
+        # Find user
+        user = Users.query.get(int(user_id))
+        if not user:
+            flash('User not found.', 'danger')
+            return redirect(url_for('login'))
+        
+        # Check if already verified
+        if user.email_verified:
+            flash('Email has already been verified. You can now log in.', 'info')
+            return redirect(url_for('login'))
+        
+        # Mark email as verified
+        user.email_verified = True
+        user.email_verified_at = datetime.utcnow()
+        db.session.commit()
+        
+        print(f"[EMAIL-VERIFICATION] Email verified for user {user.email}")
+        
+        flash(f'Email verified successfully! You can now log in.', 'success')
+        return redirect(url_for('login'))
+        
+    except ExpiredSignatureError:
+        flash('Verification link has expired. Please register again to get a new link.', 'danger')
+        return redirect(url_for('register'))
+    
+    except Exception as e:
+        print(f"[EMAIL-VERIFICATION] Error verifying email: {type(e).__name__}: {str(e)}")
+        flash(f'Error verifying email: {str(e)}', 'danger')
+        return redirect(url_for('login'))
+
+
+# ==================== PASSWORD RESET ROUTES ====================
+@app.route('/forgot-password', methods=['POST', 'GET'])
+def forgot_password():
+    """Handle password reset request"""
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip().lower()
+        
+        if not email:
+            return render_template('/auth/login.html', error='Email is required')
+        
+        # Find user by email
+        user = Users.query.filter_by(email=email).first()
+        
+        if user:
+            try:
+                # Generate reset token (valid for 1 hour)
+                from datetime import timedelta
+                reset_token = generate_email_verification_token(user.id)  # Reuse token generation
+                expires_at = datetime.utcnow() + timedelta(hours=1)
+                
+                # Store token in database
+                user.password_reset_token = reset_token
+                user.password_reset_expires = expires_at
+                db.session.commit()
+                
+                # Send reset email
+                send_password_reset_email(user.email, user.first_name, reset_token)
+                print(f"[PASSWORD-RESET] Reset email sent to {email}")
+                
+            except Exception as e:
+                print(f"[PASSWORD-RESET] Error: {str(e)}")
+                db.session.rollback()
+        
+        # Always show success message for security (don't reveal if email exists)
+        flash('If an account exists with that email, a password reset link has been sent.', 'info')
+        return redirect(url_for('login'))
+    
+    return render_template('/auth/login.html')
+
+
+@app.route('/reset-password/<token>', methods=['POST', 'GET'])
+@app.route('/reset-password/<token>/', methods=['POST', 'GET'])
+def reset_password(token):
+    """Handle password reset with token"""
+    try:
+        # Find user with this reset token
+        user = Users.query.filter_by(password_reset_token=token).first()
+        
+        if not user:
+            flash('Invalid password reset link.', 'danger')
+            return redirect(url_for('login'))
+        
+        # Check if token has expired
+        if user.password_reset_expires < datetime.utcnow():
+            flash('Password reset link has expired. Please request a new one.', 'danger')
+            return redirect(url_for('forgot_password'))
+        
+        if request.method == 'POST':
+            password = request.form.get('password', '')
+            confirm_password = request.form.get('confirm_password', '')
+            
+            if not password or not confirm_password:
+                return render_template('/auth/reset_password.html', token=token, error='All fields required')
+            
+            if password != confirm_password:
+                return render_template('/auth/reset_password.html', token=token, error='Passwords do not match')
+            
+            if len(password) < 8:
+                return render_template('/auth/reset_password.html', token=token, error='Password must be at least 8 characters')
+            
+            # Update password
+            user.passwordhash = generate_password_hash(password)
+            user.password_reset_token = None
+            user.password_reset_expires = None
+            db.session.commit()
+            
+            flash('Password reset successful! You can now log in with your new password.', 'success')
+            return redirect(url_for('login'))
+        
+        return render_template('/auth/reset_password.html', token=token)
+        
+    except Exception as e:
+        print(f"[PASSWORD-RESET] Error: {type(e).__name__}: {str(e)}")
+        flash(f'Error resetting password: {str(e)}', 'danger')
+        return redirect(url_for('login'))
+
+
+# ==================== ACCOUNT CONFIRMATION ROUTES ====================
+@app.route('/confirm-action/<token>', methods=['GET'])
+@app.route('/confirm-action/<token>/', methods=['GET'])
+def confirm_action(token):
+    """Confirm sensitive account actions"""
+    try:
+        # Decode token
+        decoded_token = decode_token(token)
+        user_id = decoded_token.get('sub')
+        token_type = decoded_token.get('type')
+        action_type = decoded_token.get('action')
+        
+        # Validate token type
+        if token_type != 'account_confirmation':
+            flash('Invalid confirmation link.', 'danger')
+            return redirect(url_for('login'))
+        
+        # Find user
+        user = Users.query.get(int(user_id))
+        if not user:
+            flash('User not found.', 'danger')
+            return redirect(url_for('login'))
+        
+        # Handle based on action type
+        if action_type == 'email_change':
+            # Update email from stored temporary value (implement based on your needs)
+            pass
+        elif action_type == 'password_change':
+            # Password change confirmed
+            pass
+        elif action_type == 'profile_update':
+            # Profile update confirmed
+            pass
+        
+        flash('Action confirmed successfully!', 'success')
+        return redirect(url_for('login'))
+        
+    except ExpiredSignatureError:
+        flash('Confirmation link has expired.', 'danger')
+        return redirect(url_for('login'))
+    
+    except Exception as e:
+        print(f"[ACCOUNT-CONFIRMATION] Error: {type(e).__name__}: {str(e)}")
+        flash(f'Error confirming action: {str(e)}', 'danger')
+        return redirect(url_for('login'))
+
+
 @app.route('/register', methods=['POST', 'GET'])
 def register():
     if request.method == 'POST':
@@ -362,6 +1324,140 @@ def register():
                 db.session.add(customer)
             
             db.session.commit()
+            
+            # Send welcome email based on role
+            try:
+                full_name = f"{first_name} {last_name}"
+                
+                if role == 'vendor':
+                    # Vendor welcome email
+                    html_content = f"""
+                    <html>
+                        <body style="font-family: Arial, sans-serif; background-color: #f5f5f5; padding: 20px;">
+                            <div style="max-width: 600px; margin: 0 auto; background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                                <h2 style="color: #FF6B35; margin-bottom: 20px;">Welcome to Ikeja Online, {full_name}!</h2>
+                                <p style="color: #333; font-size: 16px; line-height: 1.6;">Thank you for registering as a vendor on Ikeja Online. We're excited to have you join our marketplace.</p>
+                                
+                                <h3 style="color: #d4af37; margin-top: 20px;">Your Store Information:</h3>
+                                <p style="color: #333; background-color: #f9f9f9; padding: 15px; border-left: 4px solid #FF6B35;">
+                                    <strong>Store Name:</strong> {store_name if store_name else 'To be updated'}<br>
+                                    <strong>Email:</strong> {email}
+                                </p>
+                                
+                                <h3 style="color: #d4af37; margin-top: 20px;">Next Steps:</h3>
+                                <ol style="color: #333; font-size: 16px; line-height: 1.8;">
+                                    <li>Log in to your Ikeja Online vendor dashboard</li>
+                                    <li>Complete your store profile</li>
+                                    <li>Add your first products</li>
+                                    <li>Start selling!</li>
+                                </ol>
+                                
+                                <p style="color: #666; margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px; font-size: 14px;">
+                                    If you have any questions, please contact our support team.<br>
+                                    <strong>Ikeja Online Support Team</strong>
+                                </p>
+                            </div>
+                        </body>
+                    </html>
+                    """
+                    subject = "Welcome to Ikeja Online - Vendor Registration Complete"
+                    
+                elif role == 'super_admin':
+                    # Admin welcome email
+                    html_content = f"""
+                    <html>
+                        <body style="font-family: Arial, sans-serif; background-color: #f5f5f5; padding: 20px;">
+                            <div style="max-width: 600px; margin: 0 auto; background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                                <h2 style="color: #FF6B35; margin-bottom: 20px;">Welcome to Ikeja Online Admin Panel, {full_name}!</h2>
+                                <p style="color: #333; font-size: 16px; line-height: 1.6;">Your super admin account has been successfully created on Ikeja Online.</p>
+                                
+                                <h3 style="color: #d4af37; margin-top: 20px;">Account Details:</h3>
+                                <p style="color: #333; background-color: #f9f9f9; padding: 15px; border-left: 4px solid #FF6B35;">
+                                    <strong>Email:</strong> {email}<br>
+                                    <strong>Role:</strong> Super Administrator<br>
+                                    <strong>Permissions:</strong> Full System Access
+                                </p>
+                                
+                                <h3 style="color: #d4af37; margin-top: 20px;">Admin Responsibilities:</h3>
+                                <ul style="color: #333; font-size: 16px; line-height: 1.8;">
+                                    <li>Manage users and vendors</li>
+                                    <li>Monitor platform activities</li>
+                                    <li>Handle disputes and issues</li>
+                                    <li>Manage system configurations</li>
+                                </ul>
+                                
+                                <p style="color: #666; margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px; font-size: 14px;">
+                                    <strong>Ikeja Online Admin Team</strong>
+                                </p>
+                            </div>
+                        </body>
+                    </html>
+                    """
+                    subject = "Welcome to Ikeja Online - Admin Account Created"
+                    
+                else:
+                    # Customer welcome email
+                    html_content = f"""
+                    <html>
+                        <body style="font-family: Arial, sans-serif; background-color: #f5f5f5; padding: 20px;">
+                            <div style="max-width: 600px; margin: 0 auto; background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                                <h2 style="color: #FF6B35; margin-bottom: 20px;">Welcome to Ikeja Online, {full_name}!</h2>
+                                <p style="color: #333; font-size: 16px; line-height: 1.6;">Thank you for registering on Ikeja Online. We're thrilled to have you as part of our community!</p>
+                                
+                                <h3 style="color: #d4af37; margin-top: 20px;">Your Account Details:</h3>
+                                <p style="color: #333; background-color: #f9f9f9; padding: 15px; border-left: 4px solid #FF6B35;">
+                                    <strong>Email:</strong> {email}<br>
+                                    <strong>Account Type:</strong> Customer
+                                </p>
+                                
+                                <h3 style="color: #d4af37; margin-top: 20px;">Get Started:</h3>
+                                <ol style="color: #333; font-size: 16px; line-height: 1.8;">
+                                    <li>Browse our extensive range of electronics</li>
+                                    <li>Add items to your cart</li>
+                                    <li>Proceed to checkout securely</li>
+                                    <li>Track your orders in real-time</li>
+                                </ol>
+                                
+                                <p style="color: #666; margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px; font-size: 14px;">
+                                    If you need assistance, our customer support team is here to help.<br>
+                                    <strong>Ikeja Online Customer Support</strong>
+                                </p>
+                            </div>
+                        </body>
+                    </html>
+                    """
+                    subject = "Welcome to Ikeja Online - Registration Complete"
+                
+                # Send the email
+                print(f"\n========== SENDING EMAIL ==========")
+                print(f"To: {email}")
+                print(f"Subject: {subject}")
+                email_result = send_email(email, subject, html_content)
+                print(f"Email Result: {email_result}")
+                print(f"==================================\n")
+                
+                # Send verification email
+                print(f"\n========== SENDING VERIFICATION EMAIL ==========")
+                verification_token = generate_email_verification_token(new_user.id)
+                if verification_token:
+                    verification_result = send_verification_email(
+                        email,
+                        first_name,
+                        verification_token
+                    )
+                    print(f"Verification Email Result: {verification_result}")
+                else:
+                    print(f"Failed to generate verification token")
+                print(f"==============================================\n")
+                
+            except Exception as email_error:
+                # Log email error but don't fail registration
+                print(f"Error sending emails to {email}: {str(email_error)}")
+                import traceback
+                traceback.print_exc()
+            
+            # Flash success message
+            flash(f'Registration successful! Check your email to verify your account.', 'success')
             return redirect(url_for('login'))
             
         except Exception as e:
@@ -1082,50 +2178,65 @@ def verify_payment(reference):
             db.session.add(payment)
         
         # Update order status to completed (payment received successfully)
-        order.status = 'completed'
-        
-        # Distribute funds to vendors
-        order_items = Order_Items.query.filter_by(order_id=order.id).all()
-        
-        for item in order_items:
-            product = item.product
-            vendor = product.vendor
-            vendor_amount = item.price_at_purchase * item.quantity
+        # Only distribute funds if payment wasn't already processed
+        if order.status != 'completed':
+            order.status = 'completed'
             
-            # Get or create vendor wallet
-            vendor_wallet = VendorWallet.query.filter_by(vendor_id=vendor.id).first()
-            if not vendor_wallet:
-                vendor_wallet = VendorWallet(vendor_id=vendor.id, balance=0.0, total_earned=0.0)
-                db.session.add(vendor_wallet)
-                db.session.flush()
+            # Distribute funds to vendors
+            order_items = Order_Items.query.filter_by(order_id=order.id).all()
             
-            # Add amount to vendor wallet
-            vendor_wallet.balance += vendor_amount
-            vendor_wallet.total_earned += vendor_amount
-            vendor_wallet.updated_at = datetime.utcnow()
-            
-            # Create wallet transaction records
-            transaction = WalletTransaction(
-                vendor_id=vendor.id,
-                order_id=order.id,
-                amount=vendor_amount,
-                transaction_type='payment',
-                status='completed'
-            )
-            db.session.add(transaction)
-            
-            # Also create VendorWalletTransaction for transaction history
-            vendor_transaction = VendorWalletTransaction(
-                vendor_wallet_id=vendor_wallet.id,
-                transaction_type='credit',
-                amount=vendor_amount,
-                description=f'Payment from order {order.reference_number}',
-                reference_id=order.id,
-                status='completed'
-            )
-            db.session.add(vendor_transaction)
+            for item in order_items:
+                product = item.product
+                vendor = product.vendor
+                vendor_amount = item.price_at_purchase * item.quantity
+                
+                # Get or create vendor wallet
+                vendor_wallet = VendorWallet.query.filter_by(vendor_id=vendor.id).first()
+                if not vendor_wallet:
+                    vendor_wallet = VendorWallet(vendor_id=vendor.id, balance=0.0, total_earned=0.0)
+                    db.session.add(vendor_wallet)
+                    db.session.flush()
+                
+                # Add amount to vendor wallet
+                vendor_wallet.balance += vendor_amount
+                vendor_wallet.total_earned += vendor_amount
+                vendor_wallet.updated_at = datetime.utcnow()
+                
+                # Create wallet transaction records
+                transaction = WalletTransaction(
+                    vendor_id=vendor.id,
+                    order_id=order.id,
+                    amount=vendor_amount,
+                    transaction_type='payment',
+                    status='completed'
+                )
+                db.session.add(transaction)
+                
+                # Also create VendorWalletTransaction for transaction history
+                vendor_transaction = VendorWalletTransaction(
+                    vendor_wallet_id=vendor_wallet.id,
+                    transaction_type='credit',
+                    amount=vendor_amount,
+                    description=f'Payment from order {order.reference_number}',
+                    reference_id=order.id,
+                    status='completed'
+                )
+                db.session.add(vendor_transaction)
         
         db.session.commit()
+        
+        # Send payment confirmation email
+        try:
+            send_payment_confirmation_email(
+                user.email,
+                user.first_name,
+                order.reference_number,
+                order.total_amount,
+                'Card Payment'
+            )
+            print(f"[PAYMENT] Payment confirmation email sent to {user.email}")
+        except Exception as email_error:
+            print(f"[PAYMENT] Error sending payment confirmation email: {str(email_error)}")
         
         return jsonify({
             'success': True,
@@ -1200,51 +2311,92 @@ def payment_callback():
                         db.session.add(payment)
                     
                     # Update order status to completed (payment received successfully)
-                    order.status = 'completed'
-                    
-                    # Distribute funds to vendors
-                    order_items = Order_Items.query.filter_by(order_id=order.id).all()
-                    
-                    for item in order_items:
-                        product = item.product
-                        vendor = product.vendor
-                        vendor_amount = item.price_at_purchase * item.quantity
+                    # Only distribute funds if payment wasn't already processed
+                    if order.status != 'completed':
+                        order.status = 'completed'
                         
-                        # Get or create vendor wallet
-                        vendor_wallet = VendorWallet.query.filter_by(vendor_id=vendor.id).first()
-                        if not vendor_wallet:
-                            vendor_wallet = VendorWallet(vendor_id=vendor.id, balance=0.0, total_earned=0.0)
-                            db.session.add(vendor_wallet)
-                            db.session.flush()
+                        # Distribute funds to vendors
+                        order_items = Order_Items.query.filter_by(order_id=order.id).all()
                         
-                        # Add amount to vendor wallet
-                        vendor_wallet.balance += vendor_amount
-                        vendor_wallet.total_earned += vendor_amount
-                        vendor_wallet.updated_at = datetime.utcnow()
-                        
-                        # Create wallet transaction record
-                        transaction = WalletTransaction(
-                            vendor_id=vendor.id,
-                            order_id=order.id,
-                            amount=vendor_amount,
-                            transaction_type='payment',
-                            status='completed'
-                        )
-                        db.session.add(transaction)
-                        
-                        # Also create VendorWalletTransaction for transaction history
-                        vendor_transaction = VendorWalletTransaction(
-                            vendor_wallet_id=vendor_wallet.id,
-                            transaction_type='credit',
-                            amount=vendor_amount,
-                            description=f'Payment from order {order.reference_number}',
-                            reference_id=order.id,
-                            status='completed'
-                        )
-                        db.session.add(vendor_transaction)
+                        for item in order_items:
+                            product = item.product
+                            vendor = product.vendor
+                            vendor_amount = item.price_at_purchase * item.quantity
+                            
+                            # Get or create vendor wallet
+                            vendor_wallet = VendorWallet.query.filter_by(vendor_id=vendor.id).first()
+                            if not vendor_wallet:
+                                vendor_wallet = VendorWallet(vendor_id=vendor.id, balance=0.0, total_earned=0.0)
+                                db.session.add(vendor_wallet)
+                                db.session.flush()
+                            
+                            # Add amount to vendor wallet
+                            vendor_wallet.balance += vendor_amount
+                            vendor_wallet.total_earned += vendor_amount
+                            vendor_wallet.updated_at = datetime.utcnow()
+                            
+                            # Create wallet transaction record
+                            transaction = WalletTransaction(
+                                vendor_id=vendor.id,
+                                order_id=order.id,
+                                amount=vendor_amount,
+                                transaction_type='payment',
+                                status='completed'
+                            )
+                            db.session.add(transaction)
+                            
+                            # Also create VendorWalletTransaction for transaction history
+                            vendor_transaction = VendorWalletTransaction(
+                                vendor_wallet_id=vendor_wallet.id,
+                                transaction_type='credit',
+                                amount=vendor_amount,
+                                description=f'Payment from order {order.reference_number}',
+                                reference_id=order.id,
+                                status='completed'
+                            )
+                            db.session.add(vendor_transaction)
                     
                     db.session.commit()
                     print(f"Order {order_id} updated to completed status and vendor payments distributed")
+                    
+                    # Send order and payment confirmation emails
+                    try:
+                        customer = order.customer
+                        user = customer.user
+                        
+                        # Prepare items details for email
+                        order_items = Order_Items.query.filter_by(order_id=order.id).all()
+                        items_details = [
+                            {
+                                'product_name': item.product.name,
+                                'quantity': item.quantity,
+                                'price_at_purchase': item.price_at_purchase
+                            }
+                            for item in order_items
+                        ]
+                        
+                        # Send order confirmation email (if not already sent during checkout)
+                        send_order_confirmation_email(
+                            user.email,
+                            user.first_name,
+                            order.reference_number,
+                            items_details,
+                            order.total_amount
+                        )
+                        print(f"[PAYMENT-CALLBACK] Order confirmation email sent to {user.email}")
+                        
+                        # Send payment confirmation email
+                        send_payment_confirmation_email(
+                            user.email,
+                            user.first_name,
+                            order.reference_number,
+                            order.total_amount,
+                            'Card Payment'
+                        )
+                        print(f"[PAYMENT-CALLBACK] Payment confirmation email sent to {user.email}")
+                        
+                    except Exception as email_error:
+                        print(f"[PAYMENT-CALLBACK] Error sending emails: {str(email_error)}")
         else:
             print(f"Payment verification failed: {response_data.get('message', 'Unknown error')}")
             
@@ -2258,6 +3410,19 @@ def vendor_withdrawal():
         db.session.add(transaction)
         db.session.commit()
         
+        # Send vendor payout email
+        try:
+            payout_method = f"{bank_name} - {account_number}"
+            send_vendor_payout_email(
+                user.email,
+                vendor.store_name or user.first_name,
+                amount,
+                payout_method
+            )
+            print(f"[WITHDRAWAL] Vendor payout email sent to {user.email}")
+        except Exception as email_error:
+            print(f"[WITHDRAWAL] Error sending vendor payout email: {str(email_error)}")
+        
         return jsonify({
             'success': True,
             'message': 'Withdrawal request submitted',
@@ -2610,14 +3775,14 @@ def get_vendor_order_details(order_id):
             product = Products.query.get(item.product_id)
             # Only show items from this vendor
             if product and product.vendor_id == vendor.id:
-                item_total = float(item.price) * item.quantity
+                item_total = float(item.price_at_purchase) * item.quantity
                 vendor_total += item_total
                 items.append({
                     'id': item.id,
                     'product_id': item.product_id,
                     'product_name': product.name,
                     'quantity': item.quantity,
-                    'price': float(item.price),
+                    'price': float(item.price_at_purchase),
                     'total': item_total
                 })
         
@@ -2627,12 +3792,16 @@ def get_vendor_order_details(order_id):
                 'reference_number': order.reference_number,
                 'customer_name': f"{customer_user.first_name} {customer_user.last_name}" if customer_user else 'Unknown',
                 'customer_email': customer_user.email if customer_user else 'unknown@email.com',
+                'customer_phone': customer.phone if customer else '',
+                'customer_address': customer.default_address if customer else '',
+                'delivery_address': customer.default_address if customer else '',
                 'total_amount': float(order.total_amount),
                 'subtotal': float(order.total_amount),
                 'status': order.status or 'pending',
                 'payment_status': payment_status,
                 'payment_method': payment_method,
                 'payment_amount': payment_amount,
+                'shipping_status': order.shipping_status or 'pending',
                 'created_at': order.created_at.isoformat() if order.created_at else None,
                 'items': items,
                 'vendor_total': vendor_total
@@ -2684,8 +3853,24 @@ def update_shipping_status(order_id):
             return jsonify({'success': False, 'message': f'Invalid shipping status. Must be one of: {", ".join(valid_statuses)}'}), 400
         
         # Update the shipping status
+        old_status = order.shipping_status
         order.shipping_status = new_status
         db.session.commit()
+        
+        # Send email for any shipping status change
+        if new_status != old_status:
+            try:
+                tracking_number = data.get('tracking_number', None)
+                send_order_shipped_email(
+                    order.customer.user.email,
+                    order.customer.user.first_name,
+                    order.reference_number,
+                    tracking_number,
+                    new_status
+                )
+                print(f"[SHIPPING] Order status email sent to {order.customer.user.email} - New status: {new_status}")
+            except Exception as email_error:
+                print(f"[SHIPPING] Error sending order status email: {str(email_error)}")
         
         return jsonify({
             'success': True,
@@ -3620,6 +4805,92 @@ def checkout():
         
         db.session.commit()
         
+        # Check for low stock items and send alerts to vendors
+        try:
+            vendors_low_stock = {}
+            for item in order_items:
+                # Check if product stock is now below 5
+                if item['product'].stock_quantity < 5:
+                    vendor_id = item['product'].vendor_id
+                    if vendor_id not in vendors_low_stock:
+                        vendors_low_stock[vendor_id] = []
+                    vendors_low_stock[vendor_id].append({
+                        'product_name': item['product'].name,
+                        'stock_quantity': item['product'].stock_quantity,
+                        'price': item['product'].price
+                    })
+            
+            # Send low stock alerts to vendors
+            for vendor_id, low_stock_products in vendors_low_stock.items():
+                vendor = Vendors.query.get(vendor_id)
+                if vendor and vendor.user:
+                    send_low_stock_alert_email(
+                        vendor.user.email,
+                        vendor.user.first_name,
+                        vendor.store_name or vendor.user.first_name,
+                        low_stock_products
+                    )
+                    print(f"[CHECKOUT] Low stock alert email sent to {vendor.user.email}")
+        except Exception as low_stock_error:
+            print(f"[CHECKOUT] Error sending low stock alerts: {str(low_stock_error)}")
+        
+        # Send order confirmation email to customer
+        try:
+            items_details = [
+                {
+                    'product_name': item['product'].name,
+                    'quantity': item['quantity'],
+                    'price_at_purchase': item['price_at_purchase']
+                }
+                for item in order_items
+            ]
+            send_order_confirmation_email(
+                user.email,
+                user.first_name,
+                order.reference_number,
+                items_details,
+                order.total_amount
+            )
+            print(f"[CHECKOUT] Order confirmation email sent to {user.email}")
+        except Exception as email_error:
+            print(f"[CHECKOUT] Error sending order confirmation email: {str(email_error)}")
+        
+        # Send order notification emails to vendors
+        try:
+            # Group items by vendor
+            vendors_orders = {}
+            for item in order_items:
+                vendor_id = item['product'].vendor_id
+                if vendor_id not in vendors_orders:
+                    vendors_orders[vendor_id] = []
+                vendors_orders[vendor_id].append(item)
+            
+            # Send email to each vendor
+            for vendor_id, vendor_items in vendors_orders.items():
+                vendor = Vendors.query.get(vendor_id)
+                if vendor and vendor.user:
+                    products_info = [
+                        {
+                            'product_name': item['product'].name,
+                            'quantity': item['quantity'],
+                            'price': item['price_at_purchase']
+                        }
+                        for item in vendor_items
+                    ]
+                    
+                    send_product_ordered_email(
+                        vendor.user.email,
+                        vendor.user.first_name,
+                        vendor.store_name or vendor.user.first_name,
+                        products_info,
+                        order.reference_number,
+                        f"{user.first_name} {user.last_name}",
+                        order.total_amount
+                    )
+                    print(f"[CHECKOUT] Vendor order email sent to {vendor.user.email}")
+        except Exception as vendor_email_error:
+            print(f"[CHECKOUT] Error sending vendor emails: {str(vendor_email_error)}")
+        
         return jsonify({
             'success': True,
             'message': 'Order created successfully',
@@ -3990,21 +5261,27 @@ def get_order_details(order_id):
         user_id = int(get_jwt_identity())
         user = Users.query.get(user_id)
         
+        print(f"[GET-ORDER-DETAILS] Fetching order {order_id} for user {user_id}")
+        
         if not user or user.role.name != 'customer':
+            print(f"[GET-ORDER-DETAILS] Unauthorized: user not found or not a customer")
             return jsonify({'success': False, 'error': 'Unauthorized'}), 403
         
         # Get customer record
         customer = Customers.query.filter_by(user_id=user_id).first()
         if not customer:
+            print(f"[GET-ORDER-DETAILS] Customer record not found for user {user_id}")
             return jsonify({'success': False, 'error': 'Not Found'}), 404
         
         # Get order
         order = Orders.query.get(order_id)
         if not order:
+            print(f"[GET-ORDER-DETAILS] Order {order_id} not found")
             return jsonify({'success': False, 'error': 'Order not found'}), 404
         
         # Verify customer owns this order
         if order.customer_id != customer.id:
+            print(f"[GET-ORDER-DETAILS] Order {order_id} does not belong to customer {customer.id}")
             return jsonify({'success': False, 'error': 'Unauthorized', 'message': 'You do not own this order'}), 403
         
         # Build order details
@@ -4013,29 +5290,42 @@ def get_order_details(order_id):
             'reference_number': order.reference_number,
             'customer_name': f"{user.first_name} {user.last_name}",
             'customer_email': user.email,
-            'total_amount': order.total_amount,
-            'status': order.status,
-            'created_at': order.created_at.isoformat(),
+            'customer_phone': customer.phone or 'Not provided',
+            'customer_address': customer.default_address or 'Not provided',
+            'total_amount': float(order.total_amount),
+            'status': order.status or 'pending',
+            'payment_status': 'pending',
+            'shipping_status': order.shipping_status or 'pending',
+            'created_at': order.created_at.isoformat() if order.created_at else None,
             'items': []
         }
+        
+        # Get payment status
+        payment = Payments.query.filter_by(order_id=order.id).first()
+        if payment:
+            order_dict['payment_status'] = payment.status or 'pending'
         
         # Add order items
         for item in order.items:
             item_dict = {
                 'product_id': item.product_id,
-                'product_name': item.product.name,
+                'product_name': item.product.name if item.product else 'Unknown Product',
                 'quantity': item.quantity,
-                'price_at_purchase': item.price_at_purchase,
-                'total': item.quantity * item.price_at_purchase
+                'price_at_purchase': float(item.price_at_purchase),
+                'total': float(item.quantity * item.price_at_purchase)
             }
             order_dict['items'].append(item_dict)
+        
+        print(f"[GET-ORDER-DETAILS] Successfully retrieved order {order_id} with {len(order_dict['items'])} items")
         
         return jsonify({
             'success': True,
             'order': order_dict
         }), 200
     except Exception as e:
-        print(f"Error fetching order details: {str(e)}")
+        print(f"[GET-ORDER-DETAILS] Error fetching order details: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'success': False, 'error': 'Server Error', 'message': str(e)}), 500
 
 

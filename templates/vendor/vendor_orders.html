@@ -566,38 +566,76 @@
             color: #FF6B35;
         }
 
-        .payment-section {
-            background: linear-gradient(135deg, rgba(76, 175, 80, 0.1), rgba(76, 175, 80, 0.05));
-            border: 1px solid rgba(76, 175, 80, 0.3);
-            border-radius: 8px;
-            padding: 1.5rem;
-            margin-top: 1.5rem;
+        /* Customer Billing Details */
+        .billing-details-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
         }
 
-        .payment-section h4 {
-            margin: 0 0 1rem 0;
-            color: #1a1a1a;
-            font-size: 1rem;
-        }
-
-        .payment-detail {
+        .billing-detail {
             display: flex;
-            justify-content: space-between;
-            padding: 0.5rem 0;
-            font-size: 0.95rem;
+            flex-direction: column;
         }
 
-        .payment-detail.total {
-            border-top: 1px solid rgba(76, 175, 80, 0.3);
-            padding-top: 1rem;
-            margin-top: 1rem;
+        .billing-detail.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .billing-detail label {
+            font-size: 0.8rem;
+            color: #999;
+            text-transform: uppercase;
+            margin-bottom: 0.3rem;
             font-weight: 700;
-            color: #1a1a1a;
-            font-size: 1.1rem;
+            letter-spacing: 0.5px;
         }
 
-        .payment-status {
-            display: inline-block;
+        .billing-detail p {
+            font-size: 0.95rem;
+            color: #1a1a1a;
+            font-weight: 500;
+            padding: 0.5rem 0;
+        }
+
+        /* Order Detail Rows */
+        .order-detail-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .order-detail-item h3 {
+            font-size: 0.85rem;
+            color: #999;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .order-detail-item p {
+            font-size: 1rem;
+            color: #1a1a1a;
+            font-weight: 500;
+        }
+
+        /* Order Items List */
+        .order-items-list {
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        .order-items-list h3 {
+            font-size: 0.95rem;
+            color: #999;
+            text-transform: uppercase;
+            margin-bottom: 1rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
             margin-top: 1rem;
             padding: 0.5rem 1rem;
             border-radius: 6px;
@@ -751,15 +789,15 @@
             }
 
             .topbar-title h1 {
-                font-size: 0.95rem;
+                font-size: 0.85rem;
             }
 
             .topbar-title p {
-                font-size: 0.65rem;
+                font-size: 0.55rem;
             }
 
             .section-header h2 {
-                font-size: 0.95rem;
+                font-size: 0.85rem;
             }
 
             .filter-options {
@@ -768,16 +806,16 @@
 
             .filter-btn {
                 padding: 0.5rem 0.6rem;
-                font-size: 0.75rem;
+                font-size: 0.65rem;
             }
 
             .orders-table {
-                font-size: 0.7rem;
+                font-size: 0.6rem;
                 border-collapse: collapse;
             }
 
             .orders-table th {
-                font-size: 0.65rem;
+                font-size: 0.55rem;
                 padding: 0.5rem 0.3rem;
             }
 
@@ -785,17 +823,90 @@
                 padding: 0.5rem 0.3rem;
             }
 
-            .modal-content {
-                width: 98%;
-                padding: 0.9rem;
+            .order-ref {
+                font-size: 0.6rem;
             }
 
-            .modal-content h2 {
-                font-size: 1rem;
+            .order-customer {
+                font-size: 0.65rem;
+            }
+
+            .order-email {
+                font-size: 0.6rem;
+            }
+
+            .order-amount {
+                font-size: 0.6rem;
+            }
+
+            .status-badge {
+                font-size: 0.6rem;
+                padding: 0.25rem 0.6rem;
+            }
+
+            .shipping-status-dropdown {
+                font-size: 0.65rem !important;
+                padding: 0.4rem 0.5rem !important;
+                min-width: 100px !important;
+            }
+
+            .modal-content {
+                width: 98%;
+                padding: 0.8rem;
+            }
+
+            .modal-header h2 {
+                font-size: 0.9rem;
+            }
+
+            .order-detail-section {
+                margin-bottom: 1rem;
+                padding: 0.8rem;
+            }
+
+            .order-detail-row {
+                gap: 1rem;
+                margin-bottom: 0.8rem;
+            }
+
+            .order-detail-item h3,
+            .billing-detail label {
+                font-size: 0.65rem;
+                margin-bottom: 0.25rem;
+            }
+
+            .order-detail-item p,
+            .billing-detail p {
+                font-size: 0.8rem;
+            }
+
+            .order-items-list h3 {
+                font-size: 0.7rem;
+                margin-bottom: 0.5rem;
+            }
+
+            .order-item {
+                padding: 0.5rem 0;
+            }
+
+            .item-info h5 {
+                font-size: 0.75rem;
+            }
+
+            .item-info p {
+                font-size: 0.6rem;
+            }
+
+            .item-price {
+                font-size: 0.7rem;
+            }
+
+            .billing-details-grid {
+                gap: 0.8rem;
             }
 
             .payment-detail {
-                font-size: 0.8rem;
+                font-size: 0.7rem;
             }
 
             .detail-row {
@@ -1094,9 +1205,45 @@
             displayOrders(filter);
         }
 
+        // Show error in modal instead of alert
+        function showOrderError(errorTitle, errorMessage) {
+            const modalBody = document.getElementById('orderModalBody');
+            modalBody.innerHTML = `
+                <div style="text-align: center; padding: 2rem;">
+                    <div style="font-size: 3rem; color: #f44336; margin-bottom: 1rem;">
+                        <i class="fas fa-exclamation-circle"></i>
+                    </div>
+                    <h3 style="color: #1a1a1a; font-size: 1.2rem; margin-bottom: 0.5rem;">${errorTitle}</h3>
+                    <p style="color: #666; margin-bottom: 1.5rem; line-height: 1.6;">${errorMessage}</p>
+                    <button class="btn-view" onclick="closeOrderModal()" style="background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%); border: none; cursor: pointer; padding: 0.8rem 2rem;">
+                        <i class="fas fa-times"></i> Close
+                    </button>
+                </div>
+            `;
+            
+            const modal = document.getElementById('orderModal');
+            modal.classList.add('show');
+        }
+
         async function viewOrderDetails(orderId) {
             try {
                 const token = localStorage.getItem('access_token');
+                
+                if (!token) {
+                    showOrderError('Session Expired', 'Your session has expired. Please log in again to view order details.');
+                    return;
+                }
+                
+                // Show loading state
+                const modalBody = document.getElementById('orderModalBody');
+                modalBody.innerHTML = `
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>Loading order details...</p>
+                    </div>
+                `;
+                const modal = document.getElementById('orderModal');
+                modal.classList.add('show');
                 
                 const response = await fetch(`/api/vendor/orders/${orderId}`, {
                     method: 'GET',
@@ -1107,7 +1254,8 @@
                 });
 
                 if (!response.ok) {
-                    throw new Error('Failed to load order details');
+                    const error = await response.text();
+                    throw new Error(`HTTP ${response.status}: ${error}`);
                 }
 
                 const data = await response.json();
@@ -1115,120 +1263,115 @@
                 if (data.success) {
                     displayOrderModal(data.order);
                 } else {
-                    alert(data.message || 'Error loading order details');
+                    showOrderError('Failed to Load Order', data.message || 'Error loading order details. Please try again.');
                 }
             } catch (error) {
                 console.error('Error:', error);
-                alert('Error loading order details: ' + error.message);
+                showOrderError('Error Loading Order', `${error.message}<br><br><small style="color: #999;">Please check your internet connection and try again.</small>`);
             }
         }
 
         function displayOrderModal(order) {
-            const orderDateFormatted = new Date(order.created_at).toLocaleDateString();
+            const orderDateFormatted = new Date(order.created_at).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            
+            // Escape HTML special characters
+            function escapeHtml(text) {
+                if (!text) return '';
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
             
             let itemsHtml = '';
             if (order.items && order.items.length > 0) {
                 order.items.forEach(item => {
+                    const itemTotal = (item.quantity * item.price).toFixed(2);
                     itemsHtml += `
                         <div class="order-item">
                             <div class="item-info">
-                                <h5>${item.product_name}</h5>
-                                <p>Qty: ${item.quantity}</p>
+                                <h5>${escapeHtml(item.product_name)}</h5>
+                                <p>Qty: ${item.quantity} × ₦${parseFloat(item.price).toFixed(2)}</p>
                             </div>
-                            <div class="item-price">₦${parseFloat(item.price).toLocaleString('en-US', {minimumFractionDigits: 2})}</div>
+                            <div class="item-price">₦${itemTotal.toLocaleString()}</div>
                         </div>
                     `;
                 });
+            } else {
+                itemsHtml = '<p style="color: #999;">No items in this order</p>';
             }
 
+            const statusClass = `status-${(order.status || 'pending').toLowerCase()}`;
             const paymentStatusClass = `status-${order.payment_status ? order.payment_status.toLowerCase() : 'pending'}`;
+            const shippingStatusClass = `status-${(order.shipping_status || 'pending').toLowerCase()}`;
+            const amount = parseFloat(order.total_amount).toFixed(2);
 
             const modalBody = `
-                <div class="order-detail-section">
-                    <div class="detail-row">
-                        <div class="detail-item">
-                            <h4>Order Reference</h4>
-                            <p style="color: #FF6B35; font-family: 'Courier New';">${order.reference_number}</p>
+                <!-- Customer Billing Details Section -->
+                <div class="order-detail-section" style="background: #f9f9f9; padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem; border-left: 4px solid #FF6B35;">
+                    <h3 style="color: #1a1a1a; margin-bottom: 1rem; font-size: 1.1rem;">Billing Address & Contact</h3>
+                    <div class="billing-details-grid">
+                        <div class="billing-detail">
+                            <label>Name:</label>
+                            <p><strong>${escapeHtml(order.customer_name)}</strong></p>
                         </div>
-                        <div class="detail-item">
-                            <h4>Order Date</h4>
-                            <p>${orderDateFormatted}</p>
+                        <div class="billing-detail">
+                            <label>Email:</label>
+                            <p>${escapeHtml(order.customer_email)}</p>
                         </div>
-                    </div>
-                    <div class="detail-row">
-                        <div class="detail-item">
-                            <h4>Status</h4>
-                            <p><span class="status-badge status-${order.status.toLowerCase()}">${order.status}</span></p>
+                        <div class="billing-detail">
+                            <label>Phone:</label>
+                            <p>${escapeHtml(order.customer_phone || 'Not provided')}</p>
                         </div>
-                        <div class="detail-item">
-                            <h4>Payment Status</h4>
-                            <p><span class="status-badge ${paymentStatusClass}">${order.payment_status || 'Pending'}</span></p>
+                        <div class="billing-detail full-width">
+                            <label>Delivery Address:</label>
+                            <p>${escapeHtml(order.customer_address || order.delivery_address || 'Not provided')}</p>
                         </div>
                     </div>
                 </div>
 
-                <div class="order-detail-section">
-                    <h4 style="margin-bottom: 1rem; color: #1a1a1a;">Customer Information</h4>
-                    <div class="detail-row">
-                        <div class="detail-item">
-                            <h4>Customer Name</h4>
-                            <p>${order.customer_name}</p>
-                        </div>
-                        <div class="detail-item">
-                            <h4>Email</h4>
-                            <p>${order.customer_email}</p>
-                        </div>
+                <!-- Order Information Section -->
+                <div class="order-detail-row">
+                    <div class="order-detail-item">
+                        <h3>Order Reference</h3>
+                        <p style="font-family: 'Courier New', monospace; color: #FF6B35; font-weight: 700;">${order.reference_number}</p>
                     </div>
-                    <div class="detail-item">
-                        <h4>Delivery Address</h4>
-                        <p>${order.delivery_address || 'Not provided'}</p>
+                    <div class="order-detail-item">
+                        <h3>Order Date</h3>
+                        <p>${orderDateFormatted}</p>
                     </div>
                 </div>
 
-                <div class="order-detail-section">
-                    <div class="order-items">
-                        <h4>Order Items</h4>
-                        ${itemsHtml}
+                <div class="order-detail-row">
+                    <div class="order-detail-item">
+                        <h3>Total Amount</h3>
+                        <p style="font-size: 1.2rem; color: #FF6B35; font-weight: 700;">₦${amount.toLocaleString()}</p>
+                    </div>
+                    <div class="order-detail-item">
+                        <h3>Order Status</h3>
+                        <p><span class="status-badge ${statusClass}">${(order.status || 'PENDING').toUpperCase()}</span></p>
                     </div>
                 </div>
 
-                <div class="payment-section">
-                    <h4>Payment Details</h4>
-                    <div class="payment-detail">
-                        <span>Subtotal:</span>
-                        <span>₦${parseFloat(order.subtotal || order.total_amount).toLocaleString('en-US', {minimumFractionDigits: 2})}</span>
+                <div class="order-detail-row">
+                    <div class="order-detail-item">
+                        <h3>Payment Status</h3>
+                        <p><span class="status-badge ${paymentStatusClass}">${(order.payment_status || 'PENDING').toUpperCase()}</span></p>
                     </div>
-                    ${order.tax ? `
-                    <div class="payment-detail">
-                        <span>Tax:</span>
-                        <span>₦${parseFloat(order.tax).toLocaleString('en-US', {minimumFractionDigits: 2})}</span>
+                    <div class="order-detail-item">
+                        <h3>Shipping Status</h3>
+                        <p><span class="status-badge ${shippingStatusClass}">${(order.shipping_status || 'PENDING').toUpperCase()}</span></p>
                     </div>
-                    ` : ''}
-                    ${order.shipping ? `
-                    <div class="payment-detail">
-                        <span>Shipping:</span>
-                        <span>₦${parseFloat(order.shipping).toLocaleString('en-US', {minimumFractionDigits: 2})}</span>
-                    </div>
-                    ` : ''}
-                    <div class="payment-detail total">
-                        <span>Total Amount:</span>
-                        <span>₦${parseFloat(order.total_amount).toLocaleString('en-US', {minimumFractionDigits: 2})}</span>
-                    </div>
-                    <div class="payment-detail" style="border-top: 1px solid rgba(76, 175, 80, 0.3); padding-top: 1rem; margin-top: 1rem;">
-                        <span><strong>Amount Paid:</strong></span>
-                        <span style="color: #27ae60; font-weight: 700;">₦${parseFloat(order.payment_status === 'completed' || order.payment_status === 'paid' ? order.total_amount : 0).toLocaleString('en-US', {minimumFractionDigits: 2})}</span>
-                    </div>
-                    ${order.payment_method ? `
-                    <div class="payment-detail">
-                        <span>Payment Method:</span>
-                        <span>${order.payment_method.charAt(0).toUpperCase() + order.payment_method.slice(1)}</span>
-                    </div>
-                    ` : ''}
-                    <div style="margin-top: 1rem;">
-                        <span class="payment-status status-badge ${paymentStatusClass}">
-                            ${order.payment_status ? order.payment_status.charAt(0).toUpperCase() + order.payment_status.slice(1) : 'Pending Payment'}
-                        </span>
-                    </div>
+                </div>
+
+                <div class="order-items-list">
+                    <h3>Order Items</h3>
+                    ${itemsHtml}
                 </div>
             `;
 
