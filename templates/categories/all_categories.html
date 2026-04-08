@@ -216,7 +216,7 @@
             font-size: 0.85rem;
             transition: var(--transition);
             text-decoration: none;
-            display: inline-block;
+            display: none;
             box-shadow: 0 2px 10px rgba(255,107,53,0.2);
         }
 
@@ -236,6 +236,7 @@
             font-size: 0.8rem;
             transition: var(--transition);
             text-decoration: none;
+            display: none;
         }
 
         .btn-logout:hover {
@@ -656,6 +657,7 @@
                 padding: 12px 20px;
                 border-radius: 0;
                 border: 1px solid transparent;
+                font-size: 0.85rem;
             }
 
             .menu-toggle {
@@ -663,30 +665,51 @@
             }
 
             .auth-buttons {
-                display: none;
+                display: flex !important;
+                gap: 8px;
+                margin-right: 10px;
+            }
+
+            .btn-signin {
+                padding: 7px 12px;
+                font-size: 0.75rem;
+            }
+
+            .btn-signup {
+                padding: 7px 12px;
+                font-size: 0.75rem;
             }
 
             .user-profile.active {
                 display: flex;
                 flex-direction: row;
                 align-items: center;
-                gap: 15px;
+                gap: 12px;
                 width: auto;
+            }
+
+            .user-profile:not(.active) {
+                display: none !important;
             }
 
             .user-avatar {
                 display: none;
             }
 
-            .user-info {
+            .user-profile.active .user-info {
                 display: flex;
                 flex-direction: column;
                 transition: var(--transition);
+                cursor: pointer;
+            }
+
+            .user-info:hover strong {
+                color: var(--orange);
             }
 
             .user-info strong {
                 color: var(--white);
-                font-size: 0.95rem;
+                font-size: 0.85rem;
                 transition: var(--transition);
             }
 
@@ -699,46 +722,21 @@
             }
 
             .btn-logout {
+                padding: 6px 10px;
+                font-size: 0.7rem;
                 display: none !important;
-            }
-
-            .section-header h1 {
-                font-size: 2rem;
-            }
-
-            .categories-grid {
-                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-                gap: 16px;
-            }
-
-            .category-card {
-                min-height: 240px;
-            }
-
-            .category-icon {
-                font-size: 2.8rem;
-            }
-
-            .category-name {
-                font-size: 1rem;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .header-inner {
-                padding: 12px 0;
-            }
-
-            .brand {
-                font-size: 1.3rem;
             }
 
             .section-header h1 {
                 font-size: 1.6rem;
             }
 
+            .section-header p {
+                font-size: 0.9rem;
+            }
+
             .categories-grid {
-                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
                 gap: 12px;
             }
 
@@ -746,22 +744,98 @@
                 min-height: 200px;
             }
 
-            .category-info {
-                padding: 15px;
-            }
-
             .category-icon {
                 font-size: 2.2rem;
-                margin-bottom: 6px;
             }
 
             .category-name {
                 font-size: 0.9rem;
-                margin-bottom: 4px;
             }
 
             .category-count {
+                font-size: 0.7rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header-inner {
+                padding: 10px 0;
+                gap: 8px;
+            }
+
+            .brand {
+                font-size: 1.1rem;
+            }
+
+            .brand i {
+                font-size: 1.4rem;
+            }
+
+            .auth-buttons {
+                gap: 6px;
+                margin-right: 5px;
+            }
+
+            .user-profile:not(.active) {
+                display: none !important;
+            }
+
+            .btn-signin {
+                padding: 6px 10px;
+                font-size: 0.65rem;
+            }
+
+            .btn-signup {
+                padding: 6px 10px;
+                font-size: 0.65rem;
+            }
+
+            .user-info strong {
                 font-size: 0.75rem;
+            }
+
+            .btn-logout {
+                padding: 5px 8px;
+                font-size: 0.6rem;
+            }
+
+            .section-header h1 {
+                font-size: 1.4rem;
+            }
+
+            .section-header p {
+                font-size: 0.8rem;
+            }
+
+            .categories-grid {
+                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+                gap: 10px;
+            }
+
+            .category-card {
+                min-height: 160px;
+            }
+
+            .category-info {
+                padding: 10px;
+            }
+
+            .category-icon {
+                font-size: 1.8rem;
+                margin-bottom: 4px;
+            }
+
+            .category-name {
+                font-size: 0.8rem;
+                margin-bottom: 2px;
+            }
+
+            .category-count {
+                font-size: 0.65rem;
+            }
+
+            .back-link {
+                font-size: 0.85rem;
             }
         }
 
@@ -1223,6 +1297,7 @@
                 display:none;
             }
         }
+        
     </style>
 </head>
 <body>
@@ -1530,17 +1605,21 @@
             const dashboardBtn = document.getElementById('dashboardBtn');
             const userProfile = document.getElementById('userProfile');
             const userInfo = document.querySelector('.user-info');
+            const authButtons = document.getElementById('authButtons');
+            const logoutBtn = document.getElementById('logoutBtn');
             
             // Dashboard button click handler
-            dashboardBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                const dashboardUrl = dashboardBtn.dataset.dashboardUrl;
-                if (dashboardUrl) {
-                    window.location.href = dashboardUrl;
-                }
-            });
+            if (dashboardBtn) {
+                dashboardBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const dashboardUrl = dashboardBtn.dataset.dashboardUrl;
+                    if (dashboardUrl) {
+                        window.location.href = dashboardUrl;
+                    }
+                });
+            }
             
-            // User info click handler (for mobile view)
+            // User info click handler (for mobile view and desktop)
             if (userInfo) {
                 userInfo.addEventListener('click', (e) => {
                     e.preventDefault();
@@ -1551,28 +1630,38 @@
                 });
             }
             
-            document.getElementById('logoutBtn').addEventListener('click', (e) => {
-                e.preventDefault();
-                logout();
-            });
+            // Logout button click handler
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    logout();
+                });
+            }
+            
+            // Menu toggle for mobile
+            const menuToggle = document.getElementById('menuToggle');
+            const nav = document.getElementById('nav');
+
+            if (menuToggle) {
+                menuToggle.addEventListener('click', () => {
+                    nav.classList.toggle('active');
+                });
+            }
+
+            // Close menu when clicking a link
+            if (nav) {
+                nav.querySelectorAll('a').forEach(link => {
+                    link.addEventListener('click', () => {
+                        nav.classList.remove('active');
+                    });
+                });
+            }
             
             // Add back to categories button listener
-            document.getElementById('backToCategoriesBtn').addEventListener('click', backToCategories);
-        });
-
-        // Menu toggle for mobile
-        const menuToggle = document.getElementById('menuToggle');
-        const nav = document.getElementById('nav');
-
-        menuToggle.addEventListener('click', () => {
-            nav.classList.toggle('active');
-        });
-
-        // Close menu when clicking a link
-        nav.querySelectorAll('a').forEach(link => {
-            link.addEventListener('click', () => {
-                nav.classList.remove('active');
-            });
+            const backBtn = document.getElementById('backToCategoriesBtn');
+            if (backBtn) {
+                backBtn.addEventListener('click', backToCategories);
+            }
         });
 
         // Load categories

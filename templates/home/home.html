@@ -314,6 +314,7 @@
             font-weight: 600;
             font-size: 0.85rem;
             transition: var(--transition);
+            display: none;
         }
 
         .btn-logout:hover {
@@ -332,6 +333,7 @@
             font-size: 0.8rem;
             transition: var(--transition);
             text-decoration: none;
+            display: none;
         }
 
         .btn-logout:hover {
@@ -1798,7 +1800,23 @@
             }
 
             .auth-buttons {
-                display: none;
+                display: flex;
+                gap: 8px;
+                align-items: center;
+            }
+
+            .btn-signin {
+                padding: 7px 12px;
+                font-size: 0.75rem;
+            }
+
+            .btn-signup {
+                padding: 7px 12px;
+                font-size: 0.75rem;
+            }
+
+            .user-profile:not(.active) {
+                display: none !important;
             }
 
             .user-profile.active {
@@ -1857,17 +1875,14 @@
                 font-size: 0.8rem;
                 width: 100%;
                 justify-content: center;
-            }
-
-            .btn-dashboard {
-                display: inline-flex !important;
+                display: none !important;
             }
 
             .btn-logout {
                 width: 100%;
                 padding: 6px 12px;
                 font-size: 0.8rem;
-                display: inline-flex !important;
+                display: none !important;
             }
 
             .hero-content {
@@ -1945,6 +1960,11 @@
             .brand span {
                 display: none;
             }
+
+            .user-profile:not(.active) {
+                display: none !important;
+            }
+
             .header-inner {
                 padding: 12px 0;
                 transition: var(--transition);
@@ -1953,6 +1973,20 @@
             .brand {
                 font-size: 1.1rem;
                 transition: var(--transition);
+            }
+
+            .auth-buttons {
+                gap: 6px;
+            }
+
+            .btn-signin {
+                padding: 6px 10px;
+                font-size: 0.65rem;
+            }
+
+            .btn-signup {
+                padding: 6px 10px;
+                font-size: 0.65rem;
             }
 
             .hero-text h1 {
