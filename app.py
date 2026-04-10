@@ -17,6 +17,7 @@ from jwt import ExpiredSignatureError, InvalidTokenError
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///ikeja_online.db')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'Hackeye@1999SecretKey')
 app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', '89421a71f05092d8311486c018417e22')
 app.config['JWT_TOKEN_LOCATION'] = ['headers']
