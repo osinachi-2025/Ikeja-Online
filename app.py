@@ -3,7 +3,7 @@ from flask_migrate import Migrate
 import requests
 from io import BytesIO
 from flask_cors import CORS
-from models import db, Roles, Users, Vendors, Customers, Categories, Products, Product_Images, Orders, Order_Items, Reviews, Payments, Wishlists, Wishlist_Items, Wallet, Deposits, VendorWallet, WalletTransaction, CustomerWalletTransaction, VendorWalletTransaction, VendorWithdrawal, VendorDeposit
+from models import db, Roles, Users, Vendors, Customers, Categories, Products, Product_Images, Orders, Order_Items, Reviews, Payments, Wishlists, Wishlist_Items, Wallet, Deposits, VendorWallet, WalletTransaction, CustomerWalletTransaction, VendorWalletTransaction, VendorWithdrawal, VendorDeposit, CustomerAddress, DeliveryPreference
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity, decode_token
@@ -14,6 +14,10 @@ from datetime import datetime
 import os
 from slugify import slugify
 from jwt import ExpiredSignatureError, InvalidTokenError
+import base64
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///ikeja_online.db')
@@ -25,6 +29,9 @@ app.config['JWT_HEADER_NAME'] = 'Authorization'
 app.config['JWT_HEADER_TYPE'] = 'Bearer'
 app.config['TEST_PUBLIC_KEY'] = 'pk_test_0796eb2919d007e2cf058300da852181a60418d0'
 app.config['TEST_SECRET_KEY'] = 'sk_test_8fea2fcf8335cb9211c11b03ae81d79f7c9a165c'
+app.config['CLOUDINARY_CLOUD_NAME'] = os.getenv('CLOUDINARY_CLOUD_NAME', 'dfe6zaubb')
+app.config['CLOUDINARY_API_KEY'] = os.getenv('CLOUDINARY_API_KEY', '573682293696917')
+app.config['CLOUDINARY_API_SECRET'] = os.getenv('CLOUDINARY_API_SECRET', 'YevIXnx1yDCRteyrVSnTEukmkd0')
 
 # Gmail SMTP Configuration
 app.config['GMAIL_EMAIL'] = os.getenv('GMAIL_EMAIL', 'chibuikemclinic@gmail.com')
@@ -50,6 +57,63 @@ app.config['MAX_CONTENT_LENGTH'] = MAX_FILE_SIZE
 db.init_app(app)
 jwt = JWTManager(app)
 migrate = Migrate(app, db)
+
+# Configure Cloudinary
+cloudinary.config(
+    cloud_name=app.config['CLOUDINARY_CLOUD_NAME'],
+    api_key=app.config['CLOUDINARY_API_KEY'],
+    api_secret=app.config['CLOUDINARY_API_SECRET']
+)
+
+def upload_to_cloudinary(file, folder="ikeja_online", public_id=None):
+    """Upload file to Cloudinary and return the URL"""
+    try:
+        if not file:
+            print("Error: File is None")
+            return None
+
+        filename = getattr(file, 'filename', None) or getattr(file, 'name', None)
+        if not filename:
+            print("Error: File has no filename")
+            return None
+
+        if not allowed_file(filename):
+            print(f"Error: File type not allowed: {filename}")
+            return None
+
+        # Check file size
+        if hasattr(file, 'seek') and hasattr(file, 'tell'):
+            file.seek(0, 2)
+            file_size = file.tell()
+            file.seek(0)
+        else:
+            # Fallback for file-like objects without seek/tell
+            file_contents = file.read()
+            file_size = len(file_contents)
+            file = BytesIO(file_contents)
+            file.name = filename
+
+        if file_size > MAX_FILE_SIZE:
+            print(f"Error: File size {file_size} exceeds maximum {MAX_FILE_SIZE}")
+            return None
+
+        # Upload to Cloudinary
+        upload_result = cloudinary.uploader.upload(
+            file,
+            folder=folder,
+            public_id=public_id,
+            resource_type="image",
+            quality="auto"
+        )
+
+        print(f"Successfully uploaded to Cloudinary: {upload_result['secure_url']}")
+        return upload_result['secure_url']
+
+    except Exception as e:
+        print(f"Error uploading to Cloudinary: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return None
 
 print(f"[STARTUP] Gmail Configuration:")
 print(f"[STARTUP] Email: {app.config['GMAIL_EMAIL']}")
@@ -834,51 +898,25 @@ def get_mime_type(filename):
     return mime_types.get(ext, 'image/jpeg')
 
 def save_image_to_db(file, product_id=None, is_primary=False):
-    """Save uploaded file as binary data to database"""
+    """Save uploaded file to Cloudinary and create database record"""
     try:
-        # Validate file exists and is allowed
-        if not file:
-            print("Error: File is None")
+        # Upload to Cloudinary
+        image_url = upload_to_cloudinary(file, folder="ikeja_online/products")
+
+        if not image_url:
+            print("Failed to upload image to Cloudinary")
             return None
-            
-        if not file.filename:
-            print("Error: File has no filename")
-            return None
-            
-        if not allowed_file(file.filename):
-            print(f"Error: File type not allowed: {file.filename}")
-            return None
-        
-        # Read file content as binary
-        try:
-            file.seek(0)
-            image_data = file.read()
-        except Exception as e:
-            print(f"Error reading file data: {str(e)}")
-            return None
-        
-        if not image_data:
-            print("Error: No data read from file")
-            return None
-        
-        # Check file size
-        if len(image_data) > MAX_FILE_SIZE:
-            print(f"Error: File size {len(image_data)} exceeds maximum {MAX_FILE_SIZE}")
-            return None
-        
-        # Determine MIME type
-        mime_type = get_mime_type(file.filename)
-        
-        # Create Product_Images record with binary data
+
+        # Create Product_Images record with Cloudinary URL
         product_image = Product_Images(
             product_id=product_id,
-            image_data=image_data,
-            mime_type=mime_type,
+            image_url=image_url,
+            mime_type=get_mime_type(file.filename),
             filename=secure_filename(file.filename),
             is_primary=is_primary
         )
-        
-        print(f"Successfully created Product_Images object for {file.filename}")
+
+        print(f"Successfully created Product_Images object for {file.filename} with URL: {image_url}")
         return product_image
     except Exception as e:
         print(f"Error saving image to database: {str(e)}")
@@ -887,45 +925,21 @@ def save_image_to_db(file, product_id=None, is_primary=False):
         return None
 
 def save_vendor_logo_to_db(file, vendor):
-    """Save vendor logo as binary data to database"""
+    """Save vendor logo to Cloudinary and update database"""
     try:
-        if not file:
-            print("Error: File is None")
+        # Upload to Cloudinary
+        logo_url = upload_to_cloudinary(file, folder="ikeja_online/vendors/logos")
+
+        if not logo_url:
+            print("Failed to upload vendor logo to Cloudinary")
             return False
-            
-        if not file.filename:
-            print("Error: File has no filename")
-            return False
-            
-        if not allowed_file(file.filename):
-            print(f"Error: File type not allowed: {file.filename}")
-            return False
-        
-        # Read file content as binary
-        try:
-            file.seek(0)
-            logo_data = file.read()
-        except Exception as e:
-            print(f"Error reading file data: {str(e)}")
-            return False
-        
-        if not logo_data:
-            print("Error: No data read from file")
-            return False
-        
-        # Check file size
-        if len(logo_data) > MAX_FILE_SIZE:
-            print(f"Error: File size {len(logo_data)} exceeds maximum {MAX_FILE_SIZE}")
-            return False
-        
-        # Determine MIME type
-        mime_type = get_mime_type(file.filename)
-        
+
         # Update vendor logo in database
-        vendor.logo_data = logo_data
-        vendor.logo_mime_type = mime_type
-        
-        print(f"Successfully saved vendor logo: {file.filename}")
+        vendor.logo_url = logo_url
+        vendor.logo_data = None  # Clear binary data since we're using URL now
+        vendor.logo_mime_type = get_mime_type(file.filename)
+
+        print(f"Successfully saved vendor logo: {file.filename} with URL: {logo_url}")
         return True
     except Exception as e:
         print(f"Error saving vendor logo to database: {str(e)}")
@@ -1510,10 +1524,65 @@ def vendor_dashboard():
     return render_template('/vendor/vendor_dashboard.html')
 
 
+@app.route('/vendor/earnings-summary')
+def vendor_earnings_summary():
+    # Vendor earnings summary page
+    return render_template('dist/includes/vendor/vendor_earnings_summary.html')
+
+
+@app.route('/vendor/monthly-revenue')
+def vendor_monthly_revenue():
+    # Vendor monthly revenue page
+    return render_template('dist/includes/vendor/vendor_monthly_revenue.html')
+
+
 @app.route('/vendor/orders')
 def vendor_orders():
-    # Vendor orders page
-    return render_template('/vendor/vendor_orders.html')
+    # Vendor orders page now uses the dashboard include page
+    return render_template('dist/includes/vendor/vendor_orders.html')
+
+
+@app.route('/vendor/shipping-status')
+def vendor_shipping_status():
+    # Vendor shipping status page
+    return render_template('dist/includes/vendor/vendor_shipping_status.html')
+
+
+@app.route('/vendor/transactions')
+def vendor_transactions():
+    # Vendor transaction history page now uses the dashboard include page
+    return render_template('dist/includes/vendor/vendor_transactions.html')
+
+
+@app.route('/vendor/invoices')
+def vendor_invoices():
+    # Vendor invoices page now uses the dashboard include page
+    return render_template('dist/includes/vendor/vendor_invoices.html')
+
+
+@app.route('/vendor/products')
+def vendor_products():
+    # Vendor products management page
+    return render_template('dist/includes/vendor/vendor_products.html')
+
+
+@app.route('/vendor/categories')
+def vendor_categories():
+    # Vendor categories and products page
+    return render_template('dist/includes/vendor/vendor_categories.html')
+
+
+@app.route('/vendor/store-profile')
+def vendor_store_profile():
+    # Vendor store profile management page
+    return render_template('dist/includes/vendor/vendor_store_profile.html')
+
+
+
+@app.route('/vendor/login-security')
+def vendor_login_security():
+    # Vendor login information and password change page
+    return render_template('dist/includes/vendor/vendor_login_security.html')
 
 
 @app.route('/add-product', methods=['GET'])
@@ -1522,7 +1591,7 @@ def add_product_page():
     # Get all categories to pass to template
     categories = Categories.query.all()
     
-    return render_template('/vendor/add_product.html', categories=categories)
+    return render_template('dist/includes/vendor/vendor_add_product.html', categories=categories)
 
 
 @app.route('/edit-product/<int:product_id>', methods=['GET'])
@@ -1531,7 +1600,7 @@ def edit_product_page(product_id):
     # Get all categories to pass to template
     categories = Categories.query.all()
     
-    return render_template('/vendor/edit_product.html', categories=categories, product_id=product_id)
+    return render_template('dist/includes/vendor/vendor_edit_product.html', categories=categories, product_id=product_id)
 
 
 @app.route('/my-products', methods=['GET'])
@@ -1690,10 +1759,22 @@ def get_vendor_products():
         if not vendor:
             return jsonify({'success': False, 'error': 'Not Found', 'message': 'Vendor profile not found'}), 404
         
-        products = Products.query.filter_by(vendor_id=vendor.id).all()
+        # Get pagination parameters
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 10, type=int)
+        
+        # Validate pagination parameters
+        if page < 1:
+            page = 1
+        if per_page < 1 or per_page > 100:
+            per_page = 10
+        
+        # Get paginated products
+        products_query = Products.query.filter_by(vendor_id=vendor.id)
+        products_pagination = products_query.paginate(page=page, per_page=per_page, error_out=False)
         
         products_data = []
-        for product in products:
+        for product in products_pagination.items:
             try:
                 product_dict = {
                     'id': product.id,
@@ -1713,7 +1794,20 @@ def get_vendor_products():
                 print(f"Error processing product {product.id}: {str(e)}")
                 continue
         
-        return jsonify({'success': True, 'products': products_data}), 200
+        return jsonify({
+            'success': True, 
+            'products': products_data,
+            'pagination': {
+                'page': products_pagination.page,
+                'per_page': products_pagination.per_page,
+                'total': products_pagination.total,
+                'pages': products_pagination.pages,
+                'has_next': products_pagination.has_next,
+                'has_prev': products_pagination.has_prev,
+                'next_page': products_pagination.next_num if products_pagination.has_next else None,
+                'prev_page': products_pagination.prev_num if products_pagination.has_prev else None
+            }
+        }), 200
     
     except Exception as e:
         print(f"Error in get_vendor_products: {str(e)}")
@@ -1917,28 +2011,22 @@ def delete_product(product_id):
         return jsonify({'error': 'Server Error', 'message': f'Failed to delete product: {str(e)}'}), 500
 
 
-# SERVE product images from BYTEA database
+# SERVE product images from Cloudinary
 @app.route('/api/product-image/<int:image_id>', methods=['GET'])
 def get_product_image(image_id):
-    """Retrieve and serve product image from database (BYTEA)"""
+    """Retrieve and serve product image from Cloudinary URL"""
     try:
         product_image = Product_Images.query.get(image_id)
-        
+
         if not product_image:
             abort(404)
-        
-        # Use binary data from database if available, fallback to URL
-        if product_image.image_data:
-            response = make_response(product_image.image_data)
-            response.headers['Content-Type'] = product_image.mime_type
-            response.headers['Content-Disposition'] = f'inline; filename={product_image.filename}'
-            return response
-        elif product_image.image_url:
-            # Fallback for backward compatibility with file-based storage
+
+        # Use Cloudinary URL if available
+        if product_image.image_url:
             return redirect(product_image.image_url)
         else:
             abort(404)
-    
+
     except Exception as e:
         print(f"Error retrieving image: {str(e)}")
         abort(500)
@@ -1959,7 +2047,7 @@ def get_product_images(product_id):
         for img in images:
             images_data.append({
                 'id': img.id,
-                'url': f'/api/product-image/{img.id}',  # URL to retrieve binary data
+                'url': img.image_url,  # Direct Cloudinary URL
                 'filename': img.filename,
                 'mime_type': img.mime_type,
                 'is_primary': img.is_primary,
@@ -1973,28 +2061,22 @@ def get_product_images(product_id):
         return jsonify({'error': 'Server Error', 'message': str(e)}), 500
 
 
-# SERVE vendor logos from BYTEA database
+# SERVE vendor logos from Cloudinary
 @app.route('/api/vendor-logo/<int:vendor_id>', methods=['GET'])
 def get_vendor_logo(vendor_id):
-    """Retrieve and serve vendor logo from database (BYTEA)"""
+    """Retrieve and serve vendor logo from Cloudinary URL"""
     try:
         vendor = Vendors.query.get(vendor_id)
-        
+
         if not vendor:
             abort(404)
-        
-        # Use binary data from database if available, fallback to URL
-        if vendor.logo_data:
-            response = make_response(vendor.logo_data)
-            response.headers['Content-Type'] = vendor.logo_mime_type
-            response.headers['Content-Disposition'] = f'inline; filename=logo'
-            return response
-        elif vendor.logo_url:
-            # Fallback for backward compatibility with file-based storage
+
+        # Use Cloudinary URL if available
+        if vendor.logo_url:
             return redirect(vendor.logo_url)
         else:
             abort(404)
-    
+
     except Exception as e:
         print(f"Error retrieving vendor logo: {str(e)}")
         abort(500)
@@ -2002,8 +2084,8 @@ def get_vendor_logo(vendor_id):
 
 @app.route('/customer/dashboard')
 def customer_dashboard():
-    # Client-side will check for token in localStorage
-    return render_template('/customer/customer_dashboard.html')
+    # Redirect to dashboard home
+    return redirect(url_for('customer_dashboard_home'))
 
 
 @app.route('/customer/my-orders')
@@ -2456,6 +2538,55 @@ def get_wallet():
         return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
 
 
+@app.route('/api/customer/wallet-transactions', methods=['GET'])
+@jwt_required()
+def get_customer_wallet_transactions():
+    """Get customer's wallet transaction history"""
+    try:
+        user_id = int(get_jwt_identity())
+        user = Users.query.get(user_id)
+        
+        if not user or user.role.name != 'customer':
+            return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+        
+        customer = Customers.query.filter_by(user_id=user_id).first()
+        if not customer:
+            return jsonify({'success': False, 'message': 'Customer profile not found'}), 404
+        
+        # Get wallet
+        wallet = Wallet.query.filter_by(customer_id=customer.id).first()
+        if not wallet:
+            return jsonify({'success': True, 'transactions': [], 'count': 0}), 200
+        
+        # Get wallet transactions sorted by date (newest first)
+        transactions = CustomerWalletTransaction.query.filter_by(
+            wallet_id=wallet.id
+        ).order_by(CustomerWalletTransaction.created_at.desc()).all()
+        
+        transactions_data = []
+        for transaction in transactions:
+            trans_dict = {
+                'id': transaction.id,
+                'transaction_type': transaction.transaction_type,
+                'amount': float(transaction.amount),
+                'description': transaction.description or 'Transaction',
+                'status': transaction.status,
+                'created_at': transaction.created_at.isoformat() if transaction.created_at else None
+            }
+            transactions_data.append(trans_dict)
+        
+        return jsonify({
+            'success': True,
+            'transactions': transactions_data,
+            'count': len(transactions_data)
+        }), 200
+    except Exception as e:
+        print(f"Error fetching wallet transactions: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+
 @app.route('/api/deposit/initialize', methods=['POST'])
 @jwt_required()
 def initialize_deposit():
@@ -2620,6 +2751,23 @@ def verify_deposit(reference):
         # Add amount to wallet
         wallet.balance += deposit.amount
         wallet.updated_at = datetime.utcnow()
+
+        # Record wallet transaction for deposit if not already created
+        existing_txn = CustomerWalletTransaction.query.filter_by(
+            wallet_id=wallet.id,
+            transaction_type='credit',
+            reference_id=deposit.id
+        ).first()
+        if not existing_txn:
+            wallet_transaction = CustomerWalletTransaction(
+                wallet_id=wallet.id,
+                transaction_type='credit',
+                amount=deposit.amount,
+                description=f'Deposit via Paystack: {reference}',
+                reference_id=deposit.id,
+                status='completed'
+            )
+            db.session.add(wallet_transaction)
         
         db.session.commit()
         
@@ -2689,6 +2837,23 @@ def deposit_callback():
                 # Add amount to wallet
                 wallet.balance += deposit.amount
                 wallet.updated_at = datetime.utcnow()
+
+                # Record wallet transaction for deposit if not already created
+                existing_txn = CustomerWalletTransaction.query.filter_by(
+                    wallet_id=wallet.id,
+                    transaction_type='credit',
+                    reference_id=deposit.id
+                ).first()
+                if not existing_txn:
+                    wallet_transaction = CustomerWalletTransaction(
+                        wallet_id=wallet.id,
+                        transaction_type='credit',
+                        amount=deposit.amount,
+                        description=f'Deposit via Paystack: {reference}',
+                        reference_id=deposit.id,
+                        status='completed'
+                    )
+                    db.session.add(wallet_transaction)
                 
                 db.session.commit()
                 print(f"Deposit {deposit.id} completed - Balance updated")
@@ -2766,24 +2931,21 @@ def get_customer_stats():
         if not customer:
             return jsonify({'success': False, 'message': 'Customer profile not found'}), 404
         
-        # Get all completed orders for this customer
-        completed_orders = Orders.query.filter_by(customer_id=customer.id).all()
+        # Get all completed/paid orders for this customer (single query)
+        paid_orders = db.session.query(Orders).join(Payments).filter(
+            Orders.customer_id == customer.id,
+            Payments.status == 'completed'
+        ).all()
         
-        # Calculate total spent (only completed/paid orders)
-        total_spent = 0.0
-        for order in completed_orders:
-            payment = Payments.query.filter_by(order_id=order.id).first()
-            if payment and payment.status == 'completed':
-                total_spent += order.total_amount
+        # Calculate total spent from paid orders
+        total_spent = sum(order.total_amount for order in paid_orders) if paid_orders else 0.0
+        total_orders_count = len(paid_orders)
         
         # Get wishlist count
         wishlist = Wishlists.query.filter_by(customer_id=customer.id).first()
         wishlist_count = 0
         if wishlist:
             wishlist_count = Wishlist_Items.query.filter_by(wishlist_id=wishlist.id).count()
-        
-        # Get total orders count
-        total_orders_count = len([o for o in completed_orders if Payments.query.filter_by(order_id=o.id, status='completed').first()])
         
         return jsonify({
             'success': True,
@@ -2798,6 +2960,512 @@ def get_customer_stats():
         print(f"Error getting customer stats: {str(e)}")
         import traceback
         traceback.print_exc()
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+
+# Customer Address Management API Endpoints
+
+@app.route('/api/customer/addresses', methods=['GET'])
+@jwt_required()
+def get_customer_addresses():
+    """Get all addresses for the current customer"""
+    try:
+        user_id = int(get_jwt_identity())
+        user = Users.query.get(user_id)
+        
+        if not user or user.role.name != 'customer':
+            return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+        
+        customer = Customers.query.filter_by(user_id=user_id).first()
+        if not customer:
+            return jsonify({'success': False, 'message': 'Customer profile not found'}), 404
+        
+        addresses = CustomerAddress.query.filter_by(customer_id=customer.id).all()
+        
+        addresses_data = []
+        for address in addresses:
+            addr_dict = {
+                'id': address.id,
+                'label': address.label,
+                'address_line1': address.address_line1,
+                'address_line2': address.address_line2,
+                'city': address.city,
+                'state': address.state,
+                'postal_code': address.postal_code,
+                'country': address.country,
+                'phone': address.phone,
+                'is_default': address.is_default,
+                'created_at': address.created_at.isoformat() if address.created_at else None
+            }
+            addresses_data.append(addr_dict)
+        
+        return jsonify({
+            'success': True,
+            'addresses': addresses_data,
+            'count': len(addresses_data)
+        }), 200
+    except Exception as e:
+        print(f"Error fetching addresses: {str(e)}")
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+
+@app.route('/api/customer/addresses', methods=['POST'])
+@jwt_required()
+def add_customer_address():
+    """Add a new address for the current customer"""
+    try:
+        user_id = int(get_jwt_identity())
+        user = Users.query.get(user_id)
+        
+        if not user or user.role.name != 'customer':
+            return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+        
+        customer = Customers.query.filter_by(user_id=user_id).first()
+        if not customer:
+            return jsonify({'success': False, 'message': 'Customer profile not found'}), 404
+        
+        data = request.get_json()
+        
+        # Validate required fields
+        required_fields = ['address_line1', 'city', 'state', 'postal_code', 'phone']
+        for field in required_fields:
+            if not data.get(field):
+                return jsonify({'success': False, 'message': f'{field} is required'}), 400
+        
+        # If this is set as default, unset other defaults
+        if data.get('is_default', False):
+            CustomerAddress.query.filter_by(customer_id=customer.id, is_default=True).update({'is_default': False})
+        
+        new_address = CustomerAddress(
+            customer_id=customer.id,
+            label=data.get('label', 'Address'),
+            address_line1=data.get('address_line1'),
+            address_line2=data.get('address_line2'),
+            city=data.get('city'),
+            state=data.get('state'),
+            postal_code=data.get('postal_code'),
+            country=data.get('country', 'Nigeria'),
+            phone=data.get('phone'),
+            is_default=data.get('is_default', False)
+        )
+        
+        db.session.add(new_address)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Address added successfully',
+            'address_id': new_address.id
+        }), 201
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error adding address: {str(e)}")
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+
+@app.route('/api/customer/addresses/<int:address_id>', methods=['DELETE'])
+@jwt_required()
+def delete_customer_address(address_id):
+    """Delete an address"""
+    try:
+        user_id = int(get_jwt_identity())
+        user = Users.query.get(user_id)
+        
+        if not user or user.role.name != 'customer':
+            return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+        
+        customer = Customers.query.filter_by(user_id=user_id).first()
+        if not customer:
+            return jsonify({'success': False, 'message': 'Customer profile not found'}), 404
+        
+        address = CustomerAddress.query.filter_by(id=address_id, customer_id=customer.id).first()
+        if not address:
+            return jsonify({'success': False, 'message': 'Address not found'}), 404
+        
+        db.session.delete(address)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Address deleted successfully'
+        }), 200
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error deleting address: {str(e)}")
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+
+@app.route('/api/customer/addresses/<int:address_id>/set-default', methods=['POST'])
+@jwt_required()
+def set_default_address(address_id):
+    """Set an address as the default address"""
+    try:
+        user_id = int(get_jwt_identity())
+        user = Users.query.get(user_id)
+        
+        if not user or user.role.name != 'customer':
+            return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+        
+        customer = Customers.query.filter_by(user_id=user_id).first()
+        if not customer:
+            return jsonify({'success': False, 'message': 'Customer profile not found'}), 404
+        
+        # Unset all other defaults
+        CustomerAddress.query.filter_by(customer_id=customer.id, is_default=True).update({'is_default': False})
+        
+        # Set this address as default
+        address = CustomerAddress.query.filter_by(id=address_id, customer_id=customer.id).first()
+        if not address:
+            db.session.rollback()
+            return jsonify({'success': False, 'message': 'Address not found'}), 404
+        
+        address.is_default = True
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Default address updated successfully'
+        }), 200
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error setting default address: {str(e)}")
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+
+@app.route('/api/customer/addresses/<int:address_id>', methods=['PUT'])
+@jwt_required()
+def update_address_api(address_id):
+    """Update an existing customer address"""
+    try:
+        user_id = int(get_jwt_identity())
+        user = Users.query.get(user_id)
+        
+        if not user or user.role.name != 'customer':
+            return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+        
+        customer = Customers.query.filter_by(user_id=user_id).first()
+        if not customer:
+            return jsonify({'success': False, 'message': 'Customer profile not found'}), 404
+        
+        address = CustomerAddress.query.filter_by(id=address_id, customer_id=customer.id).first()
+        if not address:
+            return jsonify({'success': False, 'message': 'Address not found'}), 404
+        
+        data = request.get_json()
+        
+        # Update address fields
+        address.label = data.get('label', address.label)
+        address.address_line1 = data.get('address_line1', address.address_line1)
+        address.address_line2 = data.get('address_line2', address.address_line2)
+        address.city = data.get('city', address.city)
+        address.state = data.get('state', address.state)
+        address.postal_code = data.get('postal_code', address.postal_code)
+        address.country = data.get('country', address.country)
+        address.phone = data.get('phone', address.phone)
+        
+        # Handle default address change
+        if data.get('is_default', False) and not address.is_default:
+            CustomerAddress.query.filter_by(customer_id=customer.id, is_default=True).update({'is_default': False})
+            address.is_default = True
+        elif not data.get('is_default', False):
+            address.is_default = False
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Address updated successfully'
+        }), 200
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error updating address: {str(e)}")
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+
+@app.route('/api/customer/delivery-preferences', methods=['GET'])
+@jwt_required()
+def get_delivery_preferences():
+    """Get delivery preferences for the current customer"""
+    try:
+        user_id = int(get_jwt_identity())
+        user = Users.query.get(user_id)
+        
+        if not user or user.role.name != 'customer':
+            return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+        
+        customer = Customers.query.filter_by(user_id=user_id).first()
+        if not customer:
+            return jsonify({'success': False, 'message': 'Customer profile not found'}), 404
+        
+        preferences = DeliveryPreference.query.filter_by(customer_id=customer.id).first()
+        
+        if not preferences:
+            # Return default preferences if none exist
+            return jsonify({
+                'success': True,
+                'preferences': {
+                    'delivery_method': 'standard',
+                    'signature_required': False,
+                    'leave_at_door': False,
+                    'fragile_handling': False,
+                    'special_instructions': None
+                }
+            }), 200
+        
+        pref_dict = {
+            'delivery_method': preferences.delivery_method,
+            'signature_required': preferences.signature_required,
+            'leave_at_door': preferences.leave_at_door,
+            'fragile_handling': preferences.fragile_handling,
+            'special_instructions': preferences.special_instructions,
+            'created_at': preferences.created_at.isoformat() if preferences.created_at else None
+        }
+        
+        return jsonify({
+            'success': True,
+            'preferences': pref_dict
+        }), 200
+    except Exception as e:
+        print(f"Error fetching delivery preferences: {str(e)}")
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+
+@app.route('/api/customer/profile', methods=['GET'])
+@jwt_required()
+def get_customer_profile():
+    """Get current customer profile information"""
+    try:
+        user_id = int(get_jwt_identity())
+        user = Users.query.get(user_id)
+
+        if not user or user.role.name != 'customer':
+            return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+
+        customer = Customers.query.filter_by(user_id=user_id).first()
+        if not customer:
+            # Create customer record if it doesn't exist
+            customer = Customers(user_id=user_id, phone='', default_address='')
+            db.session.add(customer)
+            db.session.commit()
+
+        return jsonify({
+            'success': True,
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+            'email': user.email,
+            'phone': customer.phone or '',
+            'address': customer.default_address or '',
+            'created_at': user.created_at.isoformat() if user.created_at else None,
+            'profile_image': {
+                'url': user.profile_image_url,
+                'mime_type': user.profile_image_mime_type,
+                'filename': user.profile_image_filename,
+                'data': base64.b64encode(user.profile_image_data).decode('utf-8') if user.profile_image_data else None
+            } if (user.profile_image_url or user.profile_image_data) else None
+        }), 200
+    except Exception as e:
+        print(f"Error fetching customer profile: {str(e)}")
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+
+
+
+@app.route('/api/customer/change-password', methods=['POST'])
+@jwt_required()
+def change_customer_password():
+    """Change customer account password"""
+    try:
+        user_id = int(get_jwt_identity())
+        user = Users.query.get(user_id)
+
+        if not user or user.role.name != 'customer':
+            return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+
+        data = request.get_json()
+        current_password = data.get('current_password', '').strip()
+        new_password = data.get('new_password', '').strip()
+
+        if not current_password or not new_password:
+            return jsonify({'success': False, 'message': 'Both current and new passwords are required'}), 400
+
+        if not check_password_hash(user.passwordhash, current_password):
+            return jsonify({'success': False, 'message': 'Current password is incorrect'}), 400
+
+        if len(new_password) < 8:
+            return jsonify({'success': False, 'message': 'New password must be at least 8 characters long'}), 400
+
+        user.passwordhash = generate_password_hash(new_password)
+        db.session.commit()
+
+        return jsonify({'success': True, 'message': 'Password changed successfully'}), 200
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error changing password: {str(e)}")
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+
+@app.route('/api/customer/delivery-preferences', methods=['POST'])
+@jwt_required()
+def save_delivery_preferences():
+    """Save or update delivery preferences for the current customer"""
+    try:
+        user_id = int(get_jwt_identity())
+        user = Users.query.get(user_id)
+        
+        if not user or user.role.name != 'customer':
+            return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+        
+        customer = Customers.query.filter_by(user_id=user_id).first()
+        if not customer:
+            return jsonify({'success': False, 'message': 'Customer profile not found'}), 404
+        
+        data = request.get_json()
+        
+        preferences = DeliveryPreference.query.filter_by(customer_id=customer.id).first()
+        
+        if preferences:
+            # Update existing preferences
+            preferences.delivery_method = data.get('delivery_method', preferences.delivery_method)
+            preferences.signature_required = data.get('signature_required', preferences.signature_required)
+            preferences.leave_at_door = data.get('leave_at_door', preferences.leave_at_door)
+            preferences.fragile_handling = data.get('fragile_handling', preferences.fragile_handling)
+            preferences.special_instructions = data.get('special_instructions', preferences.special_instructions)
+        else:
+            # Create new preferences
+            preferences = DeliveryPreference(
+                customer_id=customer.id,
+                delivery_method=data.get('delivery_method', 'standard'),
+                signature_required=data.get('signature_required', False),
+                leave_at_door=data.get('leave_at_door', False),
+                fragile_handling=data.get('fragile_handling', False),
+                special_instructions=data.get('special_instructions')
+            )
+            db.session.add(preferences)
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Delivery preferences saved successfully'
+        }), 200
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error saving delivery preferences: {str(e)}")
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+
+@app.route('/api/customer/account-settings', methods=['PUT'])
+@jwt_required()
+def update_customer_account_settings():
+    """Update customer account settings"""
+    try:
+        user_id = int(get_jwt_identity())
+        user = Users.query.get(user_id)
+
+        if not user or user.role.name != 'customer':
+            return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+
+        customer = Customers.query.filter_by(user_id=user_id).first()
+        if not customer:
+            # Create customer record if it doesn't exist
+            customer = Customers(user_id=user_id, phone='', default_address='')
+            db.session.add(customer)
+
+        data = request.get_json()
+        
+        first_name = data.get('first_name', '').strip()
+        last_name = data.get('last_name', '').strip()
+        email = data.get('email', '').strip()
+        phone = data.get('phone', '').strip()
+        address = data.get('address', '').strip()
+
+        if not first_name or not last_name or not email:
+            return jsonify({'success': False, 'message': 'First name, last name, and email are required'}), 400
+
+        existing_user = Users.query.filter(Users.email == email, Users.id != user.id).first()
+        if existing_user:
+            return jsonify({'success': False, 'message': 'Email is already in use'}), 400
+
+        user.first_name = first_name
+        user.last_name = last_name
+        user.email = email
+        customer.phone = phone or customer.phone
+        customer.default_address = address or customer.default_address
+
+        db.session.commit()
+
+        return jsonify({'success': True, 'message': 'Account settings updated successfully'}), 200
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error updating account settings: {str(e)}")
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+
+@app.route('/api/customer/profile-image', methods=['POST'])
+@jwt_required()
+def upload_customer_profile_image():
+    """Upload or update customer profile image to Cloudinary"""
+    print("Profile image upload endpoint called")
+    try:
+        user_id = int(get_jwt_identity())
+        print(f"User ID: {user_id}")
+        user = Users.query.get(user_id)
+
+        if not user or user.role.name != 'customer':
+            print("User not found or not a customer")
+            return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+
+        if 'profile_image' not in request.files:
+            print("No profile_image in request.files")
+            return jsonify({'success': False, 'message': 'No image file provided'}), 400
+
+        file = request.files['profile_image']
+        print(f"File received: {file.filename}")
+        if file.filename == '':
+            print("Empty filename")
+            return jsonify({'success': False, 'message': 'No image file selected'}), 400
+
+        # Validate file type
+        allowed_extensions = {'png', 'jpg', 'jpeg', 'gif'}
+        if not file or '.' not in file.filename:
+            print("Invalid file or no extension")
+            return jsonify({'success': False, 'message': 'Invalid file type'}), 400
+
+        extension = file.filename.rsplit('.', 1)[1].lower()
+        if extension not in allowed_extensions:
+            print(f"Extension not allowed: {extension}")
+            return jsonify({'success': False, 'message': 'Only PNG, JPG, JPEG, and GIF files are allowed'}), 400
+
+        # Upload to Cloudinary
+        image_url = upload_to_cloudinary(file, folder="ikeja_online/profiles")
+
+        if not image_url:
+            print("Failed to upload profile image to Cloudinary")
+            return jsonify({'success': False, 'message': 'Failed to upload image'}), 500
+
+        # Update user profile image
+        user.profile_image_url = image_url
+        user.profile_image_data = None  # Clear binary data since we're using URL now
+        user.profile_image_mime_type = f'image/{extension}'
+        if extension == 'jpg':
+            user.profile_image_mime_type = 'image/jpeg'
+        user.profile_image_filename = secure_filename(file.filename)
+
+        db.session.commit()
+        print("Profile image updated successfully")
+
+        return jsonify({
+            'success': True,
+            'message': 'Profile image updated successfully',
+            'image': {
+                'url': image_url,
+                'filename': user.profile_image_filename,
+                'mime_type': user.profile_image_mime_type
+            }
+        }), 200
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error uploading profile image: {str(e)}")
         return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
 
 
@@ -2993,6 +3661,14 @@ def vendor_settings():
         vendor.phone = phone if phone else vendor.phone
         vendor.address = address if address else vendor.address
         
+        # Handle logo removal
+        remove_logo = request.form.get('remove_logo')
+        if remove_logo == 'true':
+            vendor.logo_data = None
+            vendor.logo_mime_type = None
+            vendor.logo_url = None
+            print("Logo removed from database")
+        
         logo_file = request.files.get('logo')
         if logo_file and allowed_file(logo_file.filename):
             # Save logo as binary data to database
@@ -3005,7 +3681,8 @@ def vendor_settings():
         
         return jsonify({
             'success': True,
-            'message': 'Profile Settings updated successfully'
+            'message': 'Profile Settings updated successfully',
+            'logo_url': vendor.logo_url
         }), 200
         
     except Exception as e:
@@ -3033,9 +3710,58 @@ def get_vendor_settings():
             'store_description': vendor.store_description,
             'phone': vendor.phone,
             'address': vendor.address,
-            'logo_url': f'/api/vendor-logo/{vendor.id}' if vendor.logo_data or vendor.logo_url else None
+            'logo_url': vendor.logo_url if vendor.logo_url else (f'/api/vendor-logo/{vendor.id}' if vendor.logo_data else None)
+        },
+        'user': {
+            'email': user.email,
+            'username': user.email,  # Using email as username
+            'is_active': user.is_active,
+            'created_at': user.created_at.isoformat() if user.created_at else None
         }
     }), 200
+
+@app.route('/vendor/dashboard/change-password', methods=['POST'])
+@jwt_required()
+def vendor_change_password():
+    user_id = int(get_jwt_identity())
+    user = Users.query.get(user_id)
+
+    if not user or user.role.name != 'vendor':
+        return jsonify({'error': 'Unauthorized', 'message': 'Only vendors can change password'}), 403
+
+    try:
+        current_password = request.form.get('current_password')
+        new_password = request.form.get('new_password')
+
+        if not current_password or not new_password:
+            return jsonify({'error': 'Bad Request', 'message': 'Current password and new password are required'}), 400
+
+        # Verify current password
+        if not check_password_hash(user.passwordhash, current_password):
+            return jsonify({'error': 'Unauthorized', 'message': 'Current password is incorrect'}), 401
+
+        # Validate new password strength
+        if len(new_password) < 8:
+            return jsonify({'error': 'Bad Request', 'message': 'New password must be at least 8 characters long'}), 400
+
+        # Password strength validation
+        import re
+        if not re.match(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]', new_password):
+            return jsonify({'error': 'Bad Request', 'message': 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character'}), 400
+
+        # Update password
+        user.passwordhash = generate_password_hash(new_password)
+        db.session.commit()
+
+        return jsonify({
+            'success': True,
+            'message': 'Password changed successfully'
+        }), 200
+
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error changing password: {str(e)}")
+        return jsonify({'error': 'Server Error', 'message': f'Failed to change password: {str(e)}'}), 500
 
 @app.route('/vendor/dashboard/get-vendor-settings-page')
 def get_vendor_settings_page():
@@ -3180,6 +3906,123 @@ def get_vendor_stats():
         
     except Exception as e:
         print(f"Error getting vendor stats: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+
+@app.route('/api/vendor/earnings', methods=['GET'])
+@jwt_required()
+def get_vendor_earnings():
+    """Get vendor's earnings summary and history"""
+    try:
+        user_id = int(get_jwt_identity())
+        user = Users.query.get(user_id)
+        
+        if not user or user.role.name != 'vendor':
+            return jsonify({'success': False, 'message': 'Unauthorized: Only vendors can access this'}), 403
+        
+        # Get vendor
+        vendor = Vendors.query.filter_by(user_id=user_id).first()
+        if not vendor:
+            return jsonify({'success': False, 'message': 'Vendor profile not found'}), 404
+        
+        # Get vendor wallet
+        wallet = VendorWallet.query.filter_by(vendor_id=vendor.id).first()
+        if not wallet:
+            wallet = VendorWallet(vendor_id=vendor.id, balance=0.0, total_earned=0.0)
+            db.session.add(wallet)
+            db.session.commit()
+        
+        # Get vendor's products
+        products = Products.query.filter_by(vendor_id=vendor.id).all()
+        product_ids = [p.id for p in products]
+        
+        # Calculate earnings from completed orders
+        total_earnings = 0.0
+        monthly_earnings = 0.0
+        product_sales = 0.0
+        commissions = 0.0
+        refunds = 0.0
+        fees = 0.0
+        total_orders = 0
+        monthly_revenue_map = {}
+        completed_order_ids = set()
+        
+        current_month = datetime.utcnow().month
+        current_year = datetime.utcnow().year
+        
+        earnings_history = []
+        
+        if product_ids:
+            # Get all order items for vendor's products
+            order_items = db.session.query(Order_Items).filter(
+                Order_Items.product_id.in_(product_ids)
+            ).all()
+            
+            for item in order_items:
+                order = Orders.query.get(item.order_id)
+                if not order:
+                    continue
+                    
+                payment = Payments.query.filter_by(order_id=order.id).first()
+                if not payment or payment.status != 'completed':
+                    continue
+                
+                completed_order_ids.add(order.id)
+                
+                # Calculate earnings for this item
+                item_earnings = item.price_at_purchase * item.quantity
+                total_earnings += item_earnings
+                product_sales += item_earnings
+                
+                # Check if this is current month
+                if (order.created_at.month == current_month and 
+                    order.created_at.year == current_year):
+                    monthly_earnings += item_earnings
+
+                order_month = order.created_at.strftime('%Y-%m')
+                monthly_revenue_map[order_month] = monthly_revenue_map.get(order_month, 0.0) + item_earnings
+                
+                # Add to earnings history
+                earnings_history.append({
+                    'date': order.created_at.isoformat(),
+                    'type': 'Sale',
+                    'amount': float(item_earnings),
+                    'description': f'Sale of {item.product.name} (x{item.quantity})',
+                    'status': 'Completed'
+                })
+        
+        total_orders = len(completed_order_ids)
+        monthly_revenue = [
+            {'month': month, 'revenue': float(amount)}
+            for month, amount in sorted(monthly_revenue_map.items())
+        ]
+        
+        # Get pending payout (available balance)
+        pending_payout = wallet.balance
+        
+        # Sort earnings history by date (most recent first)
+        earnings_history.sort(key=lambda x: x['date'], reverse=True)
+        
+        return jsonify({
+            'success': True,
+            'earnings': {
+                'total_earnings': float(total_earnings),
+                'monthly_earnings': float(monthly_earnings),
+                'pending_payout': float(pending_payout),
+                'product_sales': float(product_sales),
+                'commissions': float(commissions),
+                'refunds': float(refunds),
+                'fees': float(fees),
+                'total_orders': total_orders,
+                'monthly_revenue': monthly_revenue
+            },
+            'earnings_history': earnings_history[:50]  # Limit to last 50 entries
+        }), 200
+        
+    except Exception as e:
+        print(f"Error getting vendor earnings: {str(e)}")
         import traceback
         traceback.print_exc()
         return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
@@ -3631,16 +4474,22 @@ def get_vendor_transactions():
         if not vendor:
             return jsonify({'success': False, 'message': 'Vendor profile not found'}), 404
         
-        # Get transactions for this vendor
-        transactions = WalletTransaction.query.filter_by(vendor_id=vendor.id).order_by(WalletTransaction.created_at.desc()).all()
+        # Get vendor wallet
+        wallet = VendorWallet.query.filter_by(vendor_id=vendor.id).first()
+        if not wallet:
+            return jsonify({'success': True, 'transactions': []}), 200
+        
+        # Get transactions for this vendor's wallet
+        transactions = VendorWalletTransaction.query.filter_by(vendor_wallet_id=wallet.id).order_by(VendorWalletTransaction.created_at.desc()).all()
         
         transactions_list = [
             {
                 'id': t.id,
                 'amount': t.amount,
-                'type': t.transaction_type,
+                'transaction_type': t.transaction_type,
                 'status': t.status,
-                'order_id': t.order_id,
+                'reference_id': t.reference_id,
+                'description': t.description,
                 'created_at': t.created_at.isoformat() if t.created_at else None,
             }
             for t in transactions
@@ -4337,7 +5186,8 @@ def get_products_by_category(category_id):
                 'description': product.description,
                 'price': product.price,
                 'stock_quantity': product.stock_quantity,
-                'image': image_url,
+                'status': product.status,
+                'images': [{'id': img.id, 'url': f'/api/product-image/{img.id}', 'is_primary': img.is_primary} for img in product.images],
                 'store_name': store_name
             }
             product_list.append(product_dict)
@@ -5329,6 +6179,89 @@ def get_order_details(order_id):
         traceback.print_exc()
         return jsonify({'success': False, 'error': 'Server Error', 'message': str(e)}), 500
 
+@app.route('/vendor/dashboard/home')
+def vendor_dashboard_home():
+    return render_template('dist/includes/vendor/vendordashboard_home.html')
+
+@app.route('/customer/dashboard/home')
+def customer_dashboard_home():
+    return render_template('dist/includes/customer/customerdashboard_home.html')
+
+@app.route('/customer/dashboard/browse-products')
+def customer_dashboard_browse_products():
+    return render_template('dist/includes/customer/browse_products.html')
+
+@app.route('/customer/dashboard/categories')
+def customer_dashboard_categories():
+    return render_template('dist/includes/customer/categories.html')
+
+@app.route('/customer/dashboard/wishlist')
+def customer_dashboard_wishlist():
+    return render_template('dist/includes/customer/wishlist.html')
+
+@app.route('/customer/dashboard/orders')
+def customer_dashboard_orders():
+    return render_template('dist/includes/customer/customer_orders.html')
+
+@app.route('/customer/dashboard/order-tracking')
+def customer_dashboard_order_tracking():
+    return render_template('dist/includes/customer/order_tracking.html')
+
+@app.route('/customer/dashboard/order-history')
+def customer_dashboard_order_history():
+    return render_template('dist/includes/customer/order_history.html')
+
+@app.route('/customer/dashboard/cancel-orders')
+def customer_dashboard_cancel_orders():
+    return render_template('dist/includes/customer/cancel_orders.html')
+
+@app.route('/customer/dashboard/returns-refunds')
+def customer_dashboard_returns_refunds():
+    return render_template('dist/includes/customer/returns_refunds.html')
+
+@app.route('/customer/dashboard/transaction-history')
+def customer_dashboard_transaction_history():
+    return render_template('dist/includes/customer/transaction_history.html')
+
+@app.route('/customer/dashboard/profile-info')
+def customer_dashboard_profile_info():
+    return render_template('dist/includes/customer/profile_info.html')
+
+@app.route('/customer/dashboard/account-settings')
+def customer_dashboard_account_settings():
+    return render_template('dist/includes/customer/account_settings.html')
+
+@app.route('/customer/dashboard/security')
+def customer_dashboard_security():
+    return render_template('dist/includes/customer/security.html')
+
+@app.route('/customer/dashboard/address-book')
+def customer_dashboard_address_book():
+    return render_template('dist/includes/customer/address_book.html')
+
+@app.route('/customer/dashboard/add-address')
+def customer_dashboard_add_address():
+    return render_template('dist/includes/customer/add_address.html')
+
+@app.route('/customer/dashboard/delivery-preferences')
+def customer_dashboard_delivery_preferences():
+    return render_template('dist/includes/customer/delivery_preferences.html')
+
+@app.route('/customer/dashboard/edit-address/<int:address_id>')
+def customer_dashboard_edit_address(address_id):
+    return render_template('dist/includes/customer/edit_address.html')
+
+@app.route('/testingdashboard')
+def testdashboard():
+    return render_template('dist/includes/vendor/vendordashboard_home.html')
+
+@app.route('/testingdashboard2')
+def testdashboard2():
+    return render_template('dist/includes/customerdashboard_home.html')
+
+@app.route('/testingdashboard3')
+def testdashboard3():
+    return render_template('/dist/marketplace-dashboard.html')
 
 if __name__ == '__main__':
     app.run(debug=True)

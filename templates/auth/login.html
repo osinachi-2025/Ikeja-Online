@@ -687,9 +687,9 @@
                     if (data.role === 'super_admin') {
                         window.location.href = '/admin/dashboard';
                     } else if (data.role === 'vendor') {
-                        window.location.href = '{{ url_for("vendor_dashboard") }}';
+                        window.location.href = '{{ url_for("vendor_dashboard_home") }}';
                     } else if (data.role === 'customer') {
-                        window.location.href = '{{ url_for("customer_dashboard") }}';
+                        window.location.href = '{{ url_for("customer_dashboard_home") }}';
                     }
                 } else {
                     showAlert(data.message || 'Login failed', 'danger');

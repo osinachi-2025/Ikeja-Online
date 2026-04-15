@@ -30,3 +30,4 @@ gunicorn
 psycopg2
 flask-mail
 sendgrid
+cloudinary

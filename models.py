@@ -25,6 +25,10 @@ class Users(db.Model):
     created_at = db.Column(db.DateTime, default=func.now())
     role_id = db.Column(db.Integer, db.ForeignKey('roles.id'), nullable=False)
     role = db.relationship('Roles', backref=db.backref('users', lazy=True))
+    profile_image_data = db.Column(db.LargeBinary, nullable=True)  # Binary profile image data
+    profile_image_mime_type = db.Column(db.String(50), default='image/jpeg')  # MIME type
+    profile_image_filename = db.Column(db.String(255), nullable=True)  # Original filename
+    profile_image_url = db.Column(db.String(255), nullable=True)  # Cloudinary URL
     
     
 class Vendors (db.Model):
@@ -276,3 +280,35 @@ class WalletTransaction(db.Model):
     created_at = db.Column(db.DateTime, default=func.now())
     vendor = db.relationship('Vendors', backref=db.backref('wallet_transactions', lazy=True))
     order = db.relationship('Orders', backref=db.backref('wallet_transactions', lazy=True))
+
+
+class CustomerAddress(db.Model):
+    __tablename__ = 'customer_addresses'
+    id = db.Column(db.Integer, primary_key=True)
+    customer_id = db.Column(db.Integer, db.ForeignKey('customers.id'), nullable=False)
+    label = db.Column(db.String(50), nullable=True)  # Home, Office, Other, etc.
+    address_line1 = db.Column(db.String(255), nullable=False)
+    address_line2 = db.Column(db.String(255), nullable=True)
+    city = db.Column(db.String(100), nullable=False)
+    state = db.Column(db.String(100), nullable=False)
+    postal_code = db.Column(db.String(20), nullable=False)
+    country = db.Column(db.String(100), default='Nigeria')
+    phone = db.Column(db.String(20), nullable=False)
+    is_default = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=func.now())
+    updated_at = db.Column(db.DateTime, default=func.now(), onupdate=func.now())
+    customer = db.relationship('Customers', backref=db.backref('addresses', lazy=True))
+
+
+class DeliveryPreference(db.Model):
+    __tablename__ = 'delivery_preferences'
+    id = db.Column(db.Integer, primary_key=True)
+    customer_id = db.Column(db.Integer, db.ForeignKey('customers.id'), nullable=False, unique=True)
+    delivery_method = db.Column(db.String(50), default='standard')  # standard, express, overnight
+    signature_required = db.Column(db.Boolean, default=False)
+    leave_at_door = db.Column(db.Boolean, default=False)
+    fragile_handling = db.Column(db.Boolean, default=False)
+    special_instructions = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=func.now())
+    updated_at = db.Column(db.DateTime, default=func.now(), onupdate=func.now())
+    customer = db.relationship('Customers', backref=db.backref('delivery_preference', uselist=False))
