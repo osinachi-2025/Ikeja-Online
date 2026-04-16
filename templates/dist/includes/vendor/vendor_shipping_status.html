@@ -1,0 +1,153 @@
+{% extends "dist/vendordashboard.html" %}
+
+{% block title %}Shipping Status - Vendor Dashboard{% endblock %}
+
+{% block breadcrumb_name %}Shipping Status{% endblock %}
+
+{% block vendor_content %}
+<div class="app-content">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-12">
+        <div class="card card-primary card-outline">
+          <div class="card-header d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+            <div>
+              <h3 class="card-title">Shipping Status</h3>
+              <p class="text-muted mb-0">Showing only orders with completed payments.</p>
+            </div>
+            <div class="btn-group" role="group" aria-label="Shipping filters">
+              <button type="button" class="btn btn-outline-primary active" id="filter-all">All</button>
+              <button type="button" class="btn btn-outline-primary" id="filter-pending">Pending</button>
+              <button type="button" class="btn btn-outline-primary" id="filter-shipped">Shipped</button>
+              <button type="button" class="btn btn-outline-primary" id="filter-en_route">In Transit</button>
+              <button type="button" class="btn btn-outline-primary" id="filter-delivered">Delivered</button>
+            </div>
+          </div>
+          <div class="card-body">
+            <div id="shippingStatusList" class="list-group">
+              <div class="list-group-item text-center py-5" id="shippingLoading">Loading shipping information...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock vendor_content %}
+
+{% block extra_scripts %}
+<script>
+  const statusButtons = {
+    all: document.getElementById('filter-all'),
+    pending: document.getElementById('filter-pending'),
+    shipped: document.getElementById('filter-shipped'),
+    en_route: document.getElementById('filter-en_route'),
+    delivered: document.getElementById('filter-delivered')
+  };
+
+  let shippingOrders = [];
+  let activeFilter = 'all';
+
+  function formatCurrency(value) {
+    return `₦${parseFloat(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  }
+
+  function getShippingBadge(status) {
+    const normalized = (status || 'pending').toLowerCase().replace('_', '-');
+    const classes = {
+      pending: 'badge bg-warning',
+      shipped: 'badge bg-primary',
+      en_route: 'badge bg-info',
+      delivered: 'badge bg-success'
+    };
+    return `<span class="${classes[normalized] || 'badge bg-secondary'}">${status ? status.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase()) : 'Pending'}</span>`;
+  }
+
+  function getOrderStatusBadge(status) {
+    const normalized = (status || 'pending').toLowerCase();
+    const classes = {
+      completed: 'badge bg-success',
+      cancelled: 'badge bg-danger',
+      pending: 'badge bg-warning'
+    };
+    return `<span class="${classes[normalized] || 'badge bg-secondary'}">${status ? status.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase()) : 'Pending'}</span>`;
+  }
+
+  function setActiveFilter(filter) {
+    activeFilter = filter;
+    Object.entries(statusButtons).forEach(([key, btn]) => {
+      btn.classList.toggle('active', key === filter);
+    });
+    renderShippingStatusList();
+  }
+
+  function renderShippingStatusList() {
+    const container = document.getElementById('shippingStatusList');
+    const filtered = activeFilter === 'all'
+      ? shippingOrders
+      : shippingOrders.filter(order => (order.shipping_status || 'pending').toLowerCase() === activeFilter.toLowerCase());
+
+    if (!filtered.length) {
+      container.innerHTML = '<div class="list-group-item text-center py-5">No completed-payment orders found for this shipping status.</div>';
+      return;
+    }
+
+    container.innerHTML = filtered.map(order => {
+      const createdAt = order.created_at ? new Date(order.created_at).toLocaleString() : '-';
+      return `
+        <div class="list-group-item">
+          <div class="d-flex justify-content-between align-items-start gap-3 flex-column flex-md-row">
+            <div>
+              <h5 class="mb-1">Order ${order.reference_number}</h5>
+              <p class="mb-1 text-muted">${order.customer_name || 'Unknown customer'}</p>
+              <p class="mb-0">Amount: <strong>${formatCurrency(order.total_amount || 0)}</strong></p>
+            </div>
+            <div class="text-md-end">
+              <p class="mb-1">Order Status: ${getOrderStatusBadge(order.status || 'pending')}</p>
+              <p class="mb-1">Shipping: ${getShippingBadge(order.shipping_status)}</p>
+              <small class="text-muted">Created: ${createdAt}</small>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  async function loadShippingStatusOrders() {
+    const token = localStorage.getItem('access_token');
+    const container = document.getElementById('shippingStatusList');
+
+    if (!token) {
+      container.innerHTML = '<div class="list-group-item text-center py-5 text-danger">Please log in to view shipping status.</div>';
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/vendor/orders', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      const data = await response.json();
+
+      if (!data.success) {
+        container.innerHTML = `<div class="list-group-item text-center py-5 text-danger">${data.message || 'Unable to load shipping status.'}</div>`;
+        return;
+      }
+
+      shippingOrders = (data.orders || []).filter(order => (order.payment_status || '').toLowerCase() === 'completed');
+      renderShippingStatusList();
+    } catch (error) {
+      container.innerHTML = '<div class="list-group-item text-center py-5 text-danger">Error loading shipping status.</div>';
+      console.error('Error loading shipping status:', error);
+    }
+  }
+
+  Object.entries(statusButtons).forEach(([filter, button]) => {
+    button.addEventListener('click', () => setActiveFilter(filter));
+  });
+
+  document.addEventListener('DOMContentLoaded', loadShippingStatusOrders);
+</script>
+{% endblock extra_scripts %}

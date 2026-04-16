@@ -1,0 +1,145 @@
+{% extends "dist/vendordashboard.html" %}
+
+{% block dashboard_current %}
+  <div class="col-sm-6">
+    <ol class="breadcrumb float-sm-end">
+      <li class="breadcrumb-item"><a href="/vendor/dashboard">Dashboard</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Orders</li>
+    </ol>
+  </div>
+{% endblock dashboard_current %}
+
+{% block vendor_content %}
+<div class="app-content">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+            <div>
+              <h3 class="card-title">All Orders</h3>
+              <p class="text-muted mb-0">Browse and filter your vendor orders in one place.</p>
+            </div>
+            <div class="btn-group" role="group" aria-label="Order filters">
+              <button type="button" class="btn btn-outline-primary" id="filter-all">All</button>
+              <button type="button" class="btn btn-outline-primary" id="filter-pending">Pending</button>
+              <button type="button" class="btn btn-outline-primary" id="filter-completed">Completed</button>
+              <button type="button" class="btn btn-outline-primary" id="filter-cancelled">Cancelled</button>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-hover table-bordered">
+                <thead class="table-light">
+                  <tr>
+                    <th scope="col">Order #</th>
+                    <th scope="col">Customer</th>
+                    <th scope="col">Amount</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Payment</th>
+                    <th scope="col">Created</th>
+                    <th scope="col">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="ordersTableBody">
+                  <tr>
+                    <td colspan="7" class="text-center py-5">Loading orders...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="mt-3" id="ordersEmptyState" style="display: none;">
+              <div class="alert alert-secondary text-center mb-0">
+                No orders found for the selected filter.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const statusParam = new URLSearchParams(window.location.search).get('payment_status') || 'all';
+  const statusButtons = {
+    all: document.getElementById('filter-all'),
+    pending: document.getElementById('filter-pending'),
+    completed: document.getElementById('filter-completed'),
+    cancelled: document.getElementById('filter-cancelled')
+  };
+
+  function setActiveFilter(selected) {
+    Object.entries(statusButtons).forEach(([key, btn]) => {
+      btn.classList.toggle('active', key === selected);
+    });
+  }
+
+  function formatCurrency(value) {
+    return `₦${parseFloat(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  }
+
+  function renderOrders(orders, filter) {
+    const tbody = document.getElementById('ordersTableBody');
+    const emptyState = document.getElementById('ordersEmptyState');
+    const filtered = filter === 'all' ? orders : orders.filter(o => o.payment_status === filter);
+
+    if (!filtered.length) {
+      tbody.innerHTML = `<tr><td colspan="7" class="text-center py-5">No matching orders found.</td></tr>`;
+      emptyState.style.display = 'block';
+      return;
+    }
+
+    emptyState.style.display = 'none';
+    tbody.innerHTML = filtered.map(order => {
+      const statusClass = order.status === 'completed' ? 'badge bg-success' : order.status === 'cancelled' ? 'badge bg-danger' : 'badge bg-warning';
+      const paymentClass = order.payment_status === 'completed' || order.payment_status === 'paid' ? 'badge bg-success' : 'badge bg-secondary';
+      const createdAt = order.created_at ? new Date(order.created_at).toLocaleString() : '-';
+      return `
+        <tr>
+          <td>${order.reference_number}</td>
+          <td>${order.customer_name}</td>
+          <td>${formatCurrency(order.total_amount)}</td>
+          <td><span class="${statusClass}">${order.status || 'pending'}</span></td>
+          <td><span class="${paymentClass}">${order.payment_status || 'pending'}</span></td>
+          <td>${createdAt}</td>
+          <td><a href="/vendor/orders?payment_status=${filter}" class="btn btn-sm btn-outline-primary">Refresh</a></td>
+        </tr>`;
+    }).join('');
+  }
+
+  async function loadOrders() {
+    try {
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        document.getElementById('ordersTableBody').innerHTML = `<tr><td colspan="7" class="text-center py-5 text-danger">Please log in to view orders.</td></tr>`;
+        return;
+      }
+      const response = await fetch('/api/vendor/orders', { 
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json' 
+        } 
+      });
+      const data = await response.json();
+      if (!data.success) throw new Error(data.message || 'Unable to load orders');
+      renderOrders(data.orders || [], statusParam);
+      setActiveFilter(statusParam);
+    } catch (error) {
+      document.getElementById('ordersTableBody').innerHTML = `<tr><td colspan="7" class="text-center py-5 text-danger">${error.message}</td></tr>`;
+    }
+  }
+
+  Object.entries(statusButtons).forEach(([filter, button]) => {
+    button.addEventListener('click', () => {
+      const newUrl = new URL(window.location.href);
+      if (filter === 'all') newUrl.searchParams.delete('payment_status'); else newUrl.searchParams.set('payment_status', filter);
+      window.history.replaceState({}, '', newUrl);
+      setActiveFilter(filter);
+      loadOrders();
+    });
+  });
+
+  document.addEventListener('DOMContentLoaded', loadOrders);
+</script>
+{% endblock vendor_content %}

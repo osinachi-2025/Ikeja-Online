@@ -1,0 +1,115 @@
+{% extends "dist/customerdashboard.html" %}
+
+{% block dashboard_current %}
+  <div class="col-sm-6">
+    <ol class="breadcrumb float-sm-end">
+      <li class="breadcrumb-item"><a href="/customer/dashboard/home">Dashboard</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Wishlist</li>
+    </ol>
+  </div>
+{% endblock dashboard_current %}
+
+{% block customer_content %}
+<div class="app-content">
+  <div class="container-fluid">
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h3 class="card-title mb-0">Wishlist</h3>
+            <span id="wishlistCount" class="badge bg-warning">0 items</span>
+          </div>
+          <div class="card-body">
+            <div id="wishlistAlert" class="alert alert-danger d-none" role="alert"></div>
+            <div id="wishlistGrid" class="row row-cols-1 row-cols-md-2 g-4"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  async function loadWishlist() {
+    const wishlistGrid = document.getElementById('wishlistGrid');
+    const wishlistCount = document.getElementById('wishlistCount');
+    const wishlistAlert = document.getElementById('wishlistAlert');
+
+    wishlistGrid.innerHTML = '<div class="col-12 text-center py-5">Loading wishlist...</div>';
+    wishlistAlert.classList.add('d-none');
+
+    try {
+      const token = localStorage.getItem('access_token');
+      const response = await fetch('/api/wishlist', {
+        headers: {
+          'Authorization': 'Bearer ' + token
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.message || 'Unable to load wishlist.');
+      }
+
+      const data = await response.json();
+      const items = data.items || [];
+      wishlistCount.textContent = `${items.length} item${items.length !== 1 ? 's' : ''}`;
+
+      if (!items.length) {
+        wishlistGrid.innerHTML = '<div class="col-12 text-center py-5">Your wishlist is empty.</div>';
+        return;
+      }
+
+      wishlistGrid.innerHTML = items.map(item => `
+        <div class="col">
+          <div class="card h-100 shadow-sm">
+            <img src="${item.image || '/static/assets/img/product-placeholder.jpg'}" class="card-img-top" alt="${item.name}">
+            <div class="card-body d-flex flex-column">
+              <h5 class="card-title">${item.name}</h5>
+              <p class="card-text text-muted">${item.store_name || 'Unknown store'}</p>
+              <div class="mt-auto d-flex justify-content-between align-items-center gap-2">
+                <span class="fw-bold text-primary">₦${Number(item.price).toLocaleString()}</span>
+                <div class="btn-group">
+                  <a href="/product/${item.id}" class="btn btn-sm btn-outline-primary">View</a>
+                  <button type="button" class="btn btn-sm btn-danger" onclick="removeWishlistItem(${item.id})">Remove</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    } catch (error) {
+      wishlistGrid.innerHTML = '<div class="col-12 text-center py-5 text-danger">Could not load wishlist.</div>';
+      wishlistAlert.textContent = error.message;
+      wishlistAlert.classList.remove('d-none');
+      console.error(error);
+    }
+  }
+
+  async function removeWishlistItem(productId) {
+    try {
+      const token = localStorage.getItem('access_token');
+      const response = await fetch(`/api/wishlist/remove/${productId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': 'Bearer ' + token
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.message || 'Unable to remove item from wishlist.');
+      }
+
+      await loadWishlist();
+    } catch (error) {
+      const wishlistAlert = document.getElementById('wishlistAlert');
+      wishlistAlert.textContent = error.message;
+      wishlistAlert.classList.remove('d-none');
+      console.error(error);
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', loadWishlist);
+</script>
+{% endblock customer_content %}

@@ -1,0 +1,331 @@
+{% extends "dist/customerdashboard.html" %}
+
+{% block dashboard_current %}
+  <div class="col-sm-6">
+    <ol class="breadcrumb float-sm-end">
+      <li class="breadcrumb-item"><a href="/customer/dashboard/home">Dashboard</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Account Settings</li>
+    </ol>
+  </div>
+{% endblock dashboard_current %}
+
+{% block customer_content %}
+<div class="app-content">
+  <div class="container-fluid">
+    <div class="row justify-content-center">
+      <div class="col-lg-10">
+        <div class="card">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h3 class="card-title mb-0">Account Settings</h3>
+            <a href="/customer/dashboard/profile-info" class="btn btn-sm btn-secondary">View Profile</a>
+          </div>
+          <div class="card-body">
+            <div id="settingsAlert" class="alert alert-danger d-none" role="alert"></div>
+            <div id="settingsSuccess" class="alert alert-success d-none" role="alert"></div>
+            <div id="imageAlert" class="alert alert-danger d-none" role="alert"></div>
+            <div id="imageSuccess" class="alert alert-success d-none" role="alert"></div>
+
+            <!-- Profile Image Section -->
+            <div class="mb-4">
+              <h5 class="mb-3">Profile Image</h5>
+              <div class="d-flex align-items-center gap-3 mb-3">
+                <img id="currentProfileImage" src="" alt="Current Profile Image" class="rounded-circle" style="width: 80px; height: 80px; object-fit: cover; border: 2px solid #dee2e6; cursor: pointer; pointer-events: auto;" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iNDAiIGN5PSI0MCIgcj0iNDAiIGZpbGw9IiNkZGUyZTYiLz4KPGNpcmNsZSBjeD0iNDAiIGN5PSIzMCIgcj0iMTUiIGZpbGw9IiM2Yzc1N2EiLz4KPHBhdGggZD0iTTIwIDcwYzAtMTYgMTgtMjQgMzAtMjRzMzAgOCA0MCAyMiIgZmlsbD0iIzZjNzU3YSIvPgo8L3N2Zz4=';">
+                <div>
+                  <input type="file" id="profileImageInput" class="form-control d-none" accept="image/*">
+                  <button type="button" id="selectImageBtn" class="btn btn-outline-secondary btn-sm">Select Image</button>
+                  <small class="text-muted d-block">Supported formats: PNG, JPG, JPEG, GIF. Max size: 5MB</small>
+                </div>
+                <button type="button" id="uploadImageBtn" class="btn btn-outline-primary">Upload</button>
+              </div>
+              <div id="imageAlert" class="alert alert-danger d-none" role="alert"></div>
+              <div id="imageSuccess" class="alert alert-success d-none" role="alert"></div>
+            </div>
+
+            <form id="settingsForm">
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label">First Name</label>
+                  <input type="text" id="first_name" class="form-control" required>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Last Name</label>
+                  <input type="text" id="last_name" class="form-control" required>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Email</label>
+                  <input type="email" id="email" class="form-control" required>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Phone</label>
+                  <input type="tel" id="phone" class="form-control" required>
+                </div>
+                <div class="col-12">
+                  <label class="form-label">Default Address</label>
+                  <textarea id="address" class="form-control" rows="3" required></textarea>
+                </div>
+              </div>
+              <div class="mt-4 d-flex gap-2">
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+                <a href="/customer/dashboard/security" class="btn btn-outline-secondary">Security Settings</a>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  async function loadAccountSettings() {
+    const settingsAlert = document.getElementById('settingsAlert');
+    settingsAlert.classList.add('d-none');
+    console.log('[loadAccountSettings] Starting to load account settings');
+
+    // Check if user is logged in
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      settingsAlert.textContent = 'Please log in to view and edit your account settings.';
+      settingsAlert.classList.remove('d-none');
+      console.log('[loadAccountSettings] No token found');
+      return;
+    }
+
+    try {
+      console.log('[loadAccountSettings] Fetching profile data...');
+      const response = await fetch('/api/customer/profile', {
+        headers: {
+          'Authorization': 'Bearer ' + token
+        }
+      });
+
+      console.log('[loadAccountSettings] Response status:', response.status);
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({message: 'Failed to load account settings'}));
+        throw new Error(errorData.message || 'Failed to load account settings');
+      }
+
+      const data = await response.json();
+      console.log('[loadAccountSettings] Profile data received:', data);
+
+      // Populate form fields
+      document.getElementById('first_name').value = data.first_name || '';
+      document.getElementById('last_name').value = data.last_name || '';
+      document.getElementById('email').value = data.email || '';
+      document.getElementById('phone').value = data.phone || '';
+      document.getElementById('address').value = data.address || '';
+      console.log('[loadAccountSettings] Form fields populated');
+
+      // Handle profile image
+      const currentProfileImage = document.getElementById('currentProfileImage');
+      console.log('[loadAccountSettings] Profile image element found:', !!currentProfileImage);
+      console.log('[loadAccountSettings] Profile image data:', data.profile_image);
+      
+      if (data.profile_image && data.profile_image.data) {
+        console.log('[loadAccountSettings] Setting profile image from data');;
+        currentProfileImage.src = `data:${data.profile_image.mime_type};base64,${data.profile_image.data}`;
+      } else {
+        console.log('[loadAccountSettings] No profile image, using default');
+        currentProfileImage.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iNDAiIGN5PSI0MCIgcj0iNDAiIGZpbGw9IiNkZGUyZTYiLz4KPGNpcmNsZSBjeD0iNDAiIGN5PSIzMCIgcj0iMTUiIGZpbGw9IiM2Yzc1N2EiLz4KPHBhdGggZD0iTTIwIDcwYzAtMTYgMTgtMjQgMzAtMjRzMzAgOCA0MCAyMiIgZmlsbD0iIzZjNzU3YSIvPgo8L3N2Zz4=';
+      }
+    } catch (error) {
+      console.error('[loadAccountSettings] Error:', error);
+      settingsAlert.textContent = error.message;
+      settingsAlert.classList.remove('d-none');
+    }
+  }
+
+  document.getElementById('settingsForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const settingsAlert = document.getElementById('settingsAlert');
+    const settingsSuccess = document.getElementById('settingsSuccess');
+    settingsAlert.classList.add('d-none');
+    settingsSuccess.classList.add('d-none');
+
+    const payload = {
+      first_name: document.getElementById('first_name').value.trim(),
+      last_name: document.getElementById('last_name').value.trim(),
+      email: document.getElementById('email').value.trim(),
+      phone: document.getElementById('phone').value.trim(),
+      address: document.getElementById('address').value.trim()
+    };
+
+    try {
+      const token = localStorage.getItem('access_token');
+      const response = await fetch('/api/customer/account-settings', {
+        method: 'PUT',
+        headers: {
+          'Authorization': 'Bearer ' + token,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to update account settings.');
+      }
+      settingsSuccess.textContent = data.message || 'Account settings updated successfully.';
+      settingsSuccess.classList.remove('d-none');
+    } catch (error) {
+      settingsAlert.textContent = error.message;
+      settingsAlert.classList.remove('d-none');
+    }
+  });
+
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded, setting up event listeners');
+
+    // Small delay to ensure DOM is fully ready
+    setTimeout(() => {
+      console.log('Setting up image upload event listeners');
+
+      // Handle image selection and preview
+      const selectBtn = document.getElementById('selectImageBtn');
+      const profileImage = document.getElementById('currentProfileImage');
+      const fileInput = document.getElementById('profileImageInput');
+
+      if (selectBtn) {
+        selectBtn.addEventListener('click', function() {
+          console.log('Select image button clicked');
+          if (fileInput) fileInput.click();
+        });
+      }
+
+      if (profileImage) {
+        profileImage.addEventListener('click', function() {
+          console.log('Profile image clicked');
+          if (fileInput) fileInput.click();
+        });
+      }
+
+      if (fileInput) {
+        fileInput.addEventListener('change', function(e) {
+          console.log('File input changed, files:', this.files.length);
+          const file = e.target.files[0];
+          const currentProfileImage = document.getElementById('currentProfileImage');
+
+          if (file) {
+            console.log('File selected:', file.name, file.type, file.size);
+
+            // Validate file type
+            const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif'];
+            if (!allowedTypes.includes(file.type)) {
+              alert('Please select a valid image file (PNG, JPG, JPEG, or GIF).');
+              this.value = '';
+              return;
+            }
+
+            // Validate file size (5MB)
+            if (file.size > 5 * 1024 * 1024) {
+              alert('File size must be less than 5MB.');
+              this.value = '';
+              return;
+            }
+
+            console.log('File validated, showing preview');
+
+            // Show preview
+            const reader = new FileReader();
+            reader.onload = function(e) {
+              console.log('Preview loaded, setting src');
+              if (currentProfileImage) {
+                currentProfileImage.src = e.target.result;
+              }
+            };
+            reader.readAsDataURL(file);
+          } else {
+            console.log('No file selected');
+          }
+        });
+      }
+
+      // Handle profile image upload
+      const uploadBtn = document.getElementById('uploadImageBtn');
+      if (uploadBtn) {
+        uploadBtn.addEventListener('click', async function() {
+          const imageAlert = document.getElementById('imageAlert');
+          const imageSuccess = document.getElementById('imageSuccess');
+          const fileInput = document.getElementById('profileImageInput');
+
+          if (imageAlert) imageAlert.classList.add('d-none');
+          if (imageSuccess) imageSuccess.classList.add('d-none');
+
+          if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+            if (imageAlert) {
+              imageAlert.textContent = 'Please select an image file to upload.';
+              imageAlert.classList.remove('d-none');
+            }
+            return;
+          }
+
+          const file = fileInput.files[0];
+          const formData = new FormData();
+          formData.append('profile_image', file);
+
+          // Show loading state
+          const originalText = this.textContent;
+          this.textContent = 'Uploading...';
+          this.disabled = true;
+
+          try {
+            const token = localStorage.getItem('access_token');
+            if (!token) {
+              throw new Error('Please log in to upload images.');
+            }
+
+            console.log('Uploading image...', file.name, file.size, file.type);
+
+            const response = await fetch('/api/customer/profile-image', {
+              method: 'POST',
+              headers: {
+                'Authorization': 'Bearer ' + token
+              },
+              body: formData
+            });
+
+            console.log('Response status:', response.status);
+
+            const data = await response.json();
+            console.log('Upload response data:', data);
+
+            if (!response.ok) {
+              throw new Error(data.message || `Upload failed with status ${response.status}`);
+            }
+
+            if (imageSuccess) {
+              imageSuccess.textContent = data.message || 'Profile image updated successfully.';
+              imageSuccess.classList.remove('d-none');
+            }
+
+            // Update navbar profile images with the new image
+            const navbarImages = document.querySelectorAll('.user-image');
+            if (currentProfileImage && currentProfileImage.src) {
+              navbarImages.forEach(img => {
+                img.src = currentProfileImage.src;
+              });
+            }
+
+            // Clear the file input but keep the preview
+            if (fileInput) fileInput.value = '';
+
+          } catch (error) {
+            console.error('Upload error details:', error);
+            if (imageAlert) {
+              imageAlert.textContent = `Upload failed: ${error.message}`;
+              imageAlert.classList.remove('d-none');
+            }
+          } finally {
+            // Reset button state
+            this.textContent = originalText;
+            this.disabled = false;
+          }
+        });
+      }
+
+      // Load account settings
+      loadAccountSettings();
+    }, 100);
+  });
+</script>
+{% endblock customer_content %}

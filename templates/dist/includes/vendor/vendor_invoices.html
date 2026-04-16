@@ -1,0 +1,107 @@
+{% extends "dist/vendordashboard.html" %}
+
+{% block dashboard_current %}
+  <div class="col-sm-6">
+    <ol class="breadcrumb float-sm-end">
+      <li class="breadcrumb-item"><a href="/vendor/dashboard">Dashboard</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Invoices</li>
+    </ol>
+  </div>
+{% endblock dashboard_current %}
+
+{% block vendor_content %}
+<div class="app-content">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Invoices</h3>
+            <p class="text-muted mb-0">Invoices are generated from your completed orders.</p>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-hover table-bordered">
+                <thead class="table-light">
+                  <tr>
+                    <th scope="col">Invoice #</th>
+                    <th scope="col">Customer</th>
+                    <th scope="col">Amount</th>
+                    <th scope="col">Payment</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Created</th>
+                  </tr>
+                </thead>
+                <tbody id="invoicesTableBody">
+                  <tr>
+                    <td colspan="6" class="text-center py-5">Loading invoices...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="mt-3" id="invoicesEmptyState" style="display: none;">
+              <div class="alert alert-secondary text-center mb-0">No invoices available yet.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function formatCurrency(value) {
+    return `₦${parseFloat(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  }
+
+  function renderInvoices(orders) {
+    const tbody = document.getElementById('invoicesTableBody');
+    const emptyState = document.getElementById('invoicesEmptyState');
+
+    if (!orders.length) {
+      tbody.innerHTML = `<tr><td colspan="6" class="text-center py-5">No invoices available.</td></tr>`;
+      emptyState.style.display = 'block';
+      return;
+    }
+
+    emptyState.style.display = 'none';
+    tbody.innerHTML = orders.map(order => {
+      const paymentClass = order.payment_status === 'completed' || order.payment_status === 'paid' ? 'badge bg-success' : 'badge bg-warning';
+      const statusClass = order.status === 'completed' ? 'badge bg-success' : order.status === 'cancelled' ? 'badge bg-danger' : 'badge bg-secondary';
+      const createdAt = order.created_at ? new Date(order.created_at).toLocaleString() : '-';
+      return `
+        <tr>
+          <td>${order.reference_number}</td>
+          <td>${order.customer_name}</td>
+          <td>${formatCurrency(order.total_amount)}</td>
+          <td><span class="${paymentClass}">${order.payment_status || 'pending'}</span></td>
+          <td><span class="${statusClass}">${order.status || 'pending'}</span></td>
+          <td>${createdAt}</td>
+        </tr>`;
+    }).join('');
+  }
+
+  async function loadInvoices() {
+    try {
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        document.getElementById('invoicesTableBody').innerHTML = `<tr><td colspan="6" class="text-center py-5 text-danger">Please log in to view invoices.</td></tr>`;
+        return;
+      }
+      const response = await fetch('/api/vendor/orders', { 
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json' 
+        } 
+      });
+      const data = await response.json();
+      if (!data.success) throw new Error(data.message || 'Unable to load invoices');
+      renderInvoices(data.orders || []);
+    } catch (error) {
+      document.getElementById('invoicesTableBody').innerHTML = `<tr><td colspan="6" class="text-center py-5 text-danger">${error.message}</td></tr>`;
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', loadInvoices);
+</script>
+{% endblock vendor_content %}

@@ -1,0 +1,258 @@
+{% extends "dist/vendordashboard.html" %}
+
+{% block title %}Monthly Revenue - Ikeja Online{% endblock %}
+
+{% block page_title %}Monthly Revenue{% endblock %}
+
+{% block breadcrumb_name %}Monthly Revenue{% endblock %}
+
+{% block extra_head %}
+<style>
+    .revenue-summary-card .inner {
+        min-height: 110px;
+    }
+
+    .revenue-summary-card .icon {
+        top: 15px;
+        right: 20px;
+    }
+
+    .revenue-card-title {
+        font-size: 1rem;
+        color: #6c757d;
+        margin-bottom: 0.5rem;
+    }
+
+    .revenue-card-value {
+        font-size: 2rem;
+        font-weight: 700;
+    }
+
+    .revenue-chart-card {
+        min-height: 360px;
+    }
+</style>
+{% endblock %}
+
+{% block vendor_content %}
+<div class="row mb-4">
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="small-box bg-primary revenue-summary-card">
+            <div class="inner">
+                <p class="revenue-card-title">Total Revenue</p>
+                <h3 id="monthlyTotalRevenue" class="revenue-card-value">₦0.00</h3>
+            </div>
+            <div class="icon">
+                <i class="bi bi-currency-dollar"></i>
+            </div>
+            <a href="#" class="small-box-footer">From all months <i class="bi bi-arrow-right"></i></a>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="small-box bg-success revenue-summary-card">
+            <div class="inner">
+                <p class="revenue-card-title">Current Month</p>
+                <h3 id="monthlyCurrentRevenue" class="revenue-card-value">₦0.00</h3>
+            </div>
+            <div class="icon">
+                <i class="bi bi-calendar3"></i>
+            </div>
+            <a href="#" class="small-box-footer">This month <i class="bi bi-arrow-right"></i></a>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="small-box bg-warning revenue-summary-card">
+            <div class="inner">
+                <p class="revenue-card-title">Total Orders</p>
+                <h3 id="monthlyRevenueOrders" class="revenue-card-value">0</h3>
+            </div>
+            <div class="icon">
+                <i class="bi bi-cart-check"></i>
+            </div>
+            <a href="#" class="small-box-footer">Completed orders <i class="bi bi-arrow-right"></i></a>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="small-box bg-info revenue-summary-card">
+            <div class="inner">
+                <p class="revenue-card-title">Average per Month</p>
+                <h3 id="monthlyRevenueAverage" class="revenue-card-value">₦0.00</h3>
+            </div>
+            <div class="icon">
+                <i class="bi bi-bar-chart-line"></i>
+            </div>
+            <a href="#" class="small-box-footer">Average revenue <i class="bi bi-arrow-right"></i></a>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card revenue-chart-card">
+            <div class="card-header">
+                <h3 class="card-title">Monthly Revenue Trend</h3>
+            </div>
+            <div class="card-body">
+                <div id="monthlyRevenueChart"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Revenue by Month</h3>
+            </div>
+            <div class="card-body" id="monthlyRevenueTableContainer">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Loading monthly revenue details...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    function formatCurrency(value) {
+        return `₦${parseFloat(value).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+    }
+
+    function renderMonthlyRevenueChart(months, revenueData) {
+        const chartElement = document.querySelector('#monthlyRevenueChart');
+        if (!chartElement) return;
+
+        const options = {
+            series: [{
+                name: 'Revenue',
+                data: revenueData
+            }],
+            chart: {
+                type: 'area',
+                height: 360,
+                toolbar: { show: false }
+            },
+            stroke: { curve: 'smooth', width: 3 },
+            markers: { size: 4 },
+            xaxis: {
+                categories: months,
+                labels: { rotate: -45 }
+            },
+            yaxis: {
+                labels: {
+                    formatter: (val) => `₦${val.toLocaleString('en-US')}`
+                }
+            },
+            tooltip: {
+                y: {
+                    formatter: (value) => `₦${parseFloat(value).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`
+                }
+            },
+            fill: {
+                type: 'gradient',
+                gradient: {
+                    shadeIntensity: 1,
+                    opacityFrom: 0.6,
+                    opacityTo: 0.1,
+                    stops: [0, 90, 100]
+                }
+            }
+        };
+
+        if (window.monthlyRevenueApexChart && typeof window.monthlyRevenueApexChart.destroy === 'function') {
+            window.monthlyRevenueApexChart.destroy();
+        }
+
+        window.monthlyRevenueApexChart = new ApexCharts(chartElement, options);
+        window.monthlyRevenueApexChart.render();
+    }
+
+    function renderMonthlyRevenueTable(monthlyRevenue) {
+        const container = document.getElementById('monthlyRevenueTableContainer');
+        if (!container) return;
+
+        if (!monthlyRevenue || !monthlyRevenue.length) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-chart-pie"></i>
+                    <h3>No monthly revenue data</h3>
+                    <p>Revenue will appear here once sales start coming in.</p>
+                </div>
+            `;
+            return;
+        }
+
+        const rows = monthlyRevenue.map(row => `
+            <tr>
+                <td>${row.month}</td>
+                <td>${formatCurrency(row.revenue)}</td>
+            </tr>
+        `).join('');
+
+        container.innerHTML = `
+            <div class="table-responsive">
+                <table class="earnings-table table table-bordered table-striped">
+                    <thead>
+                        <tr>
+                            <th>Month</th>
+                            <th>Revenue</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                </table>
+            </div>
+        `;
+    }
+
+    async function loadMonthlyRevenueData() {
+        try {
+            const token = localStorage.getItem('access_token');
+            if (!token) throw new Error('No access token found. Please log in again.');
+
+            const response = await fetch('/api/vendor/earnings', {
+                headers: {
+                    'Authorization': 'Bearer ' + token,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            const data = await response.json();
+            if (!data.success) throw new Error(data.message || 'Unable to load revenue data');
+
+            const totalRevenue = data.earnings.total_earnings || 0;
+            const currentRevenue = data.earnings.monthly_earnings || 0;
+            const totalOrders = data.earnings.total_orders || 0;
+            const monthlyRevenue = data.earnings.monthly_revenue || [];
+            const averageRevenue = monthlyRevenue.length ? (monthlyRevenue.reduce((sum, row) => sum + row.revenue, 0) / monthlyRevenue.length) : 0;
+
+            document.getElementById('monthlyTotalRevenue').textContent = formatCurrency(totalRevenue);
+            document.getElementById('monthlyCurrentRevenue').textContent = formatCurrency(currentRevenue);
+            document.getElementById('monthlyRevenueOrders').textContent = totalOrders;
+            document.getElementById('monthlyRevenueAverage').textContent = formatCurrency(averageRevenue);
+
+            const revenueLabels = monthlyRevenue.map(r => r.month);
+            const revenueValues = monthlyRevenue.map(r => r.revenue);
+            renderMonthlyRevenueChart(revenueLabels, revenueValues);
+            renderMonthlyRevenueTable(monthlyRevenue);
+        } catch (error) {
+            console.error('Error loading monthly revenue:', error);
+            const container = document.getElementById('monthlyRevenueTableContainer');
+            if (container) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <h3>Unable to load revenue</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', loadMonthlyRevenueData);
+</script>
+{% endblock %}

@@ -1,0 +1,284 @@
+{% extends "dist/vendordashboard.html" %}
+
+{% block title %}Login Information & Change Password - Vendor Dashboard{% endblock %}
+
+{% block page_title %}Login Information & Change Password{% endblock %}
+
+{% block breadcrumb_name %}Login Information & Change Password{% endblock %}
+
+{% block vendor_content %}
+<div class="container-fluid">
+  <div class="row">
+    <!-- Login Information Section -->
+    <div class="col-md-6">
+      <div class="card card-primary">
+        <div class="card-header">
+          <h3 class="card-title">
+            <i class="fas fa-user-circle mr-2"></i>
+            Login Information
+          </h3>
+        </div>
+        <div class="card-body">
+          <div class="form-group">
+            <label for="email">Email Address</label>
+            <input type="email" class="form-control" id="email" readonly>
+          </div>
+          <div class="form-group">
+            <label for="username">Username</label>
+            <input type="text" class="form-control" id="username" readonly>
+          </div>
+          <div class="form-group">
+            <label for="last_login">Last Login</label>
+            <input type="text" class="form-control" id="last_login" readonly>
+          </div>
+          <div class="form-group">
+            <label for="account_status">Account Status</label>
+            <input type="text" class="form-control" id="account_status" readonly>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Change Password Section -->
+    <div class="col-md-6">
+      <div class="card card-warning">
+        <div class="card-header">
+          <h3 class="card-title">
+            <i class="fas fa-key mr-2"></i>
+            Change Password
+          </h3>
+        </div>
+        <form id="changePasswordForm">
+          <div class="card-body">
+            <div class="form-group">
+              <label for="current_password">Current Password</label>
+              <input type="password" class="form-control" id="current_password" name="current_password" required>
+            </div>
+            <div class="form-group">
+              <label for="new_password">New Password</label>
+              <input type="password" class="form-control" id="new_password" name="new_password" required minlength="8">
+              <small class="form-text text-muted">Password must be at least 8 characters long</small>
+            </div>
+            <div class="form-group">
+              <label for="confirm_password">Confirm New Password</label>
+              <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+            </div>
+            <div class="form-group">
+              <div class="custom-control custom-checkbox">
+                <input class="custom-control-input" type="checkbox" id="show_password" onchange="togglePasswordVisibility()">
+                <label for="show_password" class="custom-control-label">
+                  Show passwords
+                </label>
+              </div>
+            </div>
+          </div>
+          <div class="card-footer">
+            <button type="submit" class="btn btn-warning">
+              <i class="fas fa-save"></i> Change Password
+            </button>
+            <button type="button" class="btn btn-secondary ml-2" onclick="resetPasswordForm()">
+              <i class="fas fa-undo"></i> Reset
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Password Requirements Info -->
+  <div class="row mt-3">
+    <div class="col-12">
+      <div class="card card-info">
+        <div class="card-header">
+          <h3 class="card-title">
+            <i class="fas fa-info-circle mr-2"></i>
+            Password Requirements
+          </h3>
+        </div>
+        <div class="card-body">
+          <ul class="list-unstyled">
+            <li><i class="fas fa-check text-success"></i> Minimum 8 characters</li>
+            <li><i class="fas fa-check text-success"></i> At least one uppercase letter</li>
+            <li><i class="fas fa-check text-success"></i> At least one lowercase letter</li>
+            <li><i class="fas fa-check text-success"></i> At least one number</li>
+            <li><i class="fas fa-check text-success"></i> At least one special character (!@#$%^&*)</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let userData = {};
+
+document.addEventListener('DOMContentLoaded', function() {
+  const token = localStorage.getItem('vendor_token') || sessionStorage.getItem('vendor_token');
+  
+  if (!token) {
+    showNotification('Please log in to access this page', 'warning');
+    // Still load the page structure, but redirect after 2 seconds
+    setTimeout(() => {
+      window.location.href = '/auth/login';
+    }, 2000);
+    return;
+  }
+  
+  loadLoginInformation();
+});
+
+function loadLoginInformation() {
+  const token = localStorage.getItem('vendor_token') || sessionStorage.getItem('vendor_token');
+
+  if (!token) {
+    showNotification('Authentication required. Please login again.', 'error');
+    window.location.href = '/auth/login';
+    return;
+  }
+
+  fetch('/vendor/dashboard/get-vendor-settings', {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      userData = data.vendor;
+      populateLoginInfo(data.vendor);
+    } else {
+      showNotification('Failed to load login information: ' + (data.message || 'Unknown error'), 'error');
+    }
+  })
+  .catch(error => {
+    console.error('Error loading login information:', error);
+    showNotification('Error loading login information. Please try again.', 'error');
+  });
+}
+
+function populateLoginInfo(vendor) {
+  document.getElementById('email').value = vendor.email || '';
+  document.getElementById('username').value = vendor.username || '';
+  document.getElementById('last_login').value = vendor.last_login ? new Date(vendor.last_login).toLocaleString() : 'Never';
+  document.getElementById('account_status').value = vendor.is_active ? 'Active' : 'Inactive';
+}
+
+function togglePasswordVisibility() {
+  const showPassword = document.getElementById('show_password').checked;
+  const inputs = ['current_password', 'new_password', 'confirm_password'];
+
+  inputs.forEach(id => {
+    document.getElementById(id).type = showPassword ? 'text' : 'password';
+  });
+}
+
+function resetPasswordForm() {
+  document.getElementById('changePasswordForm').reset();
+  document.getElementById('current_password').type = 'password';
+  document.getElementById('new_password').type = 'password';
+  document.getElementById('confirm_password').type = 'password';
+}
+
+document.getElementById('changePasswordForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+
+  const currentPassword = document.getElementById('current_password').value;
+  const newPassword = document.getElementById('new_password').value;
+  const confirmPassword = document.getElementById('confirm_password').value;
+
+  // Client-side validation
+  if (!currentPassword || !newPassword || !confirmPassword) {
+    showNotification('All password fields are required', 'error');
+    return;
+  }
+
+  if (newPassword !== confirmPassword) {
+    showNotification('New password and confirmation do not match', 'error');
+    return;
+  }
+
+  if (newPassword.length < 8) {
+    showNotification('New password must be at least 8 characters long', 'error');
+    return;
+  }
+
+  // Password strength validation
+  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/;
+  if (!passwordRegex.test(newPassword)) {
+    showNotification('Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character', 'error');
+    return;
+  }
+
+  // Submit password change
+  changePassword(currentPassword, newPassword);
+});
+
+function changePassword(currentPassword, newPassword) {
+  const token = localStorage.getItem('vendor_token') || sessionStorage.getItem('vendor_token');
+
+  if (!token) {
+    showNotification('Authentication required. Please login again.', 'error');
+    window.location.href = '/auth/login';
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append('current_password', currentPassword);
+  formData.append('new_password', newPassword);
+
+  fetch('/vendor/dashboard/change-password', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`
+    },
+    body: formData
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      showNotification('Password changed successfully! Please login with your new password.', 'success');
+      resetPasswordForm();
+
+      // Logout user after password change for security
+      setTimeout(() => {
+        logout();
+      }, 3000);
+    } else {
+      showNotification('Failed to change password: ' + (data.message || 'Unknown error'), 'error');
+    }
+  })
+  .catch(error => {
+    console.error('Error changing password:', error);
+    showNotification('Error changing password. Please try again.', 'error');
+  });
+}
+
+function logout() {
+  localStorage.removeItem('vendor_token');
+  sessionStorage.removeItem('vendor_token');
+  window.location.href = '/auth/login';
+}
+
+function showNotification(message, type) {
+  // Create notification element
+  const notification = document.createElement('div');
+  notification.className = `alert alert-${type === 'success' ? 'success' : type === 'error' ? 'danger' : 'info'} alert-dismissible fade show position-fixed`;
+  notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+  notification.innerHTML = `
+    ${message}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  `;
+
+  document.body.appendChild(notification);
+
+  // Auto remove after 5 seconds
+  setTimeout(() => {
+    if (notification.parentNode) {
+      notification.remove();
+    }
+  }, 5000);
+}
+</script>
+{% endblock %}

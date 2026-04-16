@@ -1,0 +1,257 @@
+{% extends "dist/customerdashboard.html" %}
+
+{% block dashboard_current %}
+  <div class="col-sm-6">
+    <ol class="breadcrumb float-sm-end">
+      <li class="breadcrumb-item"><a href="/customer/dashboard/home">Dashboard</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Returns & Refunds</li>
+    </ol>
+  </div>
+{% endblock dashboard_current %}
+
+{% block customer_content %}
+<div class="app-content">
+  <div class="container-fluid">
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title mb-0">Returns & Refunds</h3>
+          </div>
+          <div class="card-body">
+            <ul class="nav nav-tabs mb-4" id="refundTabs">
+              <li class="nav-item">
+                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#returnRequests">Return Requests</button>
+              </li>
+              <li class="nav-item">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#refundStatus">Refund Status</button>
+              </li>
+              <li class="nav-item">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#refundHistory">Refund History</button>
+              </li>
+            </ul>
+
+            <div class="tab-content">
+              <!-- Return Requests Tab -->
+              <div class="tab-pane fade show active" id="returnRequests">
+                <div id="returnAlert" class="alert alert-danger d-none" role="alert"></div>
+                <div id="returnSuccessAlert" class="alert alert-success d-none" role="alert"></div>
+                
+                <div id="returnContainer" class="row g-4"></div>
+              </div>
+
+              <!-- Refund Status Tab -->
+              <div class="tab-pane fade" id="refundStatus">
+                <div id="refundStatusAlert" class="alert alert-danger d-none" role="alert"></div>
+                
+                <div class="table-responsive">
+                  <table class="table table-hover">
+                    <thead class="table-light">
+                      <tr>
+                        <th>Product</th>
+                        <th>Request Date</th>
+                        <th>Status</th>
+                        <th>Amount</th>
+                        <th>Expected Date</th>
+                      </tr>
+                    </thead>
+                    <tbody id="refundStatusBody">
+                      <tr>
+                        <td colspan="5" class="text-center py-5">Loading...</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Refund History Tab -->
+              <div class="tab-pane fade" id="refundHistory">
+                <div id="historyAlert" class="alert alert-danger d-none" role="alert"></div>
+                
+                <div class="table-responsive">
+                  <table class="table table-hover">
+                    <thead class="table-light">
+                      <tr>
+                        <th>Product</th>
+                        <th>Completion Date</th>
+                        <th>Refund Amount</th>
+                        <th>Method</th>
+                      </tr>
+                    </thead>
+                    <tbody id="historyBody">
+                      <tr>
+                        <td colspan="4" class="text-center py-5">Loading...</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  async function loadReturnRequests() {
+    const returnContainer = document.getElementById('returnContainer');
+    const returnAlert = document.getElementById('returnAlert');
+
+    returnContainer.innerHTML = '<div class="col-12 text-center py-5">Loading...</div>';
+    returnAlert.classList.add('d-none');
+
+    try {
+      const token = localStorage.getItem('access_token');
+      const response = await fetch('/api/orders', {
+        headers: {
+          'Authorization': 'Bearer ' + token
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Unable to load orders.');
+      }
+
+      const data = await response.json();
+      let orders = data.orders || [];
+      
+      // Filter orders eligible for return (completed orders within 30 days)
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      
+      orders = orders.filter(order => 
+        order.status?.toLowerCase() === 'completed' && 
+        new Date(order.created_at) >= thirtyDaysAgo
+      );
+
+      if (!orders.length) {
+        returnContainer.innerHTML = '<div class="col-12 text-center py-5 text-muted">No orders eligible for return. Only completed orders within 30 days can be returned.</div>';
+        return;
+      }
+
+      returnContainer.innerHTML = orders.map(order => {
+        return `
+          <div class="col-lg-6">
+            <div class="card shadow-sm border-0">
+              <div class="card-header bg-light">
+                <h5 class="card-title mb-0">Order #${order.id}</h5>
+              </div>
+              <div class="card-body">
+                <p class="text-muted small mb-3">${new Date(order.created_at).toLocaleDateString()}</p>
+                <p class="mb-2"><strong>Amount:</strong> ₦${Number(order.total_amount).toLocaleString()}</p>
+                <p class="mb-3"><strong>Items:</strong> ${order.items_count || 'N/A'}</p>
+                
+                <div class="mb-3">
+                  <label class="form-label">Reason for Return</label>
+                  <select class="form-select form-select-sm" id="reason-${order.id}">
+                    <option value="">Select a reason</option>
+                    <option value="damaged">Damaged or Defective</option>
+                    <option value="wrong_item">Wrong Item Received</option>
+                    <option value="not_as_described">Not as Described</option>
+                    <option value="changed_mind">Changed My Mind</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+
+                <textarea class="form-control form-control-sm mb-3" rows="3" id="comment-${order.id}" placeholder="Additional comments (optional)"></textarea>
+                
+                <button class="btn btn-sm btn-warning w-100" onclick="submitReturnRequest(${order.id})">
+                  Request Return
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    } catch (error) {
+      returnContainer.innerHTML = '<div class="col-12 text-center py-5 text-danger">Could not load orders.</div>';
+      returnAlert.textContent = error.message;
+      returnAlert.classList.remove('d-none');
+      console.error(error);
+    }
+  }
+
+  async function submitReturnRequest(orderId) {
+    const reason = document.getElementById(`reason-${orderId}`).value;
+    const comment = document.getElementById(`comment-${orderId}`).value;
+
+    if (!reason) {
+      alert('Please select a reason for return.');
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('access_token');
+      const response = await fetch(`/api/order/${orderId}/return`, {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + token,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          reason: reason,
+          comments: comment
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.message || 'Unable to submit return request.');
+      }
+
+      const returnSuccessAlert = document.getElementById('returnSuccessAlert');
+      returnSuccessAlert.textContent = 'Return request submitted successfully. We will process it shortly.';
+      returnSuccessAlert.classList.remove('d-none');
+
+      setTimeout(loadReturnRequests, 2000);
+    } catch (error) {
+      const returnAlert = document.getElementById('returnAlert');
+      returnAlert.textContent = error.message;
+      returnAlert.classList.remove('d-none');
+      console.error(error);
+    }
+  }
+
+  async function loadRefundStatus() {
+    const refundStatusBody = document.getElementById('refundStatusBody');
+    const refundStatusAlert = document.getElementById('refundStatusAlert');
+
+    refundStatusBody.innerHTML = '<tr><td colspan="5" class="text-center py-5">Loading...</td></tr>';
+    refundStatusAlert.classList.add('d-none');
+
+    try {
+      const token = localStorage.getItem('access_token');
+      // This would fetch return/refund records, but endpoint needs to be created
+      refundStatusBody.innerHTML = '<tr><td colspan="5" class="text-center py-5 text-muted">No active refunds at the moment.</td></tr>';
+    } catch (error) {
+      refundStatusAlert.textContent = error.message;
+      refundStatusAlert.classList.remove('d-none');
+    }
+  }
+
+  async function loadRefundHistory() {
+    const historyBody = document.getElementById('historyBody');
+    const historyAlert = document.getElementById('historyAlert');
+
+    historyBody.innerHTML = '<tr><td colspan="4" class="text-center py-5">Loading...</td></tr>';
+    historyAlert.classList.add('d-none');
+
+    try {
+      const token = localStorage.getItem('access_token');
+      // This would fetch completed refund records, but endpoint needs to be created
+      historyBody.innerHTML = '<tr><td colspan="4" class="text-center py-5 text-muted">No refund history available.</td></tr>';
+    } catch (error) {
+      historyAlert.textContent = error.message;
+      historyAlert.classList.remove('d-none');
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    loadReturnRequests();
+    loadRefundStatus();
+    loadRefundHistory();
+  });
+</script>
+{% endblock customer_content %}

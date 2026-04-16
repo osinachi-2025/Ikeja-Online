@@ -1,0 +1,206 @@
+{% extends "dist/customerdashboard.html" %}
+
+{% block dashboard_current %}
+  <div class="col-sm-6">
+    <ol class="breadcrumb float-sm-end">
+      <li class="breadcrumb-item"><a href="/customer/dashboard/home">Dashboard</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Order Tracking</li>
+    </ol>
+  </div>
+{% endblock dashboard_current %}
+
+{% block customer_content %}
+<div class="app-content">
+  <div class="container-fluid">
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h3 class="card-title mb-0">Track Orders</h3>
+            <span id="trackingCount" class="badge bg-info">0 active</span>
+          </div>
+          <div class="card-body">
+            <div id="trackingAlert" class="alert alert-danger d-none" role="alert"></div>
+            
+            <div id="trackingContainer" class="row g-4"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  async function loadTrackingOrders() {
+    const trackingContainer = document.getElementById('trackingContainer');
+    const trackingCount = document.getElementById('trackingCount');
+    const trackingAlert = document.getElementById('trackingAlert');
+
+    trackingContainer.innerHTML = '<div class="col-12 text-center py-5">Loading orders...</div>';
+    trackingAlert.classList.add('d-none');
+
+    try {
+      const token = localStorage.getItem('access_token');
+      const response = await fetch('/api/orders', {
+        headers: {
+          'Authorization': 'Bearer ' + token
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Unable to load orders.');
+      }
+
+      const data = await response.json();
+      let orders = data.orders || [];
+      
+      // Filter active orders (processing/pending/shipped)
+      orders = orders.filter(order => 
+        ['pending', 'processing', 'shipped'].includes(order.status?.toLowerCase())
+      );
+
+      trackingCount.textContent = `${orders.length} active`;
+
+      if (!orders.length) {
+        trackingContainer.innerHTML = '<div class="col-12 text-center py-5 text-muted">No active orders to track.</div>';
+        return;
+      }
+
+      trackingContainer.innerHTML = orders.map(order => {
+        const orderDate = new Date(order.created_at).toLocaleDateString();
+        const statusSteps = {
+          'pending': 0,
+          'processing': 1,
+          'shipped': 2,
+          'delivered': 3
+        };
+        const currentStep = statusSteps[order.status?.toLowerCase()] || 0;
+
+        return `
+          <div class="col-lg-6">
+            <div class="card shadow-sm border-0">
+              <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">Order #${order.id}</h5>
+                <span class="badge bg-info">${order.status || 'Pending'}</span>
+              </div>
+              <div class="card-body">
+                <p class="text-muted small mb-3">${orderDate}</p>
+                
+                <!-- Progress steps -->
+                <div class="progress mb-4" style="height: 2px;">
+                  <div class="progress-bar bg-success" style="width: ${(currentStep / 3) * 100}%"></div>
+                </div>
+                
+                <div class="d-flex justify-content-between text-center small mb-3">
+                  <div>
+                    <i class="bi bi-bag text-success"></i><br><span>Pending</span>
+                  </div>
+                  <div>
+                    <i class="bi bi-hourglass-split ${currentStep >= 1 ? 'text-success' : 'text-muted'}"></i><br><span>Processing</span>
+                  </div>
+                  <div>
+                    <i class="bi bi-truck ${currentStep >= 2 ? 'text-success' : 'text-muted'}"></i><br><span>Shipped</span>
+                  </div>
+                  <div>
+                    <i class="bi bi-box2-open ${currentStep >= 3 ? 'text-success' : 'text-muted'}"></i><br><span>Delivered</span>
+                  </div>
+                </div>
+
+                <hr>
+                
+                <p class="mb-2"><strong>Total:</strong> ₦${Number(order.total_amount).toLocaleString()}</p>
+                <p class="mb-3"><strong>Items:</strong> ${order.items_count || 'N/A'}</p>
+                
+                <button class="btn btn-sm btn-primary w-100" onclick="viewTrackingDetails(${order.id})">
+                  View Details
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    } catch (error) {
+      trackingContainer.innerHTML = '<div class="col-12 text-center py-5 text-danger">Could not load orders.</div>';
+      trackingAlert.textContent = error.message;
+      trackingAlert.classList.remove('d-none');
+      console.error(error);
+    }
+  }
+
+  async function viewTrackingDetails(orderId) {
+    try {
+      const token = localStorage.getItem('access_token');
+      const response = await fetch(`/api/order/${orderId}`, {
+        headers: {
+          'Authorization': 'Bearer ' + token
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Unable to load order details.');
+      }
+
+      const data = await response.json();
+      const order = data.order;
+
+      const itemsHtml = order.items.map(item => `
+        <tr>
+          <td>${item.product_name}</td>
+          <td class="text-center">${item.quantity}</td>
+          <td class="text-end">₦${Number(item.price_at_purchase).toLocaleString()}</td>
+        </tr>
+      `).join('');
+
+      const modalHtml = `
+        <div class="modal fade" id="trackingModal" tabindex="-1">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title">Order #${order.id} Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+              </div>
+              <div class="modal-body">
+                <h6 class="text-muted mb-2">Items</h6>
+                <div class="table-responsive mb-3">
+                  <table class="table table-sm">
+                    <thead class="table-light">
+                      <tr>
+                        <th>Product</th>
+                        <th class="text-center">Qty</th>
+                        <th class="text-end">Price</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${itemsHtml}
+                    </tbody>
+                  </table>
+                </div>
+                <hr>
+                <p><small><strong>Shipping Status:</strong> ${order.shipping_status || 'Not available'}</small></p>
+                <p><small><strong>Total:</strong> ₦${Number(order.total_amount).toLocaleString()}</small></p>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      const oldModal = document.getElementById('trackingModal');
+      if (oldModal) oldModal.remove();
+
+      document.body.insertAdjacentHTML('beforeend', modalHtml);
+      const modal = new bootstrap.Modal(document.getElementById('trackingModal'));
+      modal.show();
+    } catch (error) {
+      const trackingAlert = document.getElementById('trackingAlert');
+      trackingAlert.textContent = error.message;
+      trackingAlert.classList.remove('d-none');
+      console.error(error);
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', loadTrackingOrders);
+</script>
+{% endblock customer_content %}

@@ -1,0 +1,105 @@
+{% extends "dist/vendordashboard.html" %}
+
+{% block dashboard_current %}
+  <div class="col-sm-6">
+    <ol class="breadcrumb float-sm-end">
+      <li class="breadcrumb-item"><a href="/vendor/dashboard">Dashboard</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Transaction History</li>
+    </ol>
+  </div>
+{% endblock dashboard_current %}
+
+{% block vendor_content %}
+<div class="app-content">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Transaction History</h3>
+            <p class="text-muted mb-0">Review all wallet transactions for your vendor account.</p>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-hover table-bordered">
+                <thead class="table-light">
+                  <tr>
+                    <th scope="col">Date</th>
+                    <th scope="col">Type</th>
+                    <th scope="col">Amount</th>
+                    <th scope="col">Reference</th>
+                    <th scope="col">Status</th>
+                  </tr>
+                </thead>
+                <tbody id="transactionsTableBody">
+                  <tr>
+                    <td colspan="5" class="text-center py-5">Loading transactions...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="mt-3" id="transactionsEmptyState" style="display: none;">
+              <div class="alert alert-secondary text-center mb-0">No transactions found yet.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function formatCurrency(value) {
+    return `₦${parseFloat(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  }
+
+  function renderTransactions(transactions) {
+    const tbody = document.getElementById('transactionsTableBody');
+    const emptyState = document.getElementById('transactionsEmptyState');
+
+    if (!transactions.length) {
+      tbody.innerHTML = `<tr><td colspan="5" class="text-center py-5">No transactions available.</td></tr>`;
+      emptyState.style.display = 'block';
+      return;
+    }
+
+    emptyState.style.display = 'none';
+    tbody.innerHTML = transactions.map(tx => {
+      const statusClass = tx.status === 'completed' ? 'badge bg-success' : tx.status === 'pending' ? 'badge bg-warning' : 'badge bg-danger';
+      const date = tx.created_at ? new Date(tx.created_at).toLocaleString() : '-';
+      const reference = tx.reference_id ? `REF-${tx.reference_id}` : (tx.description ? tx.description.split(' ').pop() : '-');
+      return `
+        <tr>
+          <td>${date}</td>
+          <td>${tx.transaction_type || 'Unknown'}</td>
+          <td>${formatCurrency(tx.amount || 0)}</td>
+          <td>${reference}</td>
+          <td><span class="${statusClass}">${tx.status || 'pending'}</span></td>
+        </tr>`;
+    }).join('');
+  }
+
+  async function loadTransactions() {
+    try {
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        document.getElementById('transactionsTableBody').innerHTML = `<tr><td colspan="5" class="text-center py-5 text-danger">Please log in to view transactions.</td></tr>`;
+        return;
+      }
+      const response = await fetch('/api/vendor/transactions', { 
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json' 
+        } 
+      });
+      const data = await response.json();
+      if (!data.success) throw new Error(data.message || 'Unable to load transactions');
+      renderTransactions(data.transactions || []);
+    } catch (error) {
+      document.getElementById('transactionsTableBody').innerHTML = `<tr><td colspan="5" class="text-center py-5 text-danger">${error.message}</td></tr>`;
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', loadTransactions);
+</script>
+{% endblock vendor_content %}

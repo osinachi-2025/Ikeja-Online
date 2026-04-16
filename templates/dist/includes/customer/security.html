@@ -1,0 +1,91 @@
+{% extends "dist/customerdashboard.html" %}
+
+{% block dashboard_current %}
+  <div class="col-sm-6">
+    <ol class="breadcrumb float-sm-end">
+      <li class="breadcrumb-item"><a href="/customer/dashboard/home">Dashboard</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Security</li>
+    </ol>
+  </div>
+{% endblock dashboard_current %}
+
+{% block customer_content %}
+<div class="app-content">
+  <div class="container-fluid">
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+        <div class="card">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h3 class="card-title mb-0">Security Settings</h3>
+            <a href="/customer/dashboard/account-settings" class="btn btn-sm btn-secondary">Account Settings</a>
+          </div>
+          <div class="card-body">
+            <div id="securityAlert" class="alert alert-danger d-none" role="alert"></div>
+            <div id="securitySuccess" class="alert alert-success d-none" role="alert"></div>
+            <form id="securityForm">
+              <div class="mb-3">
+                <label class="form-label">Current Password</label>
+                <input type="password" id="current_password" class="form-control" required>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">New Password</label>
+                <input type="password" id="new_password" class="form-control" required>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Confirm New Password</label>
+                <input type="password" id="confirm_password" class="form-control" required>
+              </div>
+              <button type="submit" class="btn btn-primary">Change Password</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.getElementById('securityForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const alertEl = document.getElementById('securityAlert');
+    const successEl = document.getElementById('securitySuccess');
+    alertEl.classList.add('d-none');
+    successEl.classList.add('d-none');
+
+    const currentPassword = document.getElementById('current_password').value.trim();
+    const newPassword = document.getElementById('new_password').value.trim();
+    const confirmPassword = document.getElementById('confirm_password').value.trim();
+
+    if (newPassword !== confirmPassword) {
+      alertEl.textContent = 'New password and confirmation do not match.';
+      alertEl.classList.remove('d-none');
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('access_token');
+      const response = await fetch('/api/customer/change-password', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + token,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          current_password: currentPassword,
+          new_password: newPassword
+        })
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to change password.');
+      }
+      successEl.textContent = data.message || 'Password changed successfully.';
+      successEl.classList.remove('d-none');
+      document.getElementById('securityForm').reset();
+    } catch (error) {
+      alertEl.textContent = error.message;
+      alertEl.classList.remove('d-none');
+    }
+  });
+</script>
+{% endblock customer_content %}

@@ -1,0 +1,140 @@
+{% extends "dist/customerdashboard.html" %}
+
+{% block dashboard_current %}
+  <div class="col-sm-6">
+    <ol class="breadcrumb float-sm-end">
+      <li class="breadcrumb-item"><a href="/customer/dashboard/home">Dashboard</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Delivery Preferences</li>
+    </ol>
+  </div>
+{% endblock dashboard_current %}
+
+{% block customer_content %}
+<div class="app-content">
+  <div class="container-fluid">
+    <div class="row mb-4">
+      <div class="col-lg-8 mx-auto">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title mb-0">Delivery Preferences</h3>
+          </div>
+          <div class="card-body">
+            <div id="prefAlert" class="alert alert-danger d-none" role="alert"></div>
+            <div id="successAlert" class="alert alert-success d-none" role="alert"></div>
+
+            <div class="mb-4">
+              <h5 class="mb-3">Preferred Delivery Method</h5>
+              <div class="form-check mb-3">
+                <input class="form-check-input" type="radio" name="delivery_method" id="standard" value="standard" checked>
+                <label class="form-check-label" for="standard">
+                  <strong>Standard Delivery</strong>
+                  <small class="d-block text-muted">5-7 business days • Free shipping on orders over ₦10,000</small>
+                </label>
+              </div>
+
+              <div class="form-check mb-3">
+                <input class="form-check-input" type="radio" name="delivery_method" id="express" value="express">
+                <label class="form-check-label" for="express">
+                  <strong>Express Delivery</strong>
+                  <small class="d-block text-muted">1-2 business days • ₦2,500 shipping fee</small>
+                </label>
+              </div>
+
+              <div class="form-check mb-3">
+                <input class="form-check-input" type="radio" name="delivery_method" id="overnight" value="overnight">
+                <label class="form-check-label" for="overnight">
+                  <strong>Overnight Delivery</strong>
+                  <small class="d-block text-muted">Next business day • ₦5,000 shipping fee</small>
+                </label>
+              </div>
+            </div>
+
+            <hr>
+
+            <div class="mb-4">
+              <h5 class="mb-3">Delivery Instructions</h5>
+              <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" id="signature_required" value="signature">
+                <label class="form-check-label" for="signature_required">
+                  Signature required upon delivery
+                </label>
+              </div>
+
+              <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" id="leave_at_door" value="leave_door">
+                <label class="form-check-label" for="leave_at_door">
+                  Leave package at door if no one is home
+                </label>
+              </div>
+
+              <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" id="fragile_handling" value="fragile">
+                <label class="form-check-label" for="fragile_handling">
+                  Handle with care - Fragile items
+                </label>
+              </div>
+            </div>
+
+            <hr>
+
+            <div class="mb-4">
+              <h5 class="mb-3">Special Instructions</h5>
+              <textarea class="form-control" id="special_instructions" rows="4" placeholder="e.g., Gate code is 1234, Call before delivery, etc."></textarea>
+            </div>
+
+            <div class="d-flex gap-2">
+              <button class="btn btn-primary" onclick="saveDeliveryPreferences()">Save Preferences</button>
+              <a href="/customer/dashboard/address-book" class="btn btn-secondary">Cancel</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  async function saveDeliveryPreferences() {
+    const prefAlert = document.getElementById('prefAlert');
+    const successAlert = document.getElementById('successAlert');
+    prefAlert.classList.add('d-none');
+    successAlert.classList.add('d-none');
+
+    const preferences = {
+      delivery_method: document.querySelector('input[name="delivery_method"]:checked').value,
+      signature_required: document.getElementById('signature_required').checked,
+      leave_at_door: document.getElementById('leave_at_door').checked,
+      fragile_handling: document.getElementById('fragile_handling').checked,
+      special_instructions: document.getElementById('special_instructions').value
+    };
+
+    try {
+      const token = localStorage.getItem('access_token');
+      const response = await fetch('/api/customer/delivery-preferences', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + token,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(preferences)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.message || 'Unable to save preferences.');
+      }
+
+      successAlert.textContent = 'Delivery preferences saved successfully!';
+      successAlert.classList.remove('d-none');
+      
+      setTimeout(() => {
+        window.location.href = '/customer/dashboard/address-book';
+      }, 1500);
+    } catch (error) {
+      prefAlert.textContent = error.message;
+      prefAlert.classList.remove('d-none');
+      console.error(error);
+    }
+  }
+</script>
+{% endblock customer_content %}

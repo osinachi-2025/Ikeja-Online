@@ -1,0 +1,151 @@
+{% extends "dist/customerdashboard.html" %}
+
+{% block dashboard_current %}
+  <div class="col-sm-6">
+    <ol class="breadcrumb float-sm-end">
+      <li class="breadcrumb-item"><a href="/customer/dashboard/home">Dashboard</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Address Book</li>
+    </ol>
+  </div>
+{% endblock dashboard_current %}
+
+{% block customer_content %}
+<div class="app-content">
+  <div class="container-fluid">
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h3 class="card-title mb-0">Address Book</h3>
+            <a href="/customer/dashboard/add-address" class="btn btn-sm btn-primary">+ Add New Address</a>
+          </div>
+          <div class="card-body">
+            <div id="addressAlert" class="alert alert-danger d-none" role="alert"></div>
+            
+            <div id="addressContainer" class="row g-4"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  async function loadAddresses() {
+    const addressContainer = document.getElementById('addressContainer');
+    const addressAlert = document.getElementById('addressAlert');
+
+    addressContainer.innerHTML = '<div class="col-12 text-center py-5">Loading addresses...</div>';
+    addressAlert.classList.add('d-none');
+
+    try {
+      const token = localStorage.getItem('access_token');
+      const response = await fetch('/api/customer/addresses', {
+        headers: {
+          'Authorization': 'Bearer ' + token
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Unable to load addresses.');
+      }
+
+      const data = await response.json();
+      const addresses = data.addresses || [];
+
+      if (!addresses.length) {
+        addressContainer.innerHTML = '<div class="col-12 text-center py-5 text-muted">No addresses found. <a href="/customer/dashboard/add-address">Add one now</a></div>';
+        return;
+      }
+
+      addressContainer.innerHTML = addresses.map(address => `
+        <div class="col-lg-6">
+          <div class="card shadow-sm border-0 h-100">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-start mb-3">
+                <h5 class="card-title mb-0">${address.label || 'Address'}</h5>
+                <div class="btn-group btn-group-sm">
+                  <button class="btn btn-outline-primary" onclick="editAddress(${address.id})">Edit</button>
+                  <button class="btn btn-outline-danger" onclick="deleteAddress(${address.id})">Delete</button>
+                </div>
+              </div>
+              
+              <p class="card-text mb-2">${address.address_line1}</p>
+              ${address.address_line2 ? `<p class="card-text mb-2">${address.address_line2}</p>` : ''}
+              <p class="card-text mb-2">${address.city}, ${address.state} ${address.postal_code}</p>
+              <p class="card-text text-muted small">${address.country || 'Nigeria'}</p>
+              
+              <p class="card-text mb-2 pt-2">
+                <span class="badge bg-info">Phone: ${address.phone || 'N/A'}</span>
+              </p>
+              
+              ${address.is_default ? '<p class="text-success small"><i class="bi bi-check-circle"></i> Default Address</p>' : `<button class="btn btn-sm btn-outline-success" onclick="setDefaultAddress(${address.id})">Set as Default</button>`}
+            </div>
+          </div>
+        </div>
+      `).join('');
+    } catch (error) {
+      addressContainer.innerHTML = '<div class="col-12 text-center py-5 text-danger">Could not load addresses.</div>';
+      addressAlert.textContent = error.message;
+      addressAlert.classList.remove('d-none');
+      console.error(error);
+    }
+  }
+
+  function editAddress(addressId) {
+    window.location.href = `/customer/dashboard/edit-address/${addressId}`;
+  }
+
+  async function deleteAddress(addressId) {
+    if (!confirm('Are you sure you want to delete this address?')) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('access_token');
+      const response = await fetch(`/api/customer/addresses/${addressId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': 'Bearer ' + token
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Unable to delete address.');
+      }
+
+      await loadAddresses();
+    } catch (error) {
+      const addressAlert = document.getElementById('addressAlert');
+      addressAlert.textContent = error.message;
+      addressAlert.classList.remove('d-none');
+      console.error(error);
+    }
+  }
+
+  async function setDefaultAddress(addressId) {
+    try {
+      const token = localStorage.getItem('access_token');
+      const response = await fetch(`/api/customer/addresses/${addressId}/set-default`, {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + token
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Unable to set default address.');
+      }
+
+      await loadAddresses();
+    } catch (error) {
+      const addressAlert = document.getElementById('addressAlert');
+      addressAlert.textContent = error.message;
+      addressAlert.classList.remove('d-none');
+      console.error(error);
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', loadAddresses);
+</script>
+{% endblock customer_content %}

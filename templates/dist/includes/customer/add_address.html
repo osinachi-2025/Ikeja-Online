@@ -1,0 +1,138 @@
+{% extends "dist/customerdashboard.html" %}
+
+{% block dashboard_current %}
+  <div class="col-sm-6">
+    <ol class="breadcrumb float-sm-end">
+      <li class="breadcrumb-item"><a href="/customer/dashboard/home">Dashboard</a></li>
+      <li class="breadcrumb-item"><a href="/customer/dashboard/address-book">Address Book</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Add New Address</li>
+    </ol>
+  </div>
+{% endblock dashboard_current %}
+
+{% block customer_content %}
+<div class="app-content">
+  <div class="container-fluid">
+    <div class="row mb-4">
+      <div class="col-lg-8 mx-auto">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title mb-0">Add New Address</h3>
+          </div>
+          <div class="card-body">
+            <div id="formAlert" class="alert alert-danger d-none" role="alert"></div>
+            <div id="successAlert" class="alert alert-success d-none" role="alert"></div>
+            
+            <form id="addressForm">
+              <div class="mb-3">
+                <label class="form-label">Address Label (e.g., Home, Office, Other)</label>
+                <input type="text" class="form-control" id="label" placeholder="e.g., Home" required>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">Street Address *</label>
+                <input type="text" class="form-control" id="address_line1" placeholder="Street address" required>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">Apartment, suite, etc. (optional)</label>
+                <input type="text" class="form-control" id="address_line2" placeholder="Apartment, suite, etc.">
+              </div>
+
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">City *</label>
+                  <input type="text" class="form-control" id="city" placeholder="City" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">State *</label>
+                  <input type="text" class="form-control" id="state" placeholder="State" required>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Postal Code *</label>
+                  <input type="text" class="form-control" id="postal_code" placeholder="Postal code" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Country</label>
+                  <input type="text" class="form-control" id="country" placeholder="Country" value="Nigeria">
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">Phone Number *</label>
+                <input type="tel" class="form-control" id="phone" placeholder="Phone number" required>
+              </div>
+
+              <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" id="is_default">
+                <label class="form-check-label" for="is_default">
+                  Set as default address
+                </label>
+              </div>
+
+              <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">Save Address</button>
+                <a href="/customer/dashboard/address-book" class="btn btn-secondary">Cancel</a>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.getElementById('addressForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const formAlert = document.getElementById('formAlert');
+    const successAlert = document.getElementById('successAlert');
+    formAlert.classList.add('d-none');
+    successAlert.classList.add('d-none');
+
+    const addressData = {
+      label: document.getElementById('label').value,
+      address_line1: document.getElementById('address_line1').value,
+      address_line2: document.getElementById('address_line2').value,
+      city: document.getElementById('city').value,
+      state: document.getElementById('state').value,
+      postal_code: document.getElementById('postal_code').value,
+      country: document.getElementById('country').value,
+      phone: document.getElementById('phone').value,
+      is_default: document.getElementById('is_default').checked
+    };
+
+    try {
+      const token = localStorage.getItem('access_token');
+      const response = await fetch('/api/customer/addresses', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + token,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(addressData)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.message || 'Unable to save address.');
+      }
+
+      successAlert.textContent = 'Address saved successfully!';
+      successAlert.classList.remove('d-none');
+      
+      setTimeout(() => {
+        window.location.href = '/customer/dashboard/address-book';
+      }, 1500);
+    } catch (error) {
+      formAlert.textContent = error.message;
+      formAlert.classList.remove('d-none');
+      console.error(error);
+    }
+  });
+</script>
+{% endblock customer_content %}

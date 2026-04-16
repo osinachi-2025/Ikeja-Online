@@ -19,7 +19,15 @@ import cloudinary
 import cloudinary.uploader
 import cloudinary.api
 
-app = Flask(__name__)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+TEMPLATE_DIR = os.path.join(BASE_DIR, 'templates')
+STATIC_DIR = os.path.join(BASE_DIR, 'static')
+
+app = Flask(
+    __name__,
+    template_folder=TEMPLATE_DIR,
+    static_folder=STATIC_DIR
+)
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///ikeja_online.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'Hackeye@1999SecretKey')
@@ -41,11 +49,11 @@ app.config['GMAIL_PASSWORD'] = os.getenv('GMAIL_PASSWORD', 'bkgr yndz vukl zeas'
 CORS(app, supports_credentials=True)
 
 # File upload configuration
-UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'uploads', 'products')
+UPLOAD_FOLDER = os.path.join(BASE_DIR, 'static', 'uploads', 'products')
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 MAX_FILE_SIZE = 5 * 1024 * 1024  
 
-VENDOR_UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'uploads', 'vendors')
+VENDOR_UPLOAD_FOLDER = os.path.join(BASE_DIR, 'static', 'uploads', 'vendors')
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(VENDOR_UPLOAD_FOLDER, exist_ok=True)
@@ -950,7 +958,7 @@ def save_vendor_logo_to_db(file, vendor):
 @app.route('/')
 
 def home():
-    return render_template('/home/home.html')
+    return render_template('home/home.html')
 
 @app.route('/verify-gmail')
 def verify_gmail():
@@ -1140,7 +1148,7 @@ def forgot_password():
         email = request.form.get('email', '').strip().lower()
         
         if not email:
-            return render_template('/auth/login.html', error='Email is required')
+            return render_template('auth/login.html', error='Email is required')
         
         # Find user by email
         user = Users.query.filter_by(email=email).first()
@@ -1169,7 +1177,7 @@ def forgot_password():
         flash('If an account exists with that email, a password reset link has been sent.', 'info')
         return redirect(url_for('login'))
     
-    return render_template('/auth/login.html')
+    return render_template('auth/login.html')
 
 
 @app.route('/reset-password/<token>', methods=['POST', 'GET'])
@@ -1194,13 +1202,13 @@ def reset_password(token):
             confirm_password = request.form.get('confirm_password', '')
             
             if not password or not confirm_password:
-                return render_template('/auth/reset_password.html', token=token, error='All fields required')
+                return render_template('auth/reset_password.html', token=token, error='All fields required')
             
             if password != confirm_password:
-                return render_template('/auth/reset_password.html', token=token, error='Passwords do not match')
+                return render_template('auth/reset_password.html', token=token, error='Passwords do not match')
             
             if len(password) < 8:
-                return render_template('/auth/reset_password.html', token=token, error='Password must be at least 8 characters')
+                return render_template('auth/reset_password.html', token=token, error='Password must be at least 8 characters')
             
             # Update password
             user.passwordhash = generate_password_hash(password)
@@ -1211,7 +1219,7 @@ def reset_password(token):
             flash('Password reset successful! You can now log in with your new password.', 'success')
             return redirect(url_for('login'))
         
-        return render_template('/auth/reset_password.html', token=token)
+        return render_template('auth/reset_password.html', token=token)
         
     except Exception as e:
         print(f"[PASSWORD-RESET] Error: {type(e).__name__}: {str(e)}")
@@ -1281,22 +1289,22 @@ def register():
 
         # Validation
         if not all([first_name, last_name, email, password]):
-            return render_template('/auth/register.html', error='All fields are required')
+            return render_template('auth/register.html', error='All fields are required')
         
         if password != confirm_password:
-            return render_template('/auth/register.html', error='Passwords do not match')
+            return render_template('auth/register.html', error='Passwords do not match')
         
         if len(password) < 8:
-            return render_template('/auth/register.html', error='Password must be at least 8 characters')
+            return render_template('auth/register.html', error='Password must be at least 8 characters')
         
         # Check if email already exists
         if Users.query.filter_by(email=email).first():
-            return render_template('/auth/register.html', error='Email already registered')
+            return render_template('auth/register.html', error='Email already registered')
         
         # Get role from database
         role_obj = Roles.query.filter_by(name=role).first()
         if not role_obj:
-            return render_template('/auth/register.html', error=f'Invalid role: {role}')
+            return render_template('auth/register.html', error=f'Invalid role: {role}')
         
         try:
             # Create password hash
@@ -1321,11 +1329,11 @@ def register():
                 
                 if store_name and Vendors.query.filter_by(store_name=store_name).first():
                     db.session.rollback()
-                    return render_template('/auth/register.html', error='Store name already exists')
+                    return render_template('auth/register.html', error='Store name already exists')
                 
                 if Vendors.query.filter_by(store_slug=store_slug).first():
                     db.session.rollback()
-                    return render_template('/auth/register.html', error='Store slug already exists')
+                    return render_template('auth/register.html', error='Store slug already exists')
                 
                 vendor = Vendors(
                     user_id=new_user.id,
@@ -1479,7 +1487,7 @@ def register():
             db.session.rollback()
             return render_template('register.html', error=f'Registration failed: {str(e)}')
     
-    return render_template('/auth/register.html')
+    return render_template('auth/register.html')
 
 @app.route('/login', methods=['POST', 'GET'])
 def login():
@@ -1489,13 +1497,13 @@ def login():
         password = request.form.get('password', '')
         
         if not email or not password:
-            return render_template('/auth/login.html', error='Email and password are required')
+            return render_template('auth/login.html', error='Email and password are required')
         
         # Find user by email
         user = Users.query.filter_by(email=email).first()
         
         if not user or not check_password_hash(user.passwordhash, password):
-            return render_template('/auth/login.html', error='Invalid email or password')
+            return render_template('auth/login.html', error='Invalid email or password')
         
         try:
             # Create JWT token (identity must be a string)
@@ -1514,14 +1522,14 @@ def login():
         except Exception as e:
             return jsonify({'success': False, 'message': f'Login failed: {str(e)}'}), 500
     
-    return render_template('/auth/login.html')
+    return render_template('auth/login.html')
 
 
 @app.route('/vendor/dashboard')
 def vendor_dashboard():
     # Check if token is in localStorage (frontend will handle this)
     # No JWT required for page load since token is stored client-side
-    return render_template('/vendor/vendor_dashboard.html')
+    return render_template('vendor/vendor_dashboard.html')
 
 
 @app.route('/vendor/earnings-summary')
@@ -1606,7 +1614,7 @@ def edit_product_page(product_id):
 @app.route('/my-products', methods=['GET'])
 def my_products_page():
     # Client-side will check for token in localStorage and load products via API
-    return render_template('/vendor/my_products.html')
+    return render_template('vendor/my_products.html')
 
 
 @app.route('/api/add-product', methods=['POST'])
@@ -2091,7 +2099,7 @@ def customer_dashboard():
 @app.route('/customer/my-orders')
 def customer_my_orders():
     # Client-side will check for token in localStorage
-    return render_template('/customer/my_orders.html')
+    return render_template('customer/my_orders.html')
 
 
 @app.route('/api/pay/<int:order_id>', methods=['POST'])
@@ -2496,13 +2504,13 @@ def payment_callback():
 @app.route('/customer/deposit')
 def deposit_page():
     """Display deposit form"""
-    return render_template('/customer/deposit.html')
+    return render_template('customer/deposit.html')
 
 
 @app.route('/customer/deposit-status')
 def deposit_status():
     """Display deposit history and status"""
-    return render_template('/customer/deposit_status.html')
+    return render_template('customer/deposit_status.html')
 
 
 @app.route('/api/wallet', methods=['GET'])
@@ -3767,7 +3775,7 @@ def vendor_change_password():
 def get_vendor_settings_page():
     # Client-side will check for token in localStorage
     # Frontend will validate authentication before showing sensitive data
-    return render_template('/vendor/vendor-settings.html')
+    return render_template('vendor/vendor-settings.html')
 
 
 @app.route('/api/vendor/wallet', methods=['GET'])
@@ -4742,19 +4750,19 @@ def update_shipping_status(order_id):
 @app.route('/browse-products')
 def browse_Allproducts():
     # Client-side will check for token in localStorage
-    return render_template('/customer/browse_products.html')
+    return render_template('customer/browse_products.html')
 
 
 @app.route('/categories')
 def view_all_categories():
     # Guest-accessible categories page
-    return render_template('/categories/all_categories.html')
+    return render_template('categories/all_categories.html')
 
 
 @app.route('/product/<int:product_id>')
 def view_product_details(product_id):
     # Guest-accessible product details page
-    return render_template('/product_details.html')
+    return render_template('product_details.html')
 
 
 @app.route('/api/product-details/<int:product_id>', methods=['GET'])
@@ -4902,7 +4910,7 @@ def init_first_admin():
 @app.route('/admin/dashboard')
 def admin_dashboard():
     # Client-side will check for token in localStorage
-    return render_template('/admin/admin_dashboard.html')
+    return render_template('admin/admin_dashboard.html')
 
 
 @app.route('/api/admin/stats', methods=['GET'])
@@ -5056,7 +5064,7 @@ def admin_toggle_user_status(user_id):
 @app.route('/browse-products')
 def browse_products():
     # Client-side will check for token in localStorage
-    return render_template('/customer/browse_products.html')
+    return render_template('customer/browse_products.html')
 
 
 @app.route('/api/categories', methods=['GET'])
@@ -5203,7 +5211,7 @@ def get_products_by_category(category_id):
 def customer_settings():
     """Render customer settings page"""
     # Client-side will check for token in localStorage
-    return render_template('/customer/customer-settings.html')
+    return render_template('customer/customer-settings.html')
 
 
 @app.route('/customer/settings', methods=['GET'])
@@ -6261,7 +6269,7 @@ def testdashboard2():
 
 @app.route('/testingdashboard3')
 def testdashboard3():
-    return render_template('/dist/marketplace-dashboard.html')
+    return render_template('dist/marketplace-dashboard.html')
 
 if __name__ == '__main__':
     app.run(debug=True)

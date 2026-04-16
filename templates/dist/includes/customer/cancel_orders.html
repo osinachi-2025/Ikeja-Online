@@ -1,0 +1,152 @@
+{% extends "dist/customerdashboard.html" %}
+
+{% block dashboard_current %}
+  <div class="col-sm-6">
+    <ol class="breadcrumb float-sm-end">
+      <li class="breadcrumb-item"><a href="/customer/dashboard/home">Dashboard</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Cancel Orders</li>
+    </ol>
+  </div>
+{% endblock dashboard_current %}
+
+{% block customer_content %}
+<div class="app-content">
+  <div class="container-fluid">
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h3 class="card-title mb-0">Cancel Orders</h3>
+            <span id="cancelCount" class="badge bg-warning">0 pending</span>
+          </div>
+          <div class="card-body">
+            <div id="cancelAlert" class="alert alert-danger d-none" role="alert"></div>
+            <div id="successAlert" class="alert alert-success d-none" role="alert"></div>
+            
+            <div class="table-responsive">
+              <table class="table table-hover mb-0" id="cancelTable">
+                <thead class="table-light">
+                  <tr>
+                    <th>Order #</th>
+                    <th>Date</th>
+                    <th>Total Amount</th>
+                    <th>Status</th>
+                    <th>Items</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="cancelBody">
+                  <tr>
+                    <td colspan="6" class="text-center py-5">Loading orders...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  async function loadCancelableOrders() {
+    const cancelBody = document.getElementById('cancelBody');
+    const cancelCount = document.getElementById('cancelCount');
+    const cancelAlert = document.getElementById('cancelAlert');
+
+    cancelBody.innerHTML = '<tr><td colspan="6" class="text-center py-5">Loading orders...</td></tr>';
+    cancelAlert.classList.add('d-none');
+
+    try {
+      const token = localStorage.getItem('access_token');
+      const response = await fetch('/api/orders', {
+        headers: {
+          'Authorization': 'Bearer ' + token
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Unable to load orders.');
+      }
+
+      const data = await response.json();
+      let orders = data.orders || [];
+      
+      // Filter cancelable orders (pending/processing only)
+      orders = orders.filter(order => ['pending', 'processing'].includes(order.status?.toLowerCase()));
+      
+      // Sort by date (newest first)
+      orders.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+      cancelCount.textContent = `${orders.length} pending`;
+
+      if (!orders.length) {
+        cancelBody.innerHTML = '<tr><td colspan="6" class="text-center py-5 text-muted">No orders available for cancellation. Only pending and processing orders can be cancelled.</td></tr>';
+        return;
+      }
+
+      cancelBody.innerHTML = orders.map(order => {
+        const orderDate = new Date(order.created_at).toLocaleDateString();
+        const statusClass = order.status?.toLowerCase() === 'pending' ? 'bg-warning' : 'bg-info';
+
+        return `
+          <tr>
+            <td><strong>#${order.id}</strong></td>
+            <td>${orderDate}</td>
+            <td><strong>₦${Number(order.total_amount).toLocaleString()}</strong></td>
+            <td><span class="badge ${statusClass}">${order.status || 'Pending'}</span></td>
+            <td><span class="badge bg-light text-dark">${order.items_count || 'N/A'}</span></td>
+            <td>
+              <button class="btn btn-sm btn-danger" onclick="requestCancelOrder(${order.id})">
+                Request Cancel
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    } catch (error) {
+      cancelBody.innerHTML = '<tr><td colspan="6" class="text-center py-5 text-danger">Could not load orders.</td></tr>';
+      cancelAlert.textContent = error.message;
+      cancelAlert.classList.remove('d-none');
+      console.error(error);
+    }
+  }
+
+  async function requestCancelOrder(orderId) {
+    if (!confirm('Are you sure you want to cancel this order? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('access_token');
+      const response = await fetch(`/api/order/${orderId}/cancel`, {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + token,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.message || 'Unable to cancel order.');
+      }
+
+      const successAlert = document.getElementById('successAlert');
+      successAlert.textContent = 'Order cancellation requested successfully. Please wait for confirmation.';
+      successAlert.classList.remove('d-none');
+
+      // Reload orders after 2 seconds
+      setTimeout(loadCancelableOrders, 2000);
+    } catch (error) {
+      const cancelAlert = document.getElementById('cancelAlert');
+      cancelAlert.textContent = error.message;
+      cancelAlert.classList.remove('d-none');
+      console.error(error);
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', loadCancelableOrders);
+</script>
+{% endblock customer_content %}

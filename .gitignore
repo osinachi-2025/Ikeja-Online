@@ -68,6 +68,8 @@ static/uploads/
 console.log(d))
 test_debug.py
 instance/
+!templates/dist/
+!templates/dist/**
 
 # Logs
 *.log

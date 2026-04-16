@@ -1,0 +1,202 @@
+{% extends "dist/customerdashboard.html" %}
+
+{% block dashboard_current %}
+  <div class="col-sm-6">
+    <ol class="breadcrumb float-sm-end">
+      <li class="breadcrumb-item"><a href="/customer/dashboard/home">Dashboard</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Transaction History</li>
+    </ol>
+  </div>
+{% endblock dashboard_current %}
+
+{% block customer_content %}
+<div class="app-content">
+  <div class="container-fluid">
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h3 class="card-title mb-0">Transaction History</h3>
+            <span id="transactionCount" class="badge bg-primary">0 transactions</span>
+          </div>
+          <div class="card-body">
+            <div id="transactionAlert" class="alert alert-danger d-none" role="alert"></div>
+            
+            <!-- Transactions Table -->
+            <div class="table-responsive">
+              <table class="table table-hover mb-0" id="transactionsTable">
+                <thead class="table-light">
+                  <tr>
+                    <th>Date</th>
+                    <th>Transaction Type</th>
+                    <th>Description</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="transactionsBody">
+                  <tr>
+                    <td colspan="5" class="text-center py-5">Loading transactions...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Pagination -->
+            <nav aria-label="Page navigation" class="mt-4">
+              <ul class="pagination justify-content-center" id="paginationNav">
+                <li class="page-item disabled">
+                  <button class="page-link" onclick="previousTransactionPage()">Previous</button>
+                </li>
+                <li class="page-item active">
+                  <span class="page-link" id="pageInfo">Page 1 of 1</span>
+                </li>
+                <li class="page-item disabled">
+                  <button class="page-link" onclick="nextTransactionPage()">Next</button>
+                </li>
+              </ul>
+            </nav>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Pagination state
+  let allTransactions = [];
+  let currentPage = 1;
+  const itemsPerPage = 15;
+  let totalPages = 1;
+
+  async function loadTransactions() {
+    const transactionsBody = document.getElementById('transactionsBody');
+    const transactionCount = document.getElementById('transactionCount');
+    const transactionAlert = document.getElementById('transactionAlert');
+
+    transactionsBody.innerHTML = '<tr><td colspan="5" class="text-center py-5">Loading transactions...</td></tr>';
+    transactionAlert.classList.add('d-none');
+
+    try {
+      const token = localStorage.getItem('access_token');
+      const response = await fetch('/api/customer/wallet-transactions', {
+        headers: {
+          'Authorization': 'Bearer ' + token
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.message || 'Unable to load transactions.');
+      }
+
+      const data = await response.json();
+      allTransactions = data.transactions || [];
+      transactionCount.textContent = `${allTransactions.length} transaction${allTransactions.length !== 1 ? 's' : ''}`;
+
+      if (!allTransactions.length) {
+        transactionsBody.innerHTML = '<tr><td colspan="5" class="text-center py-5 text-muted">No transactions found.</td></tr>';
+        updateTransactionPaginationNav();
+        return;
+      }
+
+      // Sort transactions by date (newest first)
+      allTransactions.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      
+      totalPages = Math.ceil(allTransactions.length / itemsPerPage);
+      currentPage = 1;
+      
+      displayTransactions();
+    } catch (error) {
+      transactionsBody.innerHTML = '<tr><td colspan="5" class="text-center py-5 text-danger">Could not load transactions.</td></tr>';
+      transactionAlert.textContent = error.message;
+      transactionAlert.classList.remove('d-none');
+      console.error(error);
+    }
+  }
+
+  function displayTransactions() {
+    const transactionsBody = document.getElementById('transactionsBody');
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const pageTransactions = allTransactions.slice(startIndex, endIndex);
+
+    if (!pageTransactions.length) {
+      transactionsBody.innerHTML = '<tr><td colspan="5" class="text-center py-5">No transactions found.</td></tr>';
+      updateTransactionPaginationNav();
+      return;
+    }
+
+    transactionsBody.innerHTML = pageTransactions.map(transaction => {
+      const transactionDate = new Date(transaction.created_at).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+
+      const typeLabel = transaction.transaction_type === 'debit' ? 'Debit' : 
+                       transaction.transaction_type === 'credit' ? 'Credit' : 
+                       transaction.transaction_type;
+
+      const statusBadgeClass = {
+        'completed': 'bg-success',
+        'pending': 'bg-warning',
+        'failed': 'bg-danger',
+        'cancelled': 'bg-secondary'
+      }[transaction.status] || 'bg-info';
+
+      const amountClass = transaction.transaction_type === 'debit' ? 'text-danger' : 'text-success';
+
+      return `
+        <tr>
+          <td>${transactionDate}</td>
+          <td><span class="badge ${transaction.transaction_type === 'debit' ? 'bg-danger' : 'bg-success'}">${typeLabel}</span></td>
+          <td>${transaction.description || 'N/A'}</td>
+          <td class="fw-bold ${amountClass}">
+            ${transaction.transaction_type === 'debit' ? '-' : '+'}₦${Number(transaction.amount).toLocaleString()}
+          </td>
+          <td><span class="badge ${statusBadgeClass}">${transaction.status || 'Pending'}</span></td>
+        </tr>
+      `;
+    }).join('');
+
+    updateTransactionPaginationNav();
+  }
+
+  function updateTransactionPaginationNav() {
+    const pageInfo = document.getElementById('pageInfo');
+    const prevButton = document.querySelector('.pagination .page-item:first-child button');
+    const nextButton = document.querySelector('.pagination .page-item:last-child button');
+
+    pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
+
+    if (prevButton) {
+      prevButton.parentElement.classList.toggle('disabled', currentPage === 1);
+    }
+    if (nextButton) {
+      nextButton.parentElement.classList.toggle('disabled', currentPage === totalPages);
+    }
+  }
+
+  function previousTransactionPage() {
+    if (currentPage > 1) {
+      currentPage--;
+      displayTransactions();
+      document.querySelector('#transactionsTable').scrollIntoView({ behavior: 'smooth' });
+    }
+  }
+
+  function nextTransactionPage() {
+    if (currentPage < totalPages) {
+      currentPage++;
+      displayTransactions();
+      document.querySelector('#transactionsTable').scrollIntoView({ behavior: 'smooth' });
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', loadTransactions);
+</script>
+{% endblock customer_content %}

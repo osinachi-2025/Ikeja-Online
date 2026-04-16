@@ -1,0 +1,145 @@
+{% extends "dist/customerdashboard.html" %}
+
+{% block dashboard_current %}
+  <div class="col-sm-6">
+    <ol class="breadcrumb float-sm-end">
+      <li class="breadcrumb-item"><a href="/customer/dashboard/home">Dashboard</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Categories</li>
+    </ol>
+  </div>
+{% endblock dashboard_current %}
+
+{% block customer_content %}
+<div class="app-content">
+  <div class="container-fluid">
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h3 class="card-title mb-0">Categories</h3>
+            <span id="categoryCount" class="badge bg-success">0 categories</span>
+          </div>
+          <div class="card-body">
+            <div id="categoryAlert" class="alert alert-danger d-none" role="alert"></div>
+            <div class="row g-4">
+              <div class="col-lg-4">
+                <div class="list-group" id="categoryList"></div>
+              </div>
+              <div class="col-lg-8">
+                <div class="card shadow-sm">
+                  <div class="card-header">
+                    <h5 class="card-title mb-0" id="selectedCategoryTitle">Select a category to view products</h5>
+                  </div>
+                  <div class="card-body">
+                    <div id="categoryProducts" class="row row-cols-1 row-cols-md-2 g-4"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  async function loadCategories() {
+    const categoryList = document.getElementById('categoryList');
+    const categoryCount = document.getElementById('categoryCount');
+    const categoryAlert = document.getElementById('categoryAlert');
+
+    categoryList.innerHTML = '<div class="p-4 text-center">Loading categories...</div>';
+    categoryCount.textContent = '0 categories';
+    categoryAlert.classList.add('d-none');
+
+    try {
+      const response = await fetch('/api/categories');
+      if (!response.ok) {
+        throw new Error('Unable to load categories.');
+      }
+      const data = await response.json();
+      const categories = data.categories || [];
+      categoryCount.textContent = `${categories.length} categor${categories.length === 1 ? 'y' : 'ies'}`;
+
+      if (!categories.length) {
+        categoryList.innerHTML = '<div class="p-4 text-center">No categories available.</div>';
+        return;
+      }
+
+      categoryList.innerHTML = categories.map(category => `
+        <button type="button" class="list-group-item list-group-item-action" data-category-id="${category.id}" data-category-name="${category.name}">
+          <div class="d-flex justify-content-between align-items-center">
+            <span>${category.name}</span>
+            <span class="badge bg-secondary">${category.product_count}</span>
+          </div>
+        </button>
+      `).join('');
+
+      categoryList.querySelectorAll('button[data-category-id]').forEach(button => {
+        button.addEventListener('click', () => {
+          const categoryId = button.getAttribute('data-category-id');
+          const categoryName = button.getAttribute('data-category-name') || 'Category';
+          loadCategoryProducts(categoryId, categoryName);
+          categoryList.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
+          button.classList.add('active');
+        });
+      });
+    } catch (error) {
+      categoryList.innerHTML = '<div class="p-4 text-center text-danger">Could not load categories.</div>';
+      categoryAlert.textContent = error.message;
+      categoryAlert.classList.remove('d-none');
+      console.error(error);
+    }
+  }
+
+  async function loadCategoryProducts(categoryId, categoryName) {
+    const selectedCategoryTitle = document.getElementById('selectedCategoryTitle');
+    const categoryProducts = document.getElementById('categoryProducts');
+    const categoryAlert = document.getElementById('categoryAlert');
+
+    selectedCategoryTitle.textContent = `Loading ${categoryName}...`;
+    categoryProducts.innerHTML = '<div class="col-12 text-center py-5">Loading products...</div>';
+    categoryAlert.classList.add('d-none');
+
+    try {
+      const response = await fetch(`/api/products-by-category/${categoryId}`);
+      if (!response.ok) {
+        throw new Error('Unable to load category products.');
+      }
+      const data = await response.json();
+      const products = data.products || [];
+      selectedCategoryTitle.textContent = `${data.category || categoryName}`;
+
+      if (!products.length) {
+        categoryProducts.innerHTML = '<div class="col-12 text-center py-5">No products available for this category.</div>';
+        return;
+      }
+
+      categoryProducts.innerHTML = products.map(product => `
+        <div class="col">
+          <div class="card h-100 shadow-sm">
+            <img src="${product.image || '/static/assets/img/product-placeholder.jpg'}" class="card-img-top" alt="${product.name}">
+            <div class="card-body d-flex flex-column">
+              <h5 class="card-title">${product.name}</h5>
+              <p class="card-text text-truncate">${product.description || 'No description available.'}</p>
+              <p class="mb-2 text-muted small">${product.store_name || 'Unknown vendor'}</p>
+              <div class="mt-auto d-flex justify-content-between align-items-center">
+                <span class="fw-bold text-primary">₦${Number(product.price).toLocaleString()}</span>
+                <a href="/product/${product.id}" class="btn btn-sm btn-primary">View</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    } catch (error) {
+      categoryProducts.innerHTML = '<div class="col-12 text-center py-5 text-danger">Could not load products.</div>';
+      categoryAlert.textContent = error.message;
+      categoryAlert.classList.remove('d-none');
+      console.error(error);
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', loadCategories);
+</script>
+{% endblock customer_content %}

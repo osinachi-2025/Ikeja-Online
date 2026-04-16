@@ -1,0 +1,302 @@
+{% extends "dist/vendordashboard.html" %}
+
+{% block title %}Store Profile - Vendor Dashboard{% endblock %}
+
+{% block breadcrumb_name %}Store Profile{% endblock %}
+
+{% block vendor_content %}
+<div class="app-content">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-12">
+        <div class="card card-primary card-outline">
+          <div class="card-header">
+            <h3 class="card-title">Store Profile Settings</h3>
+            <p class="text-muted mb-0">Manage your store information and branding</p>
+          </div>
+          <div class="card-body">
+            <form id="storeProfileForm" enctype="multipart/form-data">
+              <div class="row">
+                <div class="col-md-8">
+                  <div class="mb-3">
+                    <label for="store_name" class="form-label">Store Name *</label>
+                    <input type="text" class="form-control" id="store_name" name="store_name" required>
+                    <div class="form-text">This will be displayed as your store name across the platform</div>
+                  </div>
+
+                  <div class="mb-3">
+                    <label for="store_description" class="form-label">Store Description</label>
+                    <textarea class="form-control" id="store_description" name="store_description" rows="4" maxlength="255"></textarea>
+                    <div class="form-text">Brief description of your store (max 255 characters)</div>
+                  </div>
+
+                  <div class="row">
+                    <div class="col-md-6">
+                      <div class="mb-3">
+                        <label for="phone" class="form-label">Phone Number</label>
+                        <input type="tel" class="form-control" id="phone" name="phone">
+                        <div class="form-text">Contact phone number for customers</div>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="mb-3">
+                        <label for="address" class="form-label">Store Address</label>
+                        <input type="text" class="form-control" id="address" name="address">
+                        <div class="form-text">Physical address of your store</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-md-4">
+                  <div class="card">
+                    <div class="card-header">
+                      <h5 class="card-title mb-0">Store Logo</h5>
+                    </div>
+                    <div class="card-body text-center">
+                      <div id="logoPreview" class="mb-3">
+                        <img id="currentLogo" src="" alt="Store Logo" class="img-fluid rounded" style="max-height: 150px; display: none;">
+                        <div id="noLogo" class="text-muted">
+                          <i class="fas fa-image fa-3x mb-2"></i>
+                          <p>No logo uploaded</p>
+                        </div>
+                      </div>
+                      <div class="mb-3">
+                        <input type="file" class="form-control" id="logo" name="logo" accept="image/*">
+                        <div class="form-text">Upload a logo image (JPG, PNG, GIF)</div>
+                      </div>
+                      <button type="button" class="btn btn-outline-secondary btn-sm" id="removeLogo" style="display: none;">Remove Logo</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row mt-4">
+                <div class="col-12">
+                  <button type="submit" class="btn btn-primary" id="saveBtn">
+                    <i class="fas fa-save"></i> Save Changes
+                  </button>
+                  <button type="button" class="btn btn-secondary ms-2" id="resetBtn">
+                    <i class="fas fa-undo"></i> Reset
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock vendor_content %}
+
+{% block extra_scripts %}
+<script>
+  let originalData = {};
+
+  function showNotification(message, type = 'info') {
+    const alertClass = type === 'success' ? 'alert-success' : type === 'error' ? 'alert-danger' : 'alert-info';
+    const alertHtml = `
+      <div class="alert ${alertClass} alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', alertHtml);
+    setTimeout(() => {
+      const alert = document.querySelector('.alert');
+      if (alert) alert.remove();
+    }, 5000);
+  }
+
+  function loadStoreProfile() {
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      showNotification('Please log in to view your store profile.', 'error');
+      return;
+    }
+
+    fetch('/vendor/dashboard/get-vendor-settings', {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.error) {
+        showNotification(data.message || 'Failed to load store profile', 'error');
+        return;
+      }
+
+      const vendor = data.vendor;
+      originalData = { ...vendor };
+
+      // Populate form fields
+      document.getElementById('store_name').value = vendor.store_name || '';
+      document.getElementById('store_description').value = vendor.store_description || '';
+      document.getElementById('phone').value = vendor.phone || '';
+      document.getElementById('address').value = vendor.address || '';
+
+      // Handle logo display
+      const logoImg = document.getElementById('currentLogo');
+      const noLogoDiv = document.getElementById('noLogo');
+      const removeBtn = document.getElementById('removeLogo');
+
+      if (vendor.logo_url) {
+        logoImg.src = vendor.logo_url;
+        logoImg.style.display = 'block';
+        noLogoDiv.style.display = 'none';
+        removeBtn.style.display = 'inline-block';
+      } else {
+        logoImg.style.display = 'none';
+        noLogoDiv.style.display = 'block';
+        removeBtn.style.display = 'none';
+      }
+    })
+    .catch(error => {
+      console.error('Error loading store profile:', error);
+      showNotification('Failed to load store profile', 'error');
+    });
+  }
+
+  function saveStoreProfile(formData) {
+    const token = localStorage.getItem('access_token');
+    const saveBtn = document.getElementById('saveBtn');
+    const originalText = saveBtn.innerHTML;
+
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+    fetch('/vendor/dashboard/vendor-settings', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        showNotification('Store profile updated successfully!', 'success');
+
+        if (data.logo_url) {
+          originalData.logo_url = data.logo_url;
+          const logoImg = document.getElementById('currentLogo');
+          const noLogoDiv = document.getElementById('noLogo');
+          const removeBtn = document.getElementById('removeLogo');
+
+          logoImg.src = data.logo_url;
+          logoImg.style.display = 'block';
+          noLogoDiv.style.display = 'none';
+          removeBtn.style.display = 'inline-block';
+        } else if (formData.get('remove_logo') === 'true') {
+          originalData.logo_url = null;
+          const logoImg = document.getElementById('currentLogo');
+          const noLogoDiv = document.getElementById('noLogo');
+          const removeBtn = document.getElementById('removeLogo');
+
+          logoImg.style.display = 'none';
+          noLogoDiv.style.display = 'block';
+          removeBtn.style.display = 'none';
+        }
+
+        loadStoreProfile(); // Reload to get updated data
+      } else {
+        showNotification(data.message || 'Failed to update store profile', 'error');
+      }
+    })
+    .catch(error => {
+      console.error('Error saving store profile:', error);
+      showNotification('Failed to save changes', 'error');
+    })
+    .finally(() => {
+      saveBtn.disabled = false;
+      saveBtn.innerHTML = originalText;
+    });
+  }
+
+  function resetForm() {
+    document.getElementById('store_name').value = originalData.store_name || '';
+    document.getElementById('store_description').value = originalData.store_description || '';
+    document.getElementById('phone').value = originalData.phone || '';
+    document.getElementById('address').value = originalData.address || '';
+    document.getElementById('logo').value = '';
+
+    // Remove the remove_logo input if it exists
+    const removeInput = document.getElementById('removeLogoInput');
+    if (removeInput) {
+      removeInput.remove();
+    }
+
+    // Reset logo display
+    loadStoreProfile();
+
+    showNotification('Form reset to original values', 'info');
+  }
+
+  function handleLogoPreview(event) {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const logoImg = document.getElementById('currentLogo');
+        const noLogoDiv = document.getElementById('noLogo');
+        logoImg.src = e.target.result;
+        logoImg.style.display = 'block';
+        noLogoDiv.style.display = 'none';
+        document.getElementById('removeLogo').style.display = 'inline-block';
+
+        // Remove the remove_logo input if it exists since we're uploading a new logo
+        const removeInput = document.getElementById('removeLogoInput');
+        if (removeInput) {
+          removeInput.remove();
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  function removeLogo() {
+    document.getElementById('logo').value = '';
+    const logoImg = document.getElementById('currentLogo');
+    const noLogoDiv = document.getElementById('noLogo');
+    logoImg.style.display = 'none';
+    noLogoDiv.style.display = 'block';
+    document.getElementById('removeLogo').style.display = 'none';
+
+    // Add hidden input to indicate logo removal
+    let removeInput = document.getElementById('removeLogoInput');
+    if (!removeInput) {
+      removeInput = document.createElement('input');
+      removeInput.type = 'hidden';
+      removeInput.id = 'removeLogoInput';
+      removeInput.name = 'remove_logo';
+      removeInput.value = 'true';
+      document.getElementById('storeProfileForm').appendChild(removeInput);
+    }
+
+    showNotification('Logo will be removed when you save changes', 'info');
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    loadStoreProfile();
+
+    // Form submission
+    document.getElementById('storeProfileForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const formData = new FormData(this);
+      saveStoreProfile(formData);
+    });
+
+    // Reset button
+    document.getElementById('resetBtn').addEventListener('click', resetForm);
+
+    // Logo preview
+    document.getElementById('logo').addEventListener('change', handleLogoPreview);
+
+    // Remove logo
+    document.getElementById('removeLogo').addEventListener('click', removeLogo);
+  });
+</script>
+{% endblock extra_scripts %}

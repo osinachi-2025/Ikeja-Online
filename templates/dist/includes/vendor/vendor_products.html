@@ -1,0 +1,983 @@
+{% extends "dist/vendordashboard.html" %}
+
+{% block dashboard_current %}
+  <div class="col-sm-6">
+    <ol class="breadcrumb float-sm-end">
+      <li class="breadcrumb-item"><a href="#">Home</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Products Management</li>
+    </ol>
+  </div>
+{% endblock dashboard_current %}
+
+{% block vendor_content %}
+<div class="app-content">
+    <!--begin::Container-->
+    <div class="container-fluid">
+      <!--begin::Row-->
+      <div class="row">
+        <!--begin::Col-->
+        <div class="col-12">
+          <!--begin::Card-->
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">Products Management</h3>
+              <div class="card-tools">
+                <ul class="nav nav-pills ml-auto">
+                  <li class="nav-item">
+                    <a class="nav-link active" href="#my-products" data-bs-toggle="tab">My Products</a>
+                  </li>
+                  <li class="nav-item">
+                    <a class="nav-link" href="#add-product" data-bs-toggle="tab">Add Product</a>
+                  </li>
+                  <li class="nav-item">
+                    <a class="nav-link" href="#categories" data-bs-toggle="tab">Categories</a>
+                  </li>
+                </ul>
+              </div>
+            </div>
+            <!-- /.card-header -->
+            <div class="card-body">
+              <div class="tab-content">
+                <!-- My Products Tab -->
+                <div class="tab-pane active" id="my-products">
+                  <div class="row">
+                    <div class="col-12">
+                      <div class="list-section">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                          <h3 class="h5 mb-0">My Products</h3>
+                          <a href="/add-product" class="btn btn-primary btn-sm">
+                            <i class="fas fa-plus"></i> Add New Product
+                          </a>
+                        </div>
+                        <div id="productsByCategoryContainer" class="border rounded p-3 bg-white">
+                          <div class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                              <span class="sr-only">Loading...</span>
+                            </div>
+                            <p class="mt-2">Loading products...</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Add Product Tab -->
+                <div class="tab-pane" id="add-product">
+                  <div class="card-body">
+                    <form id="addProductForm" enctype="multipart/form-data">
+                      <div class="row">
+                        <div class="col-md-8">
+                          <!-- Product Basic Information -->
+                          <div class="card mb-4">
+                            <div class="card-header">
+                              <h5 class="card-title mb-0">
+                                <i class="fas fa-info-circle mr-2"></i>
+                                Product Information
+                              </h5>
+                            </div>
+                            <div class="card-body">
+                              <div class="row">
+                                <div class="col-md-6">
+                                  <div class="form-group">
+                                    <label for="productName" class="required">Product Name *</label>
+                                    <input type="text" class="form-control" id="productName" name="product_name" required
+                                           placeholder="Enter product name">
+                                    <small class="form-text text-muted">Choose a clear, descriptive name for your product</small>
+                                  </div>
+                                </div>
+                                <div class="col-md-6">
+                                  <div class="form-group">
+                                    <label for="productCategory" class="required">Category *</label>
+                                    <select class="form-control" id="productCategory" name="category_id" required>
+                                      <option value="">Select Category</option>
+                                    </select>
+                                    <small class="form-text text-muted">Choose the most appropriate category for your product</small>
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div class="row">
+                                <div class="col-md-6">
+                                  <div class="form-group">
+                                    <label for="productPrice" class="required">Price (₦) *</label>
+                                    <div class="input-group">
+                                      <div class="input-group-prepend">
+                                        <span class="input-group-text">₦</span>
+                                      </div>
+                                      <input type="number" class="form-control" id="productPrice" name="price"
+                                             step="0.01" min="0" required placeholder="0.00">
+                                    </div>
+                                    <small class="form-text text-muted">Set the selling price for your product</small>
+                                  </div>
+                                </div>
+                                <div class="col-md-6">
+                                  <div class="form-group">
+                                    <label for="productStock" class="required">Stock Quantity *</label>
+                                    <input type="number" class="form-control" id="productStock" name="stock_quantity"
+                                           min="0" required placeholder="0">
+                                    <small class="form-text text-muted">How many units do you have in stock?</small>
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div class="form-group">
+                                <label for="productDescription" class="required">Description *</label>
+                                <textarea class="form-control" id="productDescription" name="description"
+                                          rows="4" required placeholder="Describe your product in detail..."></textarea>
+                                <small class="form-text text-muted">Provide a detailed description of your product, including features, specifications, and usage instructions</small>
+                              </div>
+
+                              <div class="form-group">
+                                <div class="custom-control custom-switch">
+                                  <input type="checkbox" class="custom-control-input" id="productActive" name="status" value="active" checked>
+                                  <label class="custom-control-label" for="productActive">
+                                    <strong>Publish Product</strong> - Make this product visible to customers
+                                  </label>
+                                </div>
+                                <small class="form-text text-muted">Uncheck this if you want to save as draft</small>
+                              </div>
+                            </div>
+                          </div>
+
+                          <!-- Product Images -->
+                          <div class="card mb-4">
+                            <div class="card-header">
+                              <h5 class="card-title mb-0">
+                                <i class="fas fa-images mr-2"></i>
+                                Product Images
+                              </h5>
+                            </div>
+                            <div class="card-body">
+                              <div class="form-group">
+                                <label for="productImages" class="required">Upload Images *</label>
+                                <div class="custom-file">
+                                  <input type="file" class="custom-file-input" id="productImages" name="product_images"
+                                         multiple accept="image/*" required>
+                                  <label class="custom-file-label" for="productImages">
+                                    Choose product images...
+                                  </label>
+                                </div>
+                                <small class="form-text text-muted">
+                                  Upload high-quality images of your product. The first image will be used as the main product image.
+                                  Supported formats: JPG, PNG, GIF. Maximum 5 images.
+                                </small>
+                              </div>
+
+                              <!-- Image Preview Area -->
+                              <div id="imagePreview" class="row mt-3" style="display: none;">
+                                <div class="col-12">
+                                  <h6>Image Preview:</h6>
+                                  <div id="previewContainer" class="d-flex flex-wrap gap-2"></div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Sidebar with Tips -->
+                        <div class="col-md-4">
+                          <div class="card">
+                            <div class="card-header">
+                              <h5 class="card-title mb-0">
+                                <i class="fas fa-lightbulb mr-2"></i>
+                                Tips for Better Products
+                              </h5>
+                            </div>
+                            <div class="card-body">
+                              <div class="alert alert-info">
+                                <h6><i class="fas fa-camera"></i> Image Tips</h6>
+                                <ul class="mb-0 small">
+                                  <li>Use clear, well-lit photos</li>
+                                  <li>Show product from multiple angles</li>
+                                  <li>Include lifestyle shots</li>
+                                  <li>Use high resolution (at least 1000x1000px)</li>
+                                </ul>
+                              </div>
+
+                              <div class="alert alert-success">
+                                <h6><i class="fas fa-edit"></i> Description Tips</h6>
+                                <ul class="mb-0 small">
+                                  <li>Be specific about features</li>
+                                  <li>Mention dimensions and materials</li>
+                                  <li>Include care instructions</li>
+                                  <li>Highlight unique selling points</li>
+                                </ul>
+                              </div>
+
+                              <div class="alert alert-warning">
+                                <h6><i class="fas fa-tags"></i> Pricing Tips</h6>
+                                <ul class="mb-0 small">
+                                  <li>Research competitor prices</li>
+                                  <li>Factor in production costs</li>
+                                  <li>Consider shipping costs</li>
+                                  <li>Include profit margin</li>
+                                </ul>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Form Actions -->
+                      <div class="row">
+                        <div class="col-12">
+                          <div class="card">
+                            <div class="card-body">
+                              <div class="d-flex justify-content-between align-items-center">
+                                <div class="text-muted">
+                                  <small>Fields marked with <span class="text-danger">*</span> are required</small>
+                                </div>
+                                <div>
+                                  <button type="button" class="btn btn-secondary mr-2" onclick="resetForm()">
+                                    <i class="fas fa-undo"></i> Reset
+                                  </button>
+                                  <button type="submit" class="btn btn-primary" id="submitBtn">
+                                    <i class="fas fa-save"></i> Add Product
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+
+                <!-- Categories Tab -->
+                <div class="tab-pane" id="categories">
+                  <div class="row">
+                    <div class="col-12">
+                      <div class="list-section">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                          <h3 class="h5 mb-0">Product Categories</h3>
+                          <button type="button" class="btn btn-success btn-sm" onclick="loadCategories()">
+                            <i class="fas fa-sync"></i> Refresh
+                          </button>
+                        </div>
+                        <div id="categoriesContainer" class="border rounded p-3 bg-white">
+                          <div class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                              <span class="sr-only">Loading...</span>
+                            </div>
+                            <p class="mt-2">Loading categories...</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- /.card-body -->
+          </div>
+          <!-- /.card -->
+        </div>
+        <!-- /.col -->
+      </div>
+      <!-- /.row -->
+    </div>
+    <!-- /.container-fluid -->
+  </div>
+
+  <script>
+    // Tab switching functionality
+    document.addEventListener('DOMContentLoaded', function() {
+      const tabLinks = document.querySelectorAll('.nav-pills a');
+
+      tabLinks.forEach(link => {
+        link.addEventListener('shown.bs.tab', function(e) {
+          const target = e.target.getAttribute('href');
+          if (target === '#my-products') {
+            loadProducts();
+          } else if (target === '#add-product') {
+            loadCategoriesForForm();
+            setupImagePreview();
+          } else if (target === '#categories') {
+            loadCategories();
+          }
+        });
+      });
+
+      // Load initial content
+      loadProducts();
+      loadCategories();  // Load categories tab content on page load
+      loadCategoriesForForm();  // Load category list for form
+
+      const addProductTab = document.querySelector('.nav-pills a[href="#add-product"]');
+      if (addProductTab && addProductTab.classList.contains('active')) {
+        setupImagePreview();
+      }
+    });
+
+    // Load vendor's products organized by categories
+    async function loadProducts(page = 1, perPage = 10) {
+      const container = document.getElementById('productsByCategoryContainer');
+
+      // Show loading state
+      container.innerHTML = `
+        <div class="text-center py-4">
+          <div class="spinner-border text-primary" role="status">
+            <span class="sr-only">Loading...</span>
+          </div>
+          <p class="mt-2">Loading products...</p>
+        </div>
+      `;
+
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+        // Get all products for this vendor with pagination
+        const response = await fetch(`/api/products?page=${page}&per_page=${perPage}`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+          },
+          signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+
+        if (data.success) {
+          container.innerHTML = '';
+
+          if (data.products.length === 0) {
+            container.innerHTML = `
+              <div class="text-center py-5">
+                <div class="mb-3">
+                  <i class="fas fa-box-open fa-3x text-muted"></i>
+                </div>
+                <h5 class="text-muted">No Products Yet</h5>
+                <p class="text-muted mb-3">You haven't added any products to your store yet.</p>
+                <a href="/add-product" class="btn btn-primary">
+                  <i class="fas fa-plus mr-2"></i> Add Your First Product
+                </a>
+              </div>
+            `;
+            return;
+          }
+
+          // Group products by category
+          const productsByCategory = {};
+          data.products.forEach(product => {
+            const categoryName = product.category_name || 'Uncategorized';
+            if (!productsByCategory[categoryName]) {
+              productsByCategory[categoryName] = [];
+            }
+            productsByCategory[categoryName].push(product);
+          });
+
+          // Display products grouped by category as lists
+          Object.keys(productsByCategory).forEach(categoryName => {
+            const products = productsByCategory[categoryName];
+            const categorySection = document.createElement('div');
+            categorySection.className = 'mb-4 category-section';
+            categorySection.innerHTML = `
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0">${categoryName}</h5>
+                <span class="badge badge-primary">${products.length} product${products.length > 1 ? 's' : ''}</span>
+              </div>
+              <div class="table-responsive">
+                <table class="table table-hover table-sm mb-0">
+                  <thead class="table-light">
+                    <tr>
+                      <th style="width: 80px;">Image</th>
+                      <th>Product Name</th>
+                      <th style="width: 120px;">Price</th>
+                      <th style="width: 100px;">Stock</th>
+                      <th style="width: 80px;">Status</th>
+                      <th style="width: 100px;">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${products.map(product => `
+                      <tr>
+                        <td>
+                          <img src="${product.images && product.images.length > 0 ? product.images[0].url : '/static/assets/img/default-150x150.png'}"
+                               alt="${product.name}"
+                               style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px; cursor: pointer;"
+                               onclick="showImagePreview('${product.images && product.images.length > 0 ? product.images[0].url : '/static/assets/img/default-150x150.png'}', '${product.name}')"
+                               data-bs-toggle="tooltip" title="Click to view">
+                        </td>
+                        <td>
+                          <div class="font-weight-bold">${product.name}</div>
+                          <small class="text-muted">${product.description.substring(0, 50)}${product.description.length > 50 ? '...' : ''}</small>
+                        </td>
+                        <td class="text-primary font-weight-bold">₦${parseFloat(product.price).toLocaleString()}</td>
+                        <td>${product.stock_quantity}</td>
+                        <td>
+                          <span class="badge ${product.status === 'active' ? 'badge-success' : 'badge-secondary'}">
+                            ${product.status === 'active' ? 'Active' : 'Inactive'}
+                          </span>
+                        </td>
+                        <td>
+                          <div class="btn-group btn-group-sm" role="group">
+                              <button type="button" class="btn btn-info" title="Edit Product" onclick="editProduct(${product.id})">
+                                <i class="fas fa-edit"></i> Edit
+                              </button>
+                              <button type="button" class="btn btn-danger" title="Delete Product" onclick="deleteProduct(${product.id})">
+                                <i class="fas fa-trash"></i> Delete
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      `).join('')}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            `;
+            container.appendChild(categorySection);
+          });
+
+          // Add pagination controls
+          if (data.pagination && data.pagination.pages > 1) {
+            const paginationDiv = document.createElement('div');
+            paginationDiv.className = 'd-flex justify-content-center mt-4';
+            paginationDiv.innerHTML = createPaginationControls(data.pagination, perPage);
+            container.appendChild(paginationDiv);
+          }
+        } else {
+          container.innerHTML = `<div class="alert alert-danger">Error: ${data.message || 'Failed to load products'}</div>`;
+        }
+      } catch (error) {
+        console.error('Error loading products:', error);
+        let errorMessage = 'Error loading products';
+        if (error.name === 'AbortError') {
+          errorMessage = 'Request timed out. Please check your connection.';
+        } else if (error.message) {
+          errorMessage = `Error: ${error.message}`;
+        }
+        container.innerHTML = `<div class="alert alert-danger">${errorMessage}</div>`;
+      }
+    }
+
+    // Create pagination controls
+    function createPaginationControls(pagination, perPage) {
+      const { page, pages, has_prev, has_next, prev_page, next_page } = pagination;
+
+      let paginationHtml = '<nav aria-label="Product pagination"><ul class="pagination justify-content-center">';
+
+      // Previous button
+      if (has_prev) {
+        paginationHtml += `<li class="page-item"><a class="page-link" href="#" onclick="loadProducts(${prev_page}, ${perPage})" aria-label="Previous"><span aria-hidden="true">&laquo;</span></a></li>`;
+      } else {
+        paginationHtml += '<li class="page-item disabled"><span class="page-link">&laquo;</span></li>';
+      }
+
+      // Page numbers
+      const startPage = Math.max(1, page - 2);
+      const endPage = Math.min(pages, page + 2);
+
+      if (startPage > 1) {
+        paginationHtml += `<li class="page-item"><a class="page-link" href="#" onclick="loadProducts(1, ${perPage})">1</a></li>`;
+        if (startPage > 2) {
+          paginationHtml += '<li class="page-item disabled"><span class="page-link">...</span></li>';
+        }
+      }
+
+      for (let i = startPage; i <= endPage; i++) {
+        if (i === page) {
+          paginationHtml += `<li class="page-item active"><span class="page-link">${i}</span></li>`;
+        } else {
+          paginationHtml += `<li class="page-item"><a class="page-link" href="#" onclick="loadProducts(${i}, ${perPage})">${i}</a></li>`;
+        }
+      }
+
+      if (endPage < pages) {
+        if (endPage < pages - 1) {
+          paginationHtml += '<li class="page-item disabled"><span class="page-link">...</span></li>';
+        }
+        paginationHtml += `<li class="page-item"><a class="page-link" href="#" onclick="loadProducts(${pages}, ${perPage})">${pages}</a></li>`;
+      }
+
+      // Next button
+      if (has_next) {
+        paginationHtml += `<li class="page-item"><a class="page-link" href="#" onclick="loadProducts(${next_page}, ${perPage})" aria-label="Next"><span aria-hidden="true">&raquo;</span></a></li>`;
+      } else {
+        paginationHtml += '<li class="page-item disabled"><span class="page-link">&raquo;</span></li>';
+      }
+
+      paginationHtml += '</ul></nav>';
+
+      // Add page info
+      paginationHtml += `<div class="text-center mt-2 text-muted small">Page ${page} of ${pages} (${pagination.total} total products)</div>`;
+
+      return paginationHtml;
+    }
+
+    // Load categories for the add product form
+    async function loadCategoriesForForm() {
+      try {
+        const response = await fetch('/api/categories');
+        const data = await response.json();
+
+        if (data.success) {
+          const select = document.getElementById('productCategory');
+          select.innerHTML = '<option value="">Select Category</option>';
+
+          data.categories.forEach(category => {
+            const option = document.createElement('option');
+            option.value = category.id;
+            option.textContent = category.name;
+            select.appendChild(option);
+          });
+
+          console.log(`Loaded ${data.categories.length} categories`);
+        } else {
+          showAlert('Error loading categories. Please refresh the page.', 'danger');
+        }
+      } catch (error) {
+        console.error('Error loading categories:', error);
+        showAlert('Failed to load categories. Please check your connection.', 'danger');
+      }
+    }
+
+    // Load categories with products as lists
+    async function loadCategories() {
+      try {
+        const response = await fetch('/api/categories');
+        const categoriesData = await response.json();
+
+        if (categoriesData.success) {
+          const container = document.getElementById('categoriesContainer');
+          container.innerHTML = '';
+
+          for (const category of categoriesData.categories) {
+            // Get products for this category
+            const productsResponse = await fetch(`/api/products-by-category/${category.id}`);
+            const productsData = await productsResponse.json();
+
+            const categorySection = document.createElement('div');
+            categorySection.className = 'mb-4 category-section';
+            categorySection.innerHTML = `
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0">${category.name}</h5>
+                <span class="badge badge-primary">${productsData.success && productsData.products ? productsData.products.length : 0} products</span>
+              </div>
+              ${productsData.success && productsData.products && productsData.products.length > 0 ?
+                `<div class="table-responsive">
+                  <table class="table table-hover table-sm mb-0">
+                    <thead class="table-light">
+                      <tr>
+                        <th style="width: 80px;">Image</th>
+                        <th>Product Name</th>
+                        <th style="width: 120px;">Price</th>
+                        <th style="width: 100px;">Stock</th>
+                        <th style="width: 80px;">Status</th>
+                        <th style="width: 100px;">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${productsData.products.map(product => `
+                        <tr>
+                          <td>
+                            <img src="${product.images && product.images.length > 0 ? product.images[0].url : '/static/assets/img/default-150x150.png'}"
+                                 alt="${product.name}"
+                                 style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px; cursor: pointer;"
+                                 onclick="showImagePreview('${product.images && product.images.length > 0 ? product.images[0].url : '/static/assets/img/default-150x150.png'}', '${product.name}')"
+                                 data-bs-toggle="tooltip" title="Click to view">
+                          </td>
+                          <td>
+                            <div class="font-weight-bold">${product.name}</div>
+                            <small class="text-muted">${product.description.substring(0, 50)}${product.description.length > 50 ? '...' : ''}</small>
+                          </td>
+                          <td class="text-primary font-weight-bold">₦${parseFloat(product.price).toLocaleString()}</td>
+                          <td>${product.stock_quantity}</td>
+                          <td>
+                            <span class="badge ${product.status === 'active' ? 'badge-success' : 'badge-secondary'}">
+                              ${product.status === 'active' ? 'Active' : 'Inactive'}
+                            </span>
+                          </td>
+                          <td>
+                            <div class="btn-group btn-group-sm" role="group">
+                              <button type="button" class="btn btn-info" title="Edit Product" onclick="editProduct(${product.id})">
+                                <i class="fas fa-edit"></i> Edit
+                              </button>
+                              <button type="button" class="btn btn-danger" title="Delete Product" onclick="deleteProduct(${product.id})">
+                                <i class="fas fa-trash"></i> Delete
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      `).join('')}
+                    </tbody>
+                  </table>
+                </div>`
+                : '<p class="text-muted mb-0"><i class="fas fa-inbox"></i> No products in this category yet.</p>'
+              }
+            `;
+            container.appendChild(categorySection);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading categories:', error);
+        document.getElementById('categoriesContainer').innerHTML = '<div class="alert alert-danger">Error loading categories</div>';
+      }
+    }
+
+    // Update file input label when files are selected
+    document.addEventListener('DOMContentLoaded', function() {
+      const imageInput = document.getElementById('productImages');
+      if (imageInput) {
+        // Update label on file selection
+        imageInput.addEventListener('change', function() {
+          const label = document.querySelector('.custom-file-label[for="productImages"]');
+          const files = Array.from(this.files);
+
+          if (files.length > 0) {
+            if (files.length === 1) {
+              label.textContent = files[0].name;
+            } else {
+              label.textContent = `${files.length} files selected`;
+            }
+          } else {
+            label.textContent = 'Choose product images...';
+          }
+        });
+
+        console.log('File input label update setup completed');
+      }
+    });
+
+    // Add product form submission with enhanced validation and error handling
+    document.addEventListener('DOMContentLoaded', function() {
+      const addProductForm = document.getElementById('addProductForm');
+      if (addProductForm) {
+        addProductForm.addEventListener('submit', async function(e) {
+          e.preventDefault();
+
+          const submitBtn = document.getElementById('submitBtn');
+          const originalText = submitBtn.innerHTML;
+          submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding Product...';
+          submitBtn.disabled = true;
+
+          // Validate form
+          const requiredFields = ['productName', 'productCategory', 'productPrice', 'productStock', 'productDescription'];
+          let isValid = true;
+
+          requiredFields.forEach(fieldId => {
+            const field = document.getElementById(fieldId);
+            if (!field.value.trim()) {
+              field.classList.add('is-invalid');
+              isValid = false;
+            } else {
+              field.classList.remove('is-invalid');
+            }
+          });
+
+          const imageInput = document.getElementById('productImages');
+          if (imageInput.files.length === 0) {
+            imageInput.classList.add('is-invalid');
+            isValid = false;
+          } else {
+            imageInput.classList.remove('is-invalid');
+          }
+
+          if (!isValid) {
+            showAlert('Please fill in all required fields and upload at least one image.', 'warning');
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+            return;
+          }
+
+          const formData = new FormData(this);
+
+          // Handle status checkbox
+          const statusCheckbox = document.getElementById('productActive');
+          if (!statusCheckbox.checked) {
+            formData.set('status', 'inactive');
+          }
+
+          try {
+            const response = await fetch('/api/add-product', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+              },
+              body: formData
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+              showAlert('Product added successfully!', 'success');
+
+              // Reset form and switch to products tab
+              this.reset();
+              const imagePreview = document.getElementById('imagePreview');
+              const previewContainer = document.getElementById('previewContainer');
+              if (imagePreview) imagePreview.style.display = 'none';
+              if (previewContainer) previewContainer.innerHTML = '';
+
+              // Switch to products tab and reload
+              const productsTabLink = document.querySelector('[href="#my-products"]');
+              if (productsTabLink) {
+                const tab = new bootstrap.Tab(productsTabLink);
+                tab.show();
+              }
+              loadProducts();
+            } else {
+              showAlert('Error: ' + data.message, 'danger');
+            }
+          } catch (error) {
+            console.error('Error adding product:', error);
+            showAlert('Error adding product. Please try again.', 'danger');
+          } finally {
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+          }
+        });
+      }
+    });
+
+    // Edit product (placeholder - would redirect to edit page)
+    function editProduct(productId) {
+      window.location.href = `/edit-product/${productId}`;
+    }
+
+    // Delete product
+    async function deleteProduct(productId) {
+      if (!confirm('Are you sure you want to delete this product?')) {
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/products/${productId}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+          }
+        });
+
+        const data = await response.json();
+
+        if (data.success || response.status === 200) {
+          showAlert('Product deleted successfully!', 'success');
+          setTimeout(() => {
+            loadProducts();
+          }, 500);
+        } else {
+          showAlert('Error: ' + (data.message || 'Failed to delete product'), 'danger');
+        }
+      } catch (error) {
+        console.error('Error deleting product:', error);
+        showAlert('Error deleting product: ' + error.message, 'danger');
+      }
+    }
+
+    // Ensure only logged-in vendors can access this page
+    (function() {
+      const token = localStorage.getItem('access_token');
+      const role = localStorage.getItem('user_role');
+      if (!token || role !== 'vendor') {
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('user_role');
+        window.location.href = '/login';
+      }
+    })();
+
+    // Show image preview modal
+    function showImagePreview(imageSrc, productName) {
+      document.getElementById('previewImage').src = imageSrc;
+      document.getElementById('previewImage').alt = productName;
+      document.getElementById('imagePreviewModalLabel').textContent = `Product Image: ${productName}`;
+
+      // Show modal using Bootstrap 5
+      const modal = new bootstrap.Modal(document.getElementById('imagePreviewModal'));
+      modal.show();
+    }
+
+    // Load categories for the add product form
+    async function loadCategoriesForForm() {
+      try {
+        const response = await fetch('/api/categories');
+        const data = await response.json();
+
+        if (data.success) {
+          const select = document.getElementById('productCategory');
+          select.innerHTML = '<option value="">Select Category</option>';
+
+          data.categories.forEach(category => {
+            const option = document.createElement('option');
+            option.value = category.id;
+            option.textContent = category.name;
+            select.appendChild(option);
+          });
+        } else {
+          showAlert('Error loading categories. Please refresh the page.', 'danger');
+        }
+      } catch (error) {
+        console.error('Error loading categories:', error);
+        showAlert('Failed to load categories. Please check your connection.', 'danger');
+      }
+    }
+
+    // Setup image preview functionality for add product form
+    function setupImagePreview() {
+      const imageInput = document.getElementById('productImages');
+      const previewContainer = document.getElementById('previewContainer');
+      const imagePreview = document.getElementById('imagePreview');
+
+      if (!imageInput || !previewContainer || !imagePreview) {
+        console.warn('Image preview elements not found');
+        return; // Skip if elements don't exist
+      }
+
+      // Remove existing event listener to avoid duplicates
+      const newImageInput = imageInput.cloneNode(true);
+      imageInput.parentNode.replaceChild(newImageInput, imageInput);
+
+      newImageInput.addEventListener('change', function(e) {
+        const files = Array.from(e.target.files);
+
+        if (files.length > 5) {
+          showAlert('Maximum 5 images allowed. Please select fewer images.', 'warning');
+          this.value = '';
+          return;
+        }
+
+        previewContainer.innerHTML = '';
+
+        files.forEach((file, index) => {
+          if (file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+              const imgContainer = document.createElement('div');
+              imgContainer.className = 'position-relative d-inline-block mr-2 mb-2';
+              imgContainer.innerHTML = `
+                <img src="${e.target.result}" class="img-thumbnail" style="width: 100px; height: 100px; object-fit: cover;" alt="Preview ${index + 1}">
+                <button type="button" class="btn btn-sm btn-danger position-absolute" style="top: 0; right: 0; padding: 2px 6px; border-radius: 50%;"
+                        onclick="removeImage(${index})" title="Remove image">
+                  <i class="fas fa-times"></i>
+                </button>
+                ${index === 0 ? '<small class="badge badge-primary position-absolute" style="bottom: 0; left: 0;">Main</small>' : ''}
+              `;
+              previewContainer.appendChild(imgContainer);
+            };
+            reader.readAsDataURL(file);
+          } else {
+            showAlert(`File "${file.name}" is not a valid image. Please select only image files.`, 'warning');
+          }
+        });
+
+        if (files.length > 0) {
+          imagePreview.style.display = 'block';
+        } else {
+          imagePreview.style.display = 'none';
+        }
+      });
+
+      console.log('Image preview setup completed');
+    }
+
+    // Remove image from preview
+    function removeImage(index) {
+      const imageInput = document.getElementById('productImages');
+      const files = Array.from(imageInput.files);
+      files.splice(index, 1);
+
+      // Create new FileList
+      const dt = new DataTransfer();
+      files.forEach(file => dt.items.add(file));
+      imageInput.files = dt.files;
+
+      // Trigger change event to update preview
+      imageInput.dispatchEvent(new Event('change'));
+    }
+
+    // Reset form
+    function resetForm() {
+      if (confirm('Are you sure you want to reset the form? All entered data will be lost.')) {
+        document.getElementById('addProductForm').reset();
+        const imagePreview = document.getElementById('imagePreview');
+        const previewContainer = document.getElementById('previewContainer');
+        if (imagePreview) imagePreview.style.display = 'none';
+        if (previewContainer) previewContainer.innerHTML = '';
+      }
+    }
+
+    // Show alert messages
+    function showAlert(message, type = 'info') {
+      const alertDiv = document.createElement('div');
+      alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+      alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+      alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="close" data-bs-dismiss="alert">
+          <span>&times;</span>
+        </button>
+      `;
+
+      document.body.appendChild(alertDiv);
+
+      // Auto remove after 5 seconds
+      setTimeout(() => {
+        if (alertDiv.parentNode) {
+          alertDiv.parentNode.removeChild(alertDiv);
+        }
+      }, 5000);
+    }
+  </script>
+
+  <!-- Image Preview Modal -->
+  <div class="modal fade" id="imagePreviewModal" tabindex="-1" role="dialog" aria-labelledby="imagePreviewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="imagePreviewModalLabel">Product Image Preview</h5>
+          <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body text-center">
+          <img id="previewImage" src="" alt="" class="img-fluid" style="max-height: 70vh;">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .product-card {
+      transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+      border: 1px solid #dee2e6;
+    }
+
+    .product-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    .card-img-overlay {
+      opacity: 0;
+      transition: opacity 0.2s ease-in-out;
+    }
+
+    .product-card:hover .card-img-overlay {
+      opacity: 1;
+    }
+
+    .badge-primary {
+      background-color: #007bff;
+    }
+
+    .badge-success {
+      background-color: #28a745;
+    }
+
+    .badge-secondary {
+      background-color: #6c757d;
+    }
+  </style>
+{% endblock vendor_content %}</content>
+<parameter name="filePath">c:\Users\GM\Desktop\ikeja-online-backend\templates\dist\includes\vendor_products.html

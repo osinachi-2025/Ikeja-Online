@@ -1,0 +1,148 @@
+{% extends "dist/customerdashboard.html" %}
+
+{% block dashboard_current %}
+  <div class="col-sm-6">
+    <ol class="breadcrumb float-sm-end">
+      <li class="breadcrumb-item"><a href="/customer/dashboard/home">Dashboard</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Profile Information</li>
+    </ol>
+  </div>
+{% endblock dashboard_current %}
+
+{% block customer_content %}
+<div class="app-content">
+  <div class="container-fluid">
+    <div class="row justify-content-center">
+      <div class="col-lg-10">
+        <div class="card">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h3 class="card-title mb-0">Profile Information</h3>
+            <a href="/customer/dashboard/account-settings" class="btn btn-sm btn-primary">Edit Profile</a>
+          </div>
+          <div class="card-body">
+            <div id="profileAlert" class="alert alert-danger d-none" role="alert"></div>
+            <div class="row gy-3">
+              <div class="col-12 text-center mb-4">
+                <div class="profile-image-container">
+                  <img id="profileImage" src="" alt="Profile Image" class="rounded-circle" style="width: 120px; height: 120px; object-fit: cover; border: 3px solid #dee2e6;" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIwIiBoZWlnaHQ9IjEyMCIgdmlld0JveD0iMCAwIDEyMCAxMjAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxjaXJjbGUgY3g9IjYwIiBjeT0iNjAiIHI9IjYwIiBmaWxsPSIjZGRlMmU2Ii8+CjxjaXJjbGUgY3g9IjYwIiBjeT0iNDUiIHI9IjIwIiBmaWxsPSIjNmM3NTdhIi8+CjxwYXRoIGQ9Ik0yMCA5NWMwLTIyIDI1LTMwIDQwLTMwczQwIDggNDAgMzAiIGZpbGw9IiM2Yzc1N2EiLz4KPHN2Zz4=';">
+                  <div class="mt-2">
+                    <a href="/customer/dashboard/account-settings" class="btn btn-sm btn-outline-primary">Change Photo</a>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="border rounded p-3">
+                  <h6 class="text-muted">First Name</h6>
+                  <p id="profileFirstName" class="mb-0">Loading...</p>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="border rounded p-3">
+                  <h6 class="text-muted">Last Name</h6>
+                  <p id="profileLastName" class="mb-0">Loading...</p>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="border rounded p-3">
+                  <h6 class="text-muted">Email</h6>
+                  <p id="profileEmail" class="mb-0">Loading...</p>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="border rounded p-3">
+                  <h6 class="text-muted">Phone</h6>
+                  <p id="profilePhone" class="mb-0">Loading...</p>
+                </div>
+              </div>
+              <div class="col-12">
+                <div class="border rounded p-3">
+                  <h6 class="text-muted">Default Address</h6>
+                  <p id="profileAddress" class="mb-0">Loading...</p>
+                </div>
+              </div>
+              <div class="col-12">
+                <div class="border rounded p-3">
+                  <h6 class="text-muted">Joined</h6>
+                  <p id="profileCreatedAt" class="mb-0">Loading...</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  async function loadProfileInfo() {
+    const url = '/api/customer/profile';
+    const profileAlert = document.getElementById('profileAlert');
+    profileAlert.classList.add('d-none');
+    console.log('[loadProfileInfo] Starting to load profile info');
+
+    try {
+      const token = localStorage.getItem('access_token');
+      console.log('[loadProfileInfo] Token present:', !!token);
+      
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': 'Bearer ' + token
+        }
+      });
+
+      console.log('[loadProfileInfo] Response status:', response.status);
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.message || 'Failed to load profile information.');
+      }
+
+      const data = await response.json();
+      console.log('[loadProfileInfo] Profile data:', data);
+      console.log('[loadProfileInfo] Profile image object:', data.profile_image);
+      
+      document.getElementById('profileFirstName').textContent = data.first_name || 'Not set';
+      document.getElementById('profileLastName').textContent = data.last_name || 'Not set';
+      document.getElementById('profileEmail').textContent = data.email || 'Not set';
+      document.getElementById('profilePhone').textContent = data.phone || 'Not set';
+      document.getElementById('profileAddress').textContent = data.address || 'Not set';
+      document.getElementById('profileCreatedAt').textContent = data.created_at || 'Unknown';
+
+      // Handle profile image
+      const profileImage = document.getElementById('profileImage');
+      console.log('[loadProfileInfo] Profile image element found:', !!profileImage);
+      if (profileImage) {
+        console.log('[loadProfileInfo] Image element details:');
+        console.log('  - Class:', profileImage.className);
+        console.log('  - Width:', profileImage.width);
+        console.log('  - Height:', profileImage.height);
+        console.log('  - Style:', profileImage.getAttribute('style'));
+        console.log('  - Current src:', profileImage.src);
+      }
+      
+      if (data.profile_image && data.profile_image.data) {
+        console.log('[loadProfileInfo] Setting profile image from data');
+        const imageSrc = `data:${data.profile_image.mime_type};base64,${data.profile_image.data}`;
+        console.log('[loadProfileInfo] Image src length:', imageSrc.length);
+        profileImage.src = imageSrc;
+        console.log('[loadProfileInfo] Image src after setting:', profileImage.src.substring(0, 50) + '...');
+      } else {
+        console.log('[loadProfileInfo] No profile image data, using default');
+        const defaultSrc = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIwIiBoZWlnaHQ9IjEyMCIgdmlld0JveD0iMCAwIDEyMCAxMjAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxjaXJjbGUgY3g9IjYwIiBjeT0iNjAiIHI9IjYwIiBmaWxsPSIjZGRlMmU2Ii8+CjxjaXJjbGUgY3g9IjYwIiBjeT0iNDUiIHI9IjIwIiBmaWxsPSIjNmM3NTdhIi8+CjxwYXRoIGQ9Ik0yMCA5NWMwLTIyIDI1LTMwIDQwLTMwczQwIDggNDAgMzAiIGZpbGw9IiM2Yzc1N2EiLz4KPHN2Zz4=';
+        profileImage.src = defaultSrc;
+        console.log('[loadProfileInfo] Default image set');
+        console.log('[loadProfileInfo] Image element visible?', profileImage.offsetHeight > 0);
+        console.log('[loadProfileInfo] Is image display hidden?', window.getComputedStyle(profileImage).display);
+      }
+    } catch (error) {
+      console.error('[loadProfileInfo] Error:', error);
+      profileAlert.textContent = error.message;
+      profileAlert.classList.remove('d-none');
+      console.error(error);
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', loadProfileInfo);
+</script>
+{% endblock customer_content %}

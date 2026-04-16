@@ -1,0 +1,769 @@
+{% extends "dist/customerdashboard.html" %}
+
+{% block dashboard_current %}
+  <div class="col-sm-6">
+    <ol class="breadcrumb float-sm-end">
+      <li class="breadcrumb-item"><a href="#">Home</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Dashboard</li>
+    </ol>
+  </div>
+{% endblock dashboard_current %}
+
+{% block customer_content %}
+    <div class="app-content">
+          <!--begin::Container-->
+          <div class="container-fluid">
+            <!-- Info boxes -->
+            <div class="row">
+              <div class="col-12 col-sm-6 col-md-3">
+                <div class="info-box">
+                  <span class="info-box-icon text-bg-primary shadow-sm">
+                    <i class="bi bi-gear-fill"></i>
+                  </span>
+
+                  <div class="info-box-content">
+                    <span class="info-box-text">Total Orders</span>
+                    <span class="order-box-number">
+                      10
+                    </span>
+                  </div>
+                  <!-- /.info-box-content -->
+                </div>
+                <!-- /.info-box -->
+              </div>
+              <!-- /.col -->
+              <div class="col-12 col-sm-6 col-md-3">
+                <div class="info-box">
+                  <span class="info-box-icon text-bg-danger shadow-sm">
+                    <i class="bi bi-hand-thumbs-up-fill"></i>
+                  </span>
+
+                  <div class="info-box-content">
+                    <span class="info-box-text">Wishlist Items</span>
+                    <span class="wishlist-box-number">41,410</span>
+                  </div>
+                  <!-- /.info-box-content -->
+                </div>
+                <!-- /.info-box -->
+              </div>
+              <!-- /.col -->
+
+              <!-- fix for small devices only -->
+              <!-- <div class="clearfix hidden-md-up"></div> -->
+
+              <div class="col-12 col-sm-6 col-md-3">
+                <div class="info-box">
+                  <span class="info-box-icon text-bg-success shadow-sm">
+                    <i class="bi bi-cart-fill"></i>
+                  </span>
+
+                  <div class="info-box-content">
+                    <span class="info-box-text">Total Spent</span>
+                    <span class="spent-box">760</span>
+                  </div>
+                  <!-- /.info-box-content -->
+                </div>
+                <!-- /.info-box -->
+              </div>
+              <!-- /.col -->
+              <div class="col-12 col-sm-6 col-md-3">
+                <div class="info-box">
+                  <span class="info-box-icon text-bg-warning shadow-sm">
+                    <i class="bi bi-people-fill"></i>
+                  </span>
+
+                  <div class="info-box-content">
+                    <span class="info-box-text">Reviews Left</span>
+                    <span class="info-box-number">0</span>
+                  </div>
+                  <!-- /.info-box-content -->
+                </div>
+                <!-- /.info-box -->
+              </div>
+              <!-- /.col -->
+            </div>
+            <!-- /.row -->   
+
+            <!--begin::Row-->
+            <div class="row">
+              <!-- Start col -->
+              <div class="col-md-8">
+                <!--begin::Row-->
+                <div class="row g-4 mb-4">
+                  <div class="col-md-6">
+                    <!-- DIRECT CHAT -->
+                    
+                    <!-- /.direct-chat -->
+                  </div>
+                  <!-- /.col -->
+
+                  
+                  <!-- /.col -->
+                </div>
+                <!--end::Row-->
+
+                <!--begin::Latest Order Widget-->
+                <div class="card">
+                  <div class="card-header">
+                    <h3 class="card-title">Latest Orders</h3>
+
+                    <div class="card-tools">
+                      <button type="button" class="btn btn-tool" data-lte-toggle="card-collapse">
+                        <i data-lte-icon="expand" class="bi bi-plus-lg"></i>
+                        <i data-lte-icon="collapse" class="bi bi-dash-lg"></i>
+                      </button>
+                      <button type="button" class="btn btn-tool" data-lte-toggle="card-remove">
+                        <i class="bi bi-x-lg"></i>
+                      </button>
+                    </div>
+                  </div>
+                  <!-- /.card-header -->
+                  <div class="card-body p-0">
+                    <div class="table-responsive">
+                      <table class="table m-0">
+                        <thead>
+                          <tr>
+                            <th>Order ID</th>
+                            <th>Item</th>
+                            <th>Status</th>
+                            <th>Popularity</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td>
+                              <a
+                                href="pages/examples/invoice.html"
+                                class="link-primary link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover"
+                                >OR9842</a
+                              >
+                            </td>
+                            <td>Call of Duty IV</td>
+                            <td>
+                              <span class="badge text-bg-success"> Shipped </span>
+                            </td>
+                            <td>
+                              <div id="table-sparkline-1"></div>
+                            </td>
+                          </tr>
+                          <tr>
+                            <td>
+                              <a
+                                href="pages/examples/invoice.html"
+                                class="link-primary link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover"
+                                >OR1848</a
+                              >
+                            </td>
+                            <td>Samsung Smart TV</td>
+                            <td>
+                              <span class="badge text-bg-warning">Pending</span>
+                            </td>
+                            <td>
+                              <div id="table-sparkline-2"></div>
+                            </td>
+                          </tr>
+                          <tr>
+                            <td>
+                              <a
+                                href="pages/examples/invoice.html"
+                                class="link-primary link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover"
+                                >OR7429</a
+                              >
+                            </td>
+                            <td>iPhone 6 Plus</td>
+                            <td>
+                              <span class="badge text-bg-danger"> Delivered </span>
+                            </td>
+                            <td>
+                              <div id="table-sparkline-3"></div>
+                            </td>
+                          </tr>
+                          <tr>
+                            <td>
+                              <a
+                                href="pages/examples/invoice.html"
+                                class="link-primary link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover"
+                                >OR7429</a
+                              >
+                            </td>
+                            <td>Samsung Smart TV</td>
+                            <td>
+                              <span class="badge text-bg-info">Processing</span>
+                            </td>
+                            <td>
+                              <div id="table-sparkline-4"></div>
+                            </td>
+                          </tr>
+                          <tr>
+                            <td>
+                              <a
+                                href="pages/examples/invoice.html"
+                                class="link-primary link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover"
+                                >OR1848</a
+                              >
+                            </td>
+                            <td>Samsung Smart TV</td>
+                            <td>
+                              <span class="badge text-bg-warning">Pending</span>
+                            </td>
+                            <td>
+                              <div id="table-sparkline-5"></div>
+                            </td>
+                          </tr>
+                          <tr>
+                            <td>
+                              <a
+                                href="pages/examples/invoice.html"
+                                class="link-primary link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover"
+                                >OR7429</a
+                              >
+                            </td>
+                            <td>iPhone 6 Plus</td>
+                            <td>
+                              <span class="badge text-bg-danger"> Delivered </span>
+                            </td>
+                            <td>
+                              <div id="table-sparkline-6"></div>
+                            </td>
+                          </tr>
+                          <tr>
+                            <td>
+                              <a
+                                href="pages/examples/invoice.html"
+                                class="link-primary link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover"
+                                >OR9842</a
+                              >
+                            </td>
+                            <td>Call of Duty IV</td>
+                            <td>
+                              <span class="badge text-bg-success">Shipped</span>
+                            </td>
+                            <td>
+                              <div id="table-sparkline-7"></div>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                    <!-- /.table-responsive -->
+                  </div>
+                  <!-- /.card-body -->
+                  <div class="card-footer clearfix">
+                    <a href="javascript:void(0)" class="btn btn-sm btn-primary float-start">
+                      Place New Order
+                    </a>
+                    <a href="javascript:void(0)" class="btn btn-sm btn-secondary float-end">
+                      View All Orders
+                    </a>
+                  </div>
+                  <!-- /.card-footer -->
+                </div>
+                <!-- /.card -->
+              </div>
+              <!-- /.col -->
+              <div class="content-section" style="margin-top: 2rem;" id="wallet-section">
+                <h2><i class="fas fa-wallet"></i> Wallet Management</h2>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+                    <div style="background: #177D4E; color: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);">
+                        <p style="font-size: 0.9rem; opacity: 0.9; margin-bottom: 0.5rem;">Available Balance</p>
+                        <h3 style="font-size: 2.5rem; margin: 0; font-weight: 800;">₦<span id="availableBalance">0.00</span></h3>
+                        <p style="font-size: 0.85rem; opacity: 0.8; margin-top: 0.5rem;">Total Earned: ₦<span id="totalEarned">0.00</span></p>
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: 1rem;">
+                        <button class="btn btn-primary" onclick="openDepositModal()" style="flex: 1; justify-content: center;">
+                            <i class="fas fa-plus-circle"></i>
+                            Deposit Funds
+                        </button>
+                        <button class="btn btn-primary" onclick="openWithdrawalModal()" style="flex: 1; justify-content: center;">
+                            <i class="fas fa-arrow-right"></i>
+                            Request Withdrawal
+                        </button>
+                    </div>
+                </div>
+
+                <h3 style="margin-top: 2rem; margin-bottom: 1rem;">Recent Transactions</h3>
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="background: #f5f5f5;">
+                                <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #e0e0e0;">Date</th>
+                                <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #e0e0e0;">Type</th>
+                                <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #e0e0e0;">Amount</th>
+                                <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #e0e0e0;">Description</th>
+                                <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #e0e0e0;">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transactionsList">
+                            <tr>
+                                <td colspan="5" style="padding: 2rem; text-align: center; color: #999;">Loading transactions...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Deposit Modal -->
+            <div id="depositModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center;">
+                <div style="background: white; padding: 2rem; border-radius: 12px; max-width: 500px; width: 90%;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <h2>Deposit Funds to Wallet</h2>
+                        <button onclick="closeDepositModal()" style="border: none; background: none; font-size: 1.5rem; cursor: pointer;">✕</button>
+                    </div>
+
+                    <form onsubmit="processDeposit(event)">
+                        <div style="margin-bottom: 1.5rem;">
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Deposit Amount (₦)</label>
+                            <input type="number" id="depositAmount" step="0.01" min="1" placeholder="Enter amount" style="width: 100%; padding: 0.75rem; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 1rem;" required>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">
+                            <i class="fas fa-credit-card"></i>
+                            Proceed to Payment
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Withdrawal Modal -->
+            <div id="withdrawalModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center;">
+                <div style="background: white; padding: 2rem; border-radius: 12px; max-width: 500px; width: 90%; max-height: 90vh; overflow-y: auto;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <h2>Request Withdrawal</h2>
+                        <button onclick="closeWithdrawalModal()" style="border: none; background: none; font-size: 1.5rem; cursor: pointer;">✕</button>
+                    </div>
+
+                    <form onsubmit="processWithdrawal(event)">
+                        <div style="margin-bottom: 1.5rem;">
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Withdrawal Amount (₦)</label>
+                            <input type="number" id="withdrawalAmount" step="0.01" min="1" placeholder="Enter amount" style="width: 100%; padding: 0.75rem; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 1rem;" required>
+                            <small style="color: #999;">Max: ₦<span id="maxWithdrawal">0.00</span></small>
+                        </div>
+
+                        <div style="margin-bottom: 1.5rem;">
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Bank Name</label>
+                            <input type="text" id="bankName" placeholder="e.g., First Bank, GTBank" style="width: 100%; padding: 0.75rem; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 1rem;" required>
+                        </div>
+
+                        <div style="margin-bottom: 1.5rem;">
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Account Number</label>
+                            <input type="text" id="accountNumber" placeholder="10-digit account number" style="width: 100%; padding: 0.75rem; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 1rem;" required>
+                        </div>
+
+                        <div style="margin-bottom: 1.5rem;">
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Account Name</label>
+                            <input type="text" id="accountName" placeholder="Full account name" style="width: 100%; padding: 0.75rem; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 1rem;" required>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">
+                            <i class="fas fa-arrow-right"></i>
+                            Submit Withdrawal Request
+                        </button>
+                    </form>
+                </div>
+            </div>
+              
+              <!-- /.col -->
+            </div>
+            <!--end::Row-->
+          </div>
+          <!--end::Container-->
+        </div>
+        <script>
+            // Ensure only logged-in customers can access this page
+            (function() {
+                const token = localStorage.getItem('access_token');
+                const role = localStorage.getItem('user_role');
+                if (!token || role !== 'customer') {
+                    localStorage.removeItem('access_token');
+                    localStorage.removeItem('user_role');
+                    window.location.href = '/login';
+                }
+            })();
+
+                async function loadCustomerStats() {
+                    try {
+                        const response = await fetch('/api/customer/stats', {
+                            headers: {
+                                'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                            }
+                        });
+                        
+                        if (!response.ok) {
+                            throw new Error('Failed to load customer stats');
+                        }
+                        
+                        const data = await response.json();
+                        console.log(data)
+                        
+                        if (data.success && data.stats) {
+                            // Update total orders
+                            const orderElements = document.querySelectorAll('.order-box-number');
+                            orderElements.forEach(el => {
+                                el.textContent = data.stats.total_orders || 0;
+                            });
+                            
+                            // Update total spent
+                            const spentElements = document.querySelectorAll('.spent-box');
+                            spentElements.forEach(el => {
+                                const formattedAmount = '₦' + parseFloat(data.stats.total_spent || 0).toLocaleString('en-US', {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2
+                                });
+                                el.textContent = formattedAmount;
+
+                            const wishList_Items = document.querySelectorAll('.wishlist-box-number')
+                            wishList_Items.forEach(el => {
+                                el.textContent = data.stats.wishlist_count || 0;
+                            })
+                            });
+                        }
+                    } catch (error) {
+                        console.error('Error loading customer stats:', error);
+                        // Set defaults on error
+                        document.querySelectorAll('.order-box-number').forEach(el => el.textContent = '0');
+                        document.querySelectorAll('.spent-box').forEach(el => el.textContent = '₦0.00');
+                    }
+                }
+
+                function logout(event) {
+            event.preventDefault();
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('user_role');
+            localStorage.removeItem('user_id');
+            window.location.href = '{{ url_for("login") }}';
+        }
+                window.addEventListener('DOMContentLoaded', loadCustomerStats);
+                
+                // Load orders dynamically
+                async function loadOrders() {
+                    try {
+                        const token = localStorage.getItem('access_token');
+                        if (!token) {
+                            console.error('No access token found');
+                            return;
+                        }
+                        
+                        const response = await fetch('/api/orders', {
+                            method: 'GET',
+                            headers: {
+                                'Authorization': 'Bearer ' + token,
+                                'Content-Type': 'application/json'
+                            }
+                        });
+                        
+                        if (!response.ok) {
+                            console.error('Failed to load orders:', response.status, response.statusText);
+                            return;
+                        }
+                        
+                        const data = await response.json();
+                        const tbody = document.querySelector('.table tbody');
+                        
+                        if (data.success && data.orders && data.orders.length > 0) {
+                            tbody.innerHTML = data.orders.slice(0, 8).map(order => {
+                                const statusBadge = {
+                                    'shipped': 'success',
+                                    'Shipped': 'success',
+                                    'pending': 'warning',
+                                    'Pending': 'warning',
+                                    'processing': 'info',
+                                    'Processing': 'info',
+                                    'delivered': 'danger',
+                                    'Delivered': 'danger',
+                                    'cancelled': 'secondary',
+                                    'Cancelled': 'secondary'
+                                }[order.status] || 'secondary';
+                                
+                                // Get first product name from items
+                                const productName = order.items && order.items.length > 0 ? order.items[0].product_name : 'Product';
+                                
+                                return `
+                                    <tr>
+                                        <td><a href="/customer/my-orders#order-${order.id}" class="link-primary link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover">#${order.id}</a></td>
+                                        <td>${productName}</td>
+                                        <td><span class="badge text-bg-${statusBadge}">${order.status || 'Unknown'}</span></td>
+                                        <td><div style="width: 100px; height: 30px; background: linear-gradient(to right, #ccc 0%, #0d6efd 50%, #ccc 100%);border-radius: 4px;"></div></td>
+                                    </tr>
+                                `;
+                            }).join('');
+                        } else if (data.success) {
+                            tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No orders found</td></tr>';
+                        }
+                    } catch (error) {
+                        console.error('Error loading orders:', error);
+                        const tbody = document.querySelector('.table tbody');
+                        if (tbody) {
+                            tbody.innerHTML = '<tr><td colspan="4" class="text-center text-danger">Error loading orders</td></tr>';
+                        }
+                    }
+                }
+                
+                window.addEventListener('DOMContentLoaded', loadOrders);
+                window.addEventListener('DOMContentLoaded', () => {
+                    loadCustomerWallet();
+                    loadCustomerTransactions();
+                });
+
+                async function loadCustomerWallet() {
+                    const availableBalance = document.getElementById('availableBalance');
+                    const totalEarned = document.getElementById('totalEarned');
+                    const token = localStorage.getItem('access_token');
+
+                    if (!token) {
+                        console.warn('No access token available for wallet load');
+                        return;
+                    }
+
+                    try {
+                        const response = await fetch('/api/wallet', {
+                            method: 'GET',
+                            headers: {
+                                'Authorization': 'Bearer ' + token,
+                                'Content-Type': 'application/json'
+                            }
+                        });
+
+                        if (!response.ok) {
+                            throw new Error('Failed to load wallet balance');
+                        }
+
+                        const data = await response.json();
+                        const balance = parseFloat(data.balance || 0);
+
+                        if (availableBalance) {
+                            availableBalance.textContent = balance.toLocaleString('en-US', {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                            });
+                        }
+
+                        if (totalEarned) {
+                            totalEarned.textContent = '0.00';
+                        }
+                    } catch (error) {
+                        console.error('Error loading wallet balance:', error);
+                        if (availableBalance) {
+                            availableBalance.textContent = '0.00';
+                        }
+                        if (totalEarned) {
+                            totalEarned.textContent = '0.00';
+                        }
+                    }
+                }
+
+                async function loadCustomerTransactions() {
+                    const transactionsList = document.getElementById('transactionsList');
+                    const totalEarned = document.getElementById('totalEarned');
+                    const token = localStorage.getItem('access_token');
+
+                    if (!token) {
+                        console.warn('No access token available for transactions load');
+                        return;
+                    }
+
+                    if (transactionsList) {
+                        transactionsList.innerHTML = '<tr><td colspan="5" style="padding: 2rem; text-align: center; color: #999;">Loading transactions...</td></tr>';
+                    }
+
+                    try {
+                        const response = await fetch('/api/customer/wallet-transactions', {
+                            method: 'GET',
+                            headers: {
+                                'Authorization': 'Bearer ' + token,
+                                'Content-Type': 'application/json'
+                            }
+                        });
+
+                        if (!response.ok) {
+                            const errorData = await response.json().catch(() => null);
+                            throw new Error(errorData?.message || 'Failed to load transactions');
+                        }
+
+                        const data = await response.json();
+                        const transactions = data.transactions || [];
+                        let earned = 0;
+
+                        if (!transactions.length) {
+                            transactionsList.innerHTML = '<tr><td colspan="5" style="padding: 2rem; text-align: center; color: #999;">No recent transactions found.</td></tr>';
+                            if (totalEarned) {
+                                totalEarned.textContent = '0.00';
+                            }
+                            return;
+                        }
+
+                        const rows = transactions
+                            .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+                            .slice(0, 8)
+                            .map(transaction => {
+                                const createdAt = transaction.created_at ? new Date(transaction.created_at) : null;
+                                const dateString = createdAt ? createdAt.toLocaleString('en-US', {
+                                    year: 'numeric',
+                                    month: 'short',
+                                    day: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                }) : 'N/A';
+
+                                const typeLabel = transaction.transaction_type === 'credit' ? 'Credit' : transaction.transaction_type === 'debit' ? 'Debit' : (transaction.transaction_type || 'N/A');
+                                const statusText = transaction.status ? transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1) : 'Pending';
+                                const statusClass = transaction.status === 'completed' ? 'background: #198754; color: white; padding: 0.35rem 0.75rem; border-radius: 0.5rem;' : transaction.status === 'pending' ? 'background: #ffc107; color: #212529; padding: 0.35rem 0.75rem; border-radius: 0.5rem;' : transaction.status === 'failed' ? 'background: #dc3545; color: white; padding: 0.35rem 0.75rem; border-radius: 0.5rem;' : 'background: #6c757d; color: white; padding: 0.35rem 0.75rem; border-radius: 0.5rem;';
+                                const amount = parseFloat(transaction.amount || 0);
+
+                                if (transaction.transaction_type === 'credit') {
+                                    earned += amount;
+                                }
+
+                                return `
+                                    <tr>
+                                        <td style="padding: 1rem; border-bottom: 1px solid #e0e0e0;">${dateString}</td>
+                                        <td style="padding: 1rem; border-bottom: 1px solid #e0e0e0;">${typeLabel}</td>
+                                        <td style="padding: 1rem; border-bottom: 1px solid #e0e0e0;">₦${amount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                                        <td style="padding: 1rem; border-bottom: 1px solid #e0e0e0;">${transaction.description || 'Wallet deposit'}</td>
+                                        <td style="padding: 1rem; border-bottom: 1px solid #e0e0e0;"><span style="${statusClass}">${statusText}</span></td>
+                                    </tr>
+                                `;
+                            });
+
+                        transactionsList.innerHTML = rows.join('');
+                        if (totalEarned) {
+                            totalEarned.textContent = earned.toLocaleString('en-US', {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                            });
+                        }
+                    } catch (error) {
+                        console.error('Error loading wallet transactions:', error);
+                        if (transactionsList) {
+                            transactionsList.innerHTML = '<tr><td colspan="5" style="padding: 2rem; text-align: center; color: #999;">Unable to load transactions.</td></tr>';
+                        }
+                        if (totalEarned) {
+                            totalEarned.textContent = '0.00';
+                        }
+                    }
+                }
+
+                // Deposit Modal Functions
+                function openDepositModal() {
+                    const depositModal = document.getElementById('depositModal');
+                    if (depositModal) {
+                        depositModal.style.display = 'flex';
+                        document.body.style.overflow = 'hidden';
+                    }
+                }
+
+                function closeDepositModal() {
+                    const depositModal = document.getElementById('depositModal');
+                    if (depositModal) {
+                        depositModal.style.display = 'none';
+                        document.body.style.overflow = 'auto';
+                        // Reset form
+                        const form = depositModal.querySelector('form');
+                        if (form) form.reset();
+                    }
+                }
+
+                async function processDeposit(event) {
+                    event.preventDefault();
+                    
+                    const depositAmount = document.getElementById('depositAmount');
+                    const amount = parseFloat(depositAmount.value);
+                    
+                    if (!amount || amount <= 0) {
+                        alert('Please enter a valid amount');
+                        return;
+                    }
+                    
+                    // Disable submit button during processing
+                    const submitBtn = event.target.querySelector('button[type="submit"]');
+                    const originalText = submitBtn.textContent;
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = 'Processing...';
+                    
+                    try {
+                        const token = localStorage.getItem('access_token');
+                        if (!token) {
+                            throw new Error('Authorization token not found');
+                        }
+                        
+                        console.log('[processDeposit] Initializing deposit for amount:', amount);
+                        
+                        // Call API to initialize deposit
+                        const response = await fetch('/api/deposit/initialize', {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ amount })
+                        });
+                        
+                        console.log('[processDeposit] API response status:', response.status);
+                        
+                        const data = await response.json();
+                        console.log('[processDeposit] API response:', data);
+                        
+                        if (!response.ok) {
+                            throw new Error(data.message || 'Failed to initialize deposit');
+                        }
+                        
+                        if (data.success && data.authorization_url) {
+                            console.log('[processDeposit] Redirecting to Paystack...');
+                            // Close modal first
+                            closeDepositModal();
+                            // Redirect to Paystack payment page
+                            window.location.href = data.authorization_url;
+                        } else {
+                            throw new Error(data.message || 'Invalid response from server');
+                        }
+                        
+                    } catch (error) {
+                        console.error('[processDeposit] Error:', error);
+                        alert(`Deposit failed: ${error.message}`);
+                    } finally {
+                        // Re-enable submit button
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = originalText;
+                    }
+                }
+
+                // Withdrawal Modal Functions
+                function openWithdrawalModal() {
+                    const withdrawalModal = document.getElementById('withdrawalModal');
+                    if (withdrawalModal) {
+                        withdrawalModal.style.display = 'flex';
+                        document.body.style.overflow = 'hidden';
+                    }
+                }
+
+                function closeWithdrawalModal() {
+                    const withdrawalModal = document.getElementById('withdrawalModal');
+                    if (withdrawalModal) {
+                        withdrawalModal.style.display = 'none';
+                        document.body.style.overflow = 'auto';
+                        // Reset form
+                        const form = withdrawalModal.querySelector('form');
+                        if (form) form.reset();
+                    }
+                }
+
+                async function processWithdrawal(event) {
+                    event.preventDefault();
+                    alert('Withdrawal processing is coming soon!');
+                }
+
+                // Close modals when clicking outside of them
+                document.addEventListener('click', function(event) {
+                    const depositModal = document.getElementById('depositModal');
+                    const withdrawalModal = document.getElementById('withdrawalModal');
+                    
+                    if (depositModal && event.target === depositModal) {
+                        closeDepositModal();
+                    }
+                    
+                    if (withdrawalModal && event.target === withdrawalModal) {
+                        closeWithdrawalModal();
+                    }
+                });
+        </script>
+{% endblock customer_content %}
