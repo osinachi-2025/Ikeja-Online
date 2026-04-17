@@ -39,7 +39,11 @@ app = Flask(
 )
 
 # Database configuration
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///ikeja_online.db')
+db_url = os.getenv('DATABASE_URL', 'sqlite:///ikeja_online.db')
+# Fix PostgreSQL URL format for SQLAlchemy compatibility
+if db_url and db_url.startswith('postgresql://'):
+    db_url = db_url.replace('postgresql://', 'postgresql+psycopg2://', 1)
+app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Critical Flask configuration - these MUST be set
@@ -823,42 +827,67 @@ def send_low_stock_alert_email(vendor_email, vendor_name, store_name, low_stock_
         return None
 
 def ensure_order_schema():
-    """Ensure the orders table has all required workflow columns."""
-    with db.engine.connect() as conn:
-        result = conn.execute(text("PRAGMA table_info('orders')"))
-        existing_columns = {row[1] for row in result}
-        alter_statements = []
-
-        if 'delivery_address_id' not in existing_columns:
-            alter_statements.append("ALTER TABLE orders ADD COLUMN delivery_address_id INTEGER")
-        if 'tracking_number' not in existing_columns:
-            alter_statements.append("ALTER TABLE orders ADD COLUMN tracking_number VARCHAR(100)")
-        if 'tracking_carrier' not in existing_columns:
-            alter_statements.append("ALTER TABLE orders ADD COLUMN tracking_carrier VARCHAR(50)")
-        if 'shipped_at' not in existing_columns:
-            alter_statements.append("ALTER TABLE orders ADD COLUMN shipped_at DATETIME")
-        if 'delivered_at' not in existing_columns:
-            alter_statements.append("ALTER TABLE orders ADD COLUMN delivered_at DATETIME")
-        if 'cancellation_request_status' not in existing_columns:
-            alter_statements.append("ALTER TABLE orders ADD COLUMN cancellation_request_status VARCHAR(20)")
-        if 'cancellation_reason' not in existing_columns:
-            alter_statements.append("ALTER TABLE orders ADD COLUMN cancellation_reason TEXT")
-        if 'cancellation_requested_at' not in existing_columns:
-            alter_statements.append("ALTER TABLE orders ADD COLUMN cancellation_requested_at DATETIME")
-        if 'cancellation_approved_at' not in existing_columns:
-            alter_statements.append("ALTER TABLE orders ADD COLUMN cancellation_approved_at DATETIME")
-        if 'cancellation_processed_by' not in existing_columns:
-            alter_statements.append("ALTER TABLE orders ADD COLUMN cancellation_processed_by INTEGER")
-        if 'updated_at' not in existing_columns:
-            alter_statements.append("ALTER TABLE orders ADD COLUMN updated_at DATETIME")
-
-        if alter_statements:
-            for statement in alter_statements:
-                try:
-                    conn.execute(text(statement))
-                    print(f"[DB-MIGRATION] Applied: {statement}")
-                except Exception as e:
-                    print(f"[DB-MIGRATION] Failed to apply: {statement} -> {e}")
+    """Ensure the orders table has all required workflow columns.
+    This function is database-agnostic and works with both SQLite and PostgreSQL."""
+    try:
+        with db.engine.connect() as conn:
+            # Determine database type
+            db_type = db.engine.dialect.name
+            
+            # Get existing columns based on database type
+            if db_type == 'postgresql':
+                # PostgreSQL: use information_schema
+                query = text("""
+                    SELECT column_name FROM information_schema.columns 
+                    WHERE table_name='orders'
+                """)
+                result = conn.execute(query)
+                existing_columns = {row[0] for row in result}
+            elif db_type == 'sqlite':
+                # SQLite: use PRAGMA
+                query = text("PRAGMA table_info('orders')")
+                result = conn.execute(query)
+                existing_columns = {row[1] for row in result}
+            else:
+                print(f"[DB-MIGRATION] Unknown database type: {db_type}")
+                return
+            
+            alter_statements = []
+            
+            # Check for missing columns
+            required_columns = {
+                'delivery_address_id': 'INTEGER',
+                'tracking_number': 'VARCHAR(100)',
+                'tracking_carrier': 'VARCHAR(50)',
+                'shipped_at': 'DATETIME',
+                'delivered_at': 'DATETIME',
+                'cancellation_request_status': 'VARCHAR(20)',
+                'cancellation_reason': 'TEXT',
+                'cancellation_requested_at': 'DATETIME',
+                'cancellation_approved_at': 'DATETIME',
+                'cancellation_processed_by': 'INTEGER',
+                'updated_at': 'DATETIME'
+            }
+            
+            for col_name, col_type in required_columns.items():
+                if col_name not in existing_columns:
+                    if db_type == 'postgresql':
+                        alter_statements.append(f"ALTER TABLE orders ADD COLUMN {col_name} {col_type}")
+                    else:
+                        # SQLite doesn't support adding foreign key constraints via ALTER TABLE
+                        alter_statements.append(f"ALTER TABLE orders ADD COLUMN {col_name} {col_type}")
+            
+            # Execute migration statements
+            if alter_statements:
+                for statement in alter_statements:
+                    try:
+                        conn.execute(text(statement))
+                        conn.commit()
+                        print(f"[DB-MIGRATION] Applied: {statement}")
+                    except Exception as e:
+                        print(f"[DB-MIGRATION] Column might already exist or error occurred: {statement} -> {e}")
+    except Exception as e:
+        print(f"[DB-MIGRATION] Error in ensure_order_schema: {str(e)}")
 
 # Initialize database and default data
 def init_db():
@@ -866,7 +895,6 @@ def init_db():
     with app.app_context():
         db.create_all()
         ensure_order_schema()
-        
         # Initialize default roles if they don't exist
         if not Roles.query.filter_by(name='super_admin').first():
             super_admin_role = Roles(name='super_admin', description='Super Administrator account with full control')

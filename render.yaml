@@ -1,0 +1,55 @@
+# Render deployment configuration for Ikeja Online backend
+# This file configures the build, deploy, and database setup for Render
+
+services:
+  - type: web
+    name: ikeja-online-backend
+    env: python
+    plan: free
+    branch: main
+    buildCommand: pip install --upgrade pip && pip install -r requirement.txt
+    startCommand: gunicorn --bind 0.0.0.0:$PORT --workers 4 --timeout 120 --access-logfile - --error-logfile - wsgi:app
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.4
+      - key: FLASK_ENV
+        value: production
+      - key: FLASK_APP
+        value: app.py
+      - key: SECRET_KEY
+        value: ${SECRET_KEY}
+      - key: JWT_SECRET_KEY
+        value: ${JWT_SECRET_KEY}
+      - key: TEST_PUBLIC_KEY
+        value: ${TEST_PUBLIC_KEY}
+      - key: TEST_SECRET_KEY
+        value: ${TEST_SECRET_KEY}
+      - key: CLOUDINARY_CLOUD_NAME
+        value: ${CLOUDINARY_CLOUD_NAME}
+      - key: CLOUDINARY_API_KEY
+        value: ${CLOUDINARY_API_KEY}
+      - key: CLOUDINARY_API_SECRET
+        value: ${CLOUDINARY_API_SECRET}
+      - key: GMAIL_EMAIL
+        value: ${GMAIL_EMAIL}
+      - key: GMAIL_PASSWORD
+        value: ${GMAIL_PASSWORD}
+      - key: SUPER_ADMIN_EMAIL
+        value: ${SUPER_ADMIN_EMAIL}
+      - key: SUPER_ADMIN_PASSWORD
+        value: ${SUPER_ADMIN_PASSWORD}
+      - key: SUPER_ADMIN_FIRST_NAME
+        value: ${SUPER_ADMIN_FIRST_NAME}
+      - key: SUPER_ADMIN_LAST_NAME
+        value: ${SUPER_ADMIN_LAST_NAME}
+      - key: DATABASE_URL
+        value: ${DATABASE_URL}
+      - key: WEB_CONCURRENCY
+        value: "4"
+
+databases:
+  - name: ikeja-online-db
+    databaseName: ikeja_online
+    user: ikeja_admin
+    plan: free
+    region: oregon
