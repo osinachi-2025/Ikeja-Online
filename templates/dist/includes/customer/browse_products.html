@@ -20,7 +20,52 @@
             <span id="productCount" class="badge bg-primary">0 products</span>
           </div>
           <div class="card-body">
-            <div id="productAlert" class="alert alert-danger d-none" role="alert"></div>
+            <div id="productAlert" class="alert d-none" role="alert"></div>
+            <div class="row g-3 mb-4">
+              <div class="col-12 col-md-4">
+                <input type="search" id="productSearch" class="form-control" placeholder="Search products, categories, brands...">
+              </div>
+              <div class="col-6 col-md-2">
+                <select id="categoryFilter" class="form-select">
+                  <option value="">All categories</option>
+                </select>
+              </div>
+              <div class="col-6 col-md-2">
+                <select id="brandFilter" class="form-select">
+                  <option value="">All brands</option>
+                </select>
+              </div>
+              <div class="col-6 col-md-2">
+                <input type="number" id="minPriceFilter" class="form-control" placeholder="Min price" min="0">
+              </div>
+              <div class="col-6 col-md-2">
+                <input type="number" id="maxPriceFilter" class="form-control" placeholder="Max price" min="0">
+              </div>
+              <div class="col-6 col-md-2">
+                <select id="ratingFilter" class="form-select">
+                  <option value="">Min rating</option>
+                  <option value="1">1 star</option>
+                  <option value="2">2 stars</option>
+                  <option value="3">3 stars</option>
+                  <option value="4">4 stars</option>
+                  <option value="4.5">4.5 stars</option>
+                </select>
+              </div>
+              <div class="col-6 col-md-2">
+                <select id="sortFilter" class="form-select">
+                  <option value="">Sort by</option>
+                  <option value="price_low_high">Price: Low to high</option>
+                  <option value="price_high_low">Price: High to low</option>
+                  <option value="rating_high">Best rating</option>
+                </select>
+              </div>
+              <div class="col-6 col-md-2">
+                <button id="applyFiltersBtn" class="btn btn-primary w-100">Apply filters</button>
+              </div>
+              <div class="col-6 col-md-2">
+                <button id="clearFiltersBtn" class="btn btn-outline-secondary w-100">Clear</button>
+              </div>
+            </div>
             <div id="productGrid" class="row row-cols-1 row-cols-md-3 g-4"></div>
           </div>
         </div>
@@ -30,7 +75,31 @@
 </div>
 
 <script>
-  async function loadBrowseProducts() {
+  let allProducts = [];
+  let categoryOptions = [];
+  let brandOptions = [];
+
+  function buildQueryParams() {
+    const search = document.getElementById('productSearch').value.trim();
+    const categoryId = document.getElementById('categoryFilter').value;
+    const brand = document.getElementById('brandFilter').value;
+    const minPrice = document.getElementById('minPriceFilter').value;
+    const maxPrice = document.getElementById('maxPriceFilter').value;
+    const minRating = document.getElementById('ratingFilter').value;
+    const sortBy = document.getElementById('sortFilter').value;
+
+    const params = new URLSearchParams();
+    if (search) params.append('q', search);
+    if (categoryId) params.append('category_id', categoryId);
+    if (brand) params.append('brand', brand);
+    if (minPrice) params.append('min_price', minPrice);
+    if (maxPrice) params.append('max_price', maxPrice);
+    if (minRating) params.append('min_rating', minRating);
+    if (sortBy) params.append('sort_by', sortBy);
+    return params.toString();
+  }
+
+  async function fetchProducts() {
     const productGrid = document.getElementById('productGrid');
     const productCount = document.getElementById('productCount');
     const productAlert = document.getElementById('productAlert');
@@ -40,7 +109,9 @@
 
     try {
       const token = localStorage.getItem('access_token');
-      const response = await fetch('/customer/get-products', {
+      const query = buildQueryParams();
+      const url = '/customer/get-products' + (query ? `?${query}` : '');
+      const response = await fetch(url, {
         headers: {
           'Authorization': 'Bearer ' + token
         }
@@ -53,29 +124,11 @@
 
       const data = await response.json();
       const products = data.products || [];
+      allProducts = products;
       productCount.textContent = `${products.length} product${products.length !== 1 ? 's' : ''}`;
 
-      if (!products.length) {
-        productGrid.innerHTML = '<div class="col-12 text-center py-5">No products available right now.</div>';
-        return;
-      }
-
-      productGrid.innerHTML = products.map(product => `
-        <div class="col">
-          <div class="card h-100 shadow-sm">
-            <img src="${product.image || '/static/assets/img/product-placeholder.jpg'}" class="card-img-top" alt="${product.name}">
-            <div class="card-body d-flex flex-column">
-              <h5 class="card-title">${product.name}</h5>
-              <p class="card-text text-truncate">${product.description || 'No description available.'}</p>
-              <p class="mb-2 text-muted small">${product.store_name || 'Unknown vendor'}</p>
-              <div class="mt-auto d-flex justify-content-between align-items-center">
-                <span class="fw-bold text-primary">₦${Number(product.price).toLocaleString()}</span>
-                <a href="/product/${product.id}" class="btn btn-sm btn-primary">View</a>
-              </div>
-            </div>
-          </div>
-        </div>
-      `).join('');
+      updateFilterOptions(products);
+      renderProductGrid(products);
     } catch (error) {
       productGrid.innerHTML = '<div class="col-12 text-center py-5 text-danger">Could not load products.</div>';
       productAlert.textContent = error.message;
@@ -84,6 +137,183 @@
     }
   }
 
-  document.addEventListener('DOMContentLoaded', loadBrowseProducts);
+  function renderProductGrid(products) {
+    const productGrid = document.getElementById('productGrid');
+
+    if (!products.length) {
+      productGrid.innerHTML = '<div class="col-12 text-center py-5">No products match your search and filters.</div>';
+      return;
+    }
+
+    productGrid.innerHTML = products.map(product => {
+      const reviewCount = product.review_count || 0;
+      const avgRating = product.avg_rating ? product.avg_rating.toFixed(1) : '0.0';
+      const ratingText = reviewCount ? `${avgRating} ★ (${reviewCount})` : 'No ratings yet';
+      return `
+        <div class="col">
+          <div class="card h-100 shadow-sm position-relative">
+            <button type="button" class="btn btn-link position-absolute top-0 end-0 m-2 p-1" 
+              style="font-size: 1.5rem; color: #ddd; z-index: 10;" 
+              onclick="addToWishlist(${product.id}, this)" 
+              title="Add to wishlist">
+              ♡
+            </button>
+            <img src="${product.image || '/static/assets/img/product-placeholder.jpg'}" class="card-img-top" alt="${product.name}">
+            <div class="card-body d-flex flex-column">
+              <h5 class="card-title">${product.name}</h5>
+              <p class="card-text text-truncate">${product.description || 'No description available.'}</p>
+              <p class="mb-2 text-muted small">${product.store_name || 'Unknown vendor'}</p>
+              <div class="mb-2">
+                <small class="text-warning">${ratingText}</small>
+              </div>
+              <div class="mt-auto d-flex justify-content-between align-items-center gap-2">
+                <span class="fw-bold text-primary">₦${Number(product.price).toLocaleString()}</span>
+                <div class="btn-group">
+                  <a href="/product/${product.id}" class="btn btn-sm btn-primary">View</a>
+                  <button type="button" class="btn btn-sm btn-outline-secondary" onclick="saveForLater(${product.id})">Save</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function updateFilterOptions(products) {
+    const categorySelect = document.getElementById('categoryFilter');
+    const brandSelect = document.getElementById('brandFilter');
+
+    const categories = new Map();
+    const brands = new Set();
+
+    products.forEach(product => {
+      if (product.category_id && product.category_name) {
+        categories.set(product.category_id, product.category_name);
+      }
+      if (product.store_name) {
+        brands.add(product.store_name);
+      }
+    });
+
+    if (!categoryOptions.length) {
+      categoryOptions = Array.from(categories.entries());
+      categoryOptions.forEach(([id, name]) => {
+        const option = document.createElement('option');
+        option.value = id;
+        option.textContent = name;
+        categorySelect.appendChild(option);
+      });
+    }
+
+    if (!brandOptions.length) {
+      brandOptions = Array.from(brands).sort();
+      brandOptions.forEach(name => {
+        const option = document.createElement('option');
+        option.value = name;
+        option.textContent = name;
+        brandSelect.appendChild(option);
+      });
+    }
+  }
+
+  async function saveForLater(productId) {
+    try {
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        window.location.href = '/login';
+        return;
+      }
+
+      const response = await fetch('/api/save-for-later/add', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + token,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ product_id: productId })
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || 'Unable to save item.');
+      }
+
+      const alertBox = document.getElementById('productAlert');
+      alertBox.textContent = data.message || 'Saved for later';
+      alertBox.classList.remove('d-none', 'alert-danger');
+      alertBox.classList.add('alert-success');
+      setTimeout(() => alertBox.classList.add('d-none'), 2500);
+    } catch (error) {
+      const alertBox = document.getElementById('productAlert');
+      alertBox.textContent = error.message;
+      alertBox.classList.remove('d-none', 'alert-success');
+      alertBox.classList.add('alert-danger');
+      console.error(error);
+    }
+  }
+
+  async function addToWishlist(productId, button) {
+    try {
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        window.location.href = '/login';
+        return;
+      }
+
+      const response = await fetch('/api/wishlist/add', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + token,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ product_id: productId })
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || data.error || 'Unable to add to wishlist.');
+      }
+
+      button.style.color = '#ff6b6b';
+      button.textContent = '♥';
+      button.title = 'Remove from wishlist';
+      
+      const alertBox = document.getElementById('productAlert');
+      alertBox.textContent = data.message || 'Added to wishlist';
+      alertBox.classList.remove('d-none', 'alert-danger');
+      alertBox.classList.add('alert-success');
+      setTimeout(() => alertBox.classList.add('d-none'), 2500);
+    } catch (error) {
+      const alertBox = document.getElementById('productAlert');
+      alertBox.textContent = error.message;
+      alertBox.classList.remove('d-none', 'alert-success');
+      alertBox.classList.add('alert-danger');
+      console.error(error);
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('applyFiltersBtn').addEventListener('click', fetchProducts);
+    document.getElementById('clearFiltersBtn').addEventListener('click', () => {
+      document.getElementById('productSearch').value = '';
+      document.getElementById('categoryFilter').value = '';
+      document.getElementById('brandFilter').value = '';
+      document.getElementById('minPriceFilter').value = '';
+      document.getElementById('maxPriceFilter').value = '';
+      document.getElementById('ratingFilter').value = '';
+      document.getElementById('sortFilter').value = '';
+      fetchProducts();
+    });
+
+    ['productSearch', 'categoryFilter', 'brandFilter', 'minPriceFilter', 'maxPriceFilter', 'ratingFilter', 'sortFilter'].forEach(id => {
+      const element = document.getElementById(id);
+      if (element) {
+        element.addEventListener('change', fetchProducts);
+      }
+    });
+
+    fetchProducts();
+  });
 </script>
 {% endblock customer_content %}

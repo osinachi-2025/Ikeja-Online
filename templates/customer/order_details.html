@@ -1,0 +1,310 @@
+{% extends "dist/customerdashboard.html" %}
+
+{% block dashboard_current %}
+  <div class="col-sm-6">
+    <ol class="breadcrumb float-sm-end">
+      <li class="breadcrumb-item"><a href="/customer/dashboard/home">Dashboard</a></li>
+      <li class="breadcrumb-item"><a href="/customer/my-orders">My Orders</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Order #{{ order_id }}</li>
+    </ol>
+  </div>
+{% endblock dashboard_current %}
+
+{% block customer_content %}
+<div class="app-content">
+  <div class="container-fluid">
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h3 class="card-title mb-0">Order Details - #{{ order_id }}</h3>
+            <div>
+              <span id="orderStatusBadge" class="badge bg-secondary me-2">Loading...</span>
+              <span id="paymentStatusBadge" class="badge bg-secondary">Loading...</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <div id="orderAlert" class="alert alert-danger d-none" role="alert"></div>
+
+            <!-- Order Information -->
+            <div class="row mb-4">
+              <div class="col-md-6">
+                <div class="card border-0 bg-light">
+                  <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">Order Information</h5>
+                  </div>
+                  <div class="card-body">
+                    <p class="mb-2"><strong>Order Number:</strong> #<span id="orderNumber">{{ order_id }}</span></p>
+                    <p class="mb-2"><strong>Reference:</strong> <span id="orderReference">Loading...</span></p>
+                    <p class="mb-2"><strong>Date:</strong> <span id="orderDate">Loading...</span></p>
+                    <p class="mb-2"><strong>Status:</strong>
+                      <span id="orderStatusText" class="badge bg-secondary">Loading...</span>
+                    </p>
+                    <p class="mb-2"><strong>Payment Status:</strong>
+                      <span id="paymentStatusText" class="badge bg-secondary">Loading...</span>
+                    </p>
+                    <p class="mb-2"><strong>Shipping Status:</strong>
+                      <span id="shippingStatusText" class="badge bg-secondary">Loading...</span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <div class="card border-0 bg-light">
+                  <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">Customer Information</h5>
+                  </div>
+                  <div class="card-body">
+                    <p class="mb-2"><strong>Name:</strong> <span id="customerName">Loading...</span></p>
+                    <p class="mb-2"><strong>Email:</strong> <span id="customerEmail">Loading...</span></p>
+                    <p class="mb-2"><strong>Phone:</strong> <span id="customerPhone">Loading...</span></p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Order Items -->
+            <div class="card border-0">
+              <div class="card-header">
+                <h5 class="card-title mb-0">Order Items</h5>
+              </div>
+              <div class="card-body p-0">
+                <div class="table-responsive">
+                  <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                      <tr>
+                        <th>Product</th>
+                        <th class="text-center">Quantity</th>
+                        <th class="text-end">Unit Price</th>
+                        <th class="text-end">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody id="orderItemsBody">
+                      <tr>
+                        <td colspan="4" class="text-center py-5">Loading order items...</td>
+                      </tr>
+                    </tbody>
+                    <tfoot class="table-light">
+                      <tr>
+                        <td colspan="3" class="text-end"><strong>Order Total:</strong></td>
+                        <td class="text-end"><strong class="text-primary" id="orderTotal">Loading...</strong></td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="row mt-4">
+              <div class="col-12">
+                <div class="d-flex justify-content-between">
+                  <a href="/customer/dashboard/orders" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left me-2"></i>Back to Orders
+                  </a>
+                  <div>
+                    <button id="cancelOrderButton" class="btn btn-danger me-2 d-none" onclick="cancelOrder({{ order_id }})">
+                      <i class="bi bi-x-circle me-2"></i>Cancel Order
+                    </button>
+                    <button class="btn btn-primary" onclick="printOrder()">
+                      <i class="bi bi-printer me-2"></i>Print Order
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const orderId = {{ order_id }};
+
+function createBadge(text, badgeClass) {
+  return `<span class="badge ${badgeClass}">${text}</span>`;
+}
+
+function getStatusClasses(status, type) {
+  const normalized = status?.toLowerCase() || 'pending';
+  const classes = {
+    order: {
+      completed: 'bg-success',
+      pending: 'bg-warning',
+      processing: 'bg-info',
+      cancelled: 'bg-danger'
+    },
+    payment: {
+      completed: 'bg-success',
+      pending: 'bg-warning',
+      failed: 'bg-danger'
+    },
+    shipping: {
+      delivered: 'bg-success',
+      shipped: 'bg-info',
+      en_route: 'bg-primary',
+      pending: 'bg-warning'
+    }
+  };
+  return classes[type][normalized] || 'bg-secondary';
+}
+
+async function showError(message) {
+  const alert = document.getElementById('orderAlert');
+  alert.textContent = message;
+  alert.classList.remove('d-none');
+}
+
+function formatCurrency(amount) {
+  return `₦${Number(amount || 0).toLocaleString()}`;
+}
+
+function formatDate(isoString) {
+  if (!isoString) return 'Not available';
+  const date = new Date(isoString);
+  return date.toLocaleString(undefined, { year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+}
+
+function renderItems(items) {
+  const body = document.getElementById('orderItemsBody');
+  if (!items || items.length === 0) {
+    body.innerHTML = '<tr><td colspan="4" class="text-center py-5">No items found for this order.</td></tr>';
+    return;
+  }
+
+  body.innerHTML = items.map(item => {
+    const productImage = item.product_image ? `<img src="${item.product_image}" alt="${item.product_name}" class="rounded me-3" style="width: 50px; height: 50px; object-fit: cover;">` : '';
+    return `
+      <tr>
+        <td>
+          <div class="d-flex align-items-center">
+            ${productImage}
+            <div><strong>${item.product_name}</strong></div>
+          </div>
+        </td>
+        <td class="text-center">${item.quantity}</td>
+        <td class="text-end">${formatCurrency(item.price_at_purchase)}</td>
+        <td class="text-end"><strong>${formatCurrency(item.total)}</strong></td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function updateOrderDetails(data) {
+  document.getElementById('orderReference').textContent = data.reference_number || 'N/A';
+  document.getElementById('orderDate').textContent = formatDate(data.created_at);
+  document.getElementById('orderStatusText').textContent = data.status?.toUpperCase() || 'PENDING';
+  document.getElementById('paymentStatusText').textContent = data.payment_status?.toUpperCase() || 'PENDING';
+  document.getElementById('shippingStatusText').textContent = data.shipping_status?.replace('_', ' ').toUpperCase() || 'PENDING';
+  document.getElementById('customerName').textContent = data.customer_name || 'N/A';
+  document.getElementById('customerEmail').textContent = data.customer_email || 'N/A';
+  document.getElementById('customerPhone').textContent = data.customer_phone || 'N/A';
+  document.getElementById('orderTotal').textContent = formatCurrency(data.total_amount);
+
+  document.getElementById('orderStatusBadge').innerHTML = createBadge(data.status?.toUpperCase() || 'PENDING', getStatusClasses(data.status, 'order'));
+  document.getElementById('paymentStatusBadge').innerHTML = createBadge(data.payment_status?.toUpperCase() || 'PENDING', getStatusClasses(data.payment_status, 'payment'));
+  document.getElementById('shippingStatusText').className = `badge ${getStatusClasses(data.shipping_status, 'shipping')}`;
+  document.getElementById('shippingStatusText').textContent = data.shipping_status?.replace('_', ' ')?.toUpperCase() || 'PENDING';
+
+  renderItems(data.items);
+
+  const cancelButton = document.getElementById('cancelOrderButton');
+  if (['pending', 'processing'].includes(data.status?.toLowerCase()) && data.payment_status?.toLowerCase() === 'completed') {
+    cancelButton.classList.remove('d-none');
+  } else {
+    cancelButton.classList.add('d-none');
+  }
+}
+
+async function loadOrderDetails() {
+  const token = localStorage.getItem('access_token');
+  if (!token) {
+    showError('You must be logged in to view this order.');
+    return;
+  }
+
+  try {
+    const response = await fetch(`/api/orders/${orderId}`, {
+      headers: {
+        'Authorization': 'Bearer ' + token
+      }
+    });
+
+    const payload = await response.json();
+    if (!response.ok || !payload.success) {
+      const message = payload.message || payload.error || 'Unable to load order details.';
+      showError(message);
+      return;
+    }
+
+    updateOrderDetails(payload.order);
+  } catch (error) {
+    console.error(error);
+    showError('An error occurred while loading order details.');
+  }
+}
+
+async function cancelOrder(orderId) {
+  if (!confirm('Are you sure you want to cancel this order? This action cannot be undone.')) {
+    return;
+  }
+
+  try {
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      showError('You must be logged in to cancel the order.');
+      return;
+    }
+
+    const response = await fetch(`/api/order/${orderId}/cancel`, {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + token,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    const data = await response.json();
+    if (!response.ok || !data.success) {
+      throw new Error(data.message || 'Unable to cancel order.');
+    }
+
+    alert('Order cancellation requested successfully. Please wait for confirmation.');
+    loadOrderDetails();
+  } catch (error) {
+    showError(error.message);
+    console.error(error);
+  }
+}
+
+function printOrder() {
+  window.print();
+}
+
+document.addEventListener('DOMContentLoaded', loadOrderDetails);
+</script>
+
+<style>
+@media print {
+  .card-header .btn,
+  .breadcrumb,
+  .navbar,
+  .sidebar,
+  script {
+    display: none !important;
+  }
+
+  .card {
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  body {
+    background: white !important;
+  }
+}
+</style>
+{% endblock customer_content %}

@@ -59,16 +59,35 @@
                   <label class="form-label">Phone</label>
                   <input type="tel" id="phone" class="form-control" required>
                 </div>
-                <div class="col-12">
-                  <label class="form-label">Default Address</label>
-                  <textarea id="address" class="form-control" rows="3" required></textarea>
-                </div>
               </div>
               <div class="mt-4 d-flex gap-2">
                 <button type="submit" class="btn btn-primary">Save Changes</button>
                 <a href="/customer/dashboard/security" class="btn btn-outline-secondary">Security Settings</a>
               </div>
             </form>
+
+            <!-- Default Address Display Card -->
+            <div class="mt-4">
+              <h5 class="mb-3">Default Address</h5>
+              <div class="card border-primary">
+                <div class="card-body">
+                  <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                      <h6 class="card-title text-primary mb-2">
+                        <i class="fas fa-map-marker-alt me-2"></i>Delivery Address
+                      </h6>
+                      <p id="displayAddress" class="card-text mb-0">Loading...</p>
+                    </div>
+                    <a href="/customer/dashboard/address-book" class="btn btn-sm btn-outline-primary">
+                      <i class="fas fa-edit me-1"></i>Manage Addresses
+                    </a>
+                  </div>
+                </div>
+              </div>
+              <small class="text-muted mt-2 d-block">
+                To change your default address, visit the <a href="/customer/dashboard/address-book">Address Book</a> section.
+              </small>
+            </div>
           </div>
         </div>
       </div>
@@ -114,17 +133,22 @@
       document.getElementById('last_name').value = data.last_name || '';
       document.getElementById('email').value = data.email || '';
       document.getElementById('phone').value = data.phone || '';
-      document.getElementById('address').value = data.address || '';
       console.log('[loadAccountSettings] Form fields populated');
+
+      // Display address in the card
+      const displayAddress = document.getElementById('displayAddress');
+      if (displayAddress) {
+        displayAddress.textContent = data.address || 'No address set';
+      }
 
       // Handle profile image
       const currentProfileImage = document.getElementById('currentProfileImage');
       console.log('[loadAccountSettings] Profile image element found:', !!currentProfileImage);
       console.log('[loadAccountSettings] Profile image data:', data.profile_image);
       
-      if (data.profile_image && data.profile_image.data) {
-        console.log('[loadAccountSettings] Setting profile image from data');;
-        currentProfileImage.src = `data:${data.profile_image.mime_type};base64,${data.profile_image.data}`;
+      if (data.profile_image && data.profile_image.url) {
+        console.log('[loadAccountSettings] Setting profile image from URL');
+        currentProfileImage.src = data.profile_image.url;
       } else {
         console.log('[loadAccountSettings] No profile image, using default');
         currentProfileImage.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iNDAiIGN5PSI0MCIgcj0iNDAiIGZpbGw9IiNkZGUyZTYiLz4KPGNpcmNsZSBjeD0iNDAiIGN5PSIzMCIgcj0iMTUiIGZpbGw9IiM2Yzc1N2EiLz4KPHBhdGggZD0iTTIwIDcwYzAtMTYgMTgtMjQgMzAtMjRzMzAgOCA0MCAyMiIgZmlsbD0iIzZjNzU3YSIvPgo8L3N2Zz4=';
@@ -147,8 +171,7 @@
       first_name: document.getElementById('first_name').value.trim(),
       last_name: document.getElementById('last_name').value.trim(),
       email: document.getElementById('email').value.trim(),
-      phone: document.getElementById('phone').value.trim(),
-      address: document.getElementById('address').value.trim()
+      phone: document.getElementById('phone').value.trim()
     };
 
     try {

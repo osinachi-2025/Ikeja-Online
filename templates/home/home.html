@@ -2063,11 +2063,11 @@
                     <div id="cartCount">0</div>
                 </button>
             </div>
-            <div class="auth-buttons" id="authButtons">
+            <div class="auth-buttons" id="authButtons" style="display: flex;">
                 <a href="/login" class="btn-signin fade-in delay-4">Sign In</a>
                 <a href="/register" class="btn-signup fade-in delay-5">Get Started</a>
             </div>
-            <div class="user-profile" id="userProfile">
+            <div class="user-profile" id="userProfile" style="display: none;">
                 <div class="wallet-input-group" id="walletBtn" style="display: none;">
                     <input type="text" class="wallet-display" id="walletBalance" value="₦0.00" disabled>
                     <a href="/customer/deposit" class="wallet-plus-btn-link" title="Add funds">
@@ -2093,7 +2093,7 @@
                     <h1>Welcome to <span>Ikeja Online</span></h1>
                     <p>Your premier destination for quality electronics and premium tech products. Discover thousands of products from verified vendors, enjoy competitive prices, and shop with confidence.</p>
                     <div class="hero-buttons">
-                        <a href="/browse-products" class="btn-primary fade-in-up delay-2">
+                        <a href="/categories" class="btn-primary fade-in-up delay-2">
                             <i class="fas fa-shopping-cart"></i> Browse Products
                         </a>
                         <a href="/register" class="btn-secondary fade-in-up delay-3">
@@ -2172,7 +2172,7 @@
             </div>
 
             <div style="text-align: center;">
-                <a href="/browse-products" class="btn-primary">
+                <a href="/categories" class="btn-primary">
                     <i class="fas fa-th"></i> Shop All Products
                 </a>
             </div>
@@ -2322,10 +2322,10 @@
                     <h4>About Ikeja Online</h4>
                     <p style="color: var(--muted); margin-bottom: 20px;">Premium electronics and tech marketplace connecting quality products with satisfied customers across Nigeria.</p>
                     <div class="footer-social">
-                        <a href="#" title="Facebook"><i class="fab fa-facebook-f"></i></a>
-                        <a href="#" title="Twitter"><i class="fab fa-twitter"></i></a>
-                        <a href="#" title="Instagram"><i class="fab fa-instagram"></i></a>
-                        <a href="#" title="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+                        <a href="https://facebook.com" target="_blank" title="Facebook"><i class="fab fa-facebook-f"></i></a>
+                        <a href="https://twitter.com" target="_blank" title="Twitter"><i class="fab fa-twitter"></i></a>
+                        <a href="https://instagram.com" target="_blank" title="Instagram"><i class="fab fa-instagram"></i></a>
+                        <a href="https://linkedin.com" target="_blank" title="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
                     </div>
                 </div>
 
@@ -2333,30 +2333,30 @@
                     <h4>Quick Links</h4>
                     <a href="/">Home</a>
                     <a href="/browse-products">Browse Products</a>
-                    <a href="/login">Sign In</a>
+                    <a href="#products">Shop Categories</a>
                     <a href="/register">Sign Up</a>
                 </div>
 
                 <div class="footer-column fade-in-up delay-3">
                     <h4>For Vendors</h4>
                     <a href="/register">Become a Vendor</a>
-                    <a href="#">Seller Guidelines</a>
-                    <a href="#">Commission & Fees</a>
-                    <a href="#">Vendor Support</a>
+                    <a href="#features">Why Join Us</a>
+                    <a href="/vendor/dashboard">Vendor Dashboard</a>
+                    <a href="mailto:support@ikeja-online.com">Vendor Support</a>
                 </div>
 
                 <div class="footer-column fade-in-right delay-4">
                     <h4>Support</h4>
-                    <a href="#">Help Center</a>
-                    <a href="#">Contact Us</a>
-                    <a href="#">Track Order</a>
+                    <a href="/browse-products">Browse Products</a>
+                    <a href="mailto:support@ikeja-online.com">Contact Us</a>
+                    <a href="/my-orders">Track Order</a>
                     <a href="#">Return Policy</a>
                     <a href="#">FAQ</a>
                 </div>
             </div>
 
             <div class="footer-bottom fade-in">
-                <p>&copy; 2024 Ikeja Online. All rights reserved.</p>
+                <p>&copy; 2026 Ikeja Online. All rights reserved.</p>
                 <div style="display: flex; gap: 20px; flex-wrap: wrap;">
                     <a href="#" style="text-decoration: none; color: var(--muted);">Privacy Policy</a>
                     <a href="#" style="text-decoration: none; color: var(--muted);">Terms of Service</a>
@@ -2378,8 +2378,9 @@
             const userProfile = document.getElementById('userProfile');
 
             if (token && firstName) {
-                // User is logged in
+                // User is logged in - hide auth buttons, show user profile
                 authButtons.style.display = 'none';
+                userProfile.style.display = 'flex';
                 userProfile.classList.add('active');
                 
                 // Set user name
@@ -2390,14 +2391,14 @@
                 // Store dashboard URL in userAvatarLink for click handler
                 const userAvatarLink = document.getElementById('userAvatarLink');
                 if (role === 'vendor') {
-                    userAvatarLink.dataset.dashboardUrl = '/vendor/dashboard';
+                    userAvatarLink.dataset.dashboardUrl = '/vendor/dashboard/home';
                 } else if (role === 'customer') {
-                    userAvatarLink.dataset.dashboardUrl = '/customer/dashboard';
+                    userAvatarLink.dataset.dashboardUrl = '/customer/dashboard/home';
                 } else if (role === 'super_admin') {
                     userAvatarLink.dataset.dashboardUrl = '/admin/dashboard';
                 } else {
                     // Default to customer dashboard if role is unknown
-                    userAvatarLink.dataset.dashboardUrl = '/customer/dashboard';
+                    userAvatarLink.dataset.dashboardUrl = '/customer/dashboard/home';
                 }
                 
                 // Load wallet if customer
@@ -2405,8 +2406,9 @@
                     loadWallet(token);
                 }
             } else {
-                // User is not logged in
+                // User is not logged in - show auth buttons, hide user profile
                 authButtons.style.display = 'flex';
+                userProfile.style.display = 'none';
                 userProfile.classList.remove('active');
             }
         }
@@ -2463,6 +2465,9 @@
 
             // Make avatar cursor pointer to indicate it's clickable
             userAvatar.style.cursor = 'pointer';
+
+            // Re-check auth on window resize to handle mobile/desktop changes
+            window.addEventListener('resize', checkAuth);
         });
 
         // Menu toggle for mobile

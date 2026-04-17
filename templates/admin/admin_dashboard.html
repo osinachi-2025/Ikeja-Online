@@ -294,6 +294,26 @@
             color: #721c24;
         }
 
+        .badge.success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .badge.warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .badge.primary {
+            background: #cce5ff;
+            color: #004085;
+        }
+
+        .badge.pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
         .action-btn {
             padding: 0.5rem 1rem;
             border: none;
@@ -435,6 +455,12 @@
                     <button onclick="setActiveTab('categories')" class="menu-btn">
                         <i class="fas fa-layer-group"></i>
                         Categories
+                    </button>
+                </li>
+                <li>
+                    <button onclick="window.location.href='/admin/orders'" class="menu-btn">
+                        <i class="fas fa-shopping-cart"></i>
+                        Orders
                     </button>
                 </li>
             </ul>
@@ -585,10 +611,68 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Orders Tab -->
+            <div id="orders-tab" class="tab-content" style="display: none;">
+                <div class="content-section">
+                    <div class="section-header">
+                        <h2>Order Management</h2>
+                        <div class="filters" style="display: flex; gap: 1rem; margin-top: 1rem;">
+                            <select id="paymentStatusFilter" style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+                                <option value="">All Payment Status</option>
+                                <option value="paid">Paid</option>
+                                <option value="pending">Pending</option>
+                                <option value="failed">Failed</option>
+                            </select>
+                            <select id="shippingStatusFilter" style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+                                <option value="">All Shipping Status</option>
+                                <option value="pending">Pending</option>
+                                <option value="en_route">En Route</option>
+                                <option value="delivered">Delivered</option>
+                            </select>
+                            <button onclick="loadOrders()" style="padding: 0.5rem 1rem; background: #1e3a5f; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                                <i class="fas fa-filter"></i> Apply Filters
+                            </button>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Order ID</th>
+                                    <th>Customer</th>
+                                    <th>Vendor</th>
+                                    <th>Total</th>
+                                    <th>Payment Status</th>
+                                    <th>Shipping Status</th>
+                                    <th>Order Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ordersTableBody">
+                                <tr>
+                                    <td colspan="8" style="text-align: center; padding: 2rem;">
+                                        <div class="loading"></div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </main>
     </div>
 
     <script>
+        // Check authentication and super admin role
+        const token = localStorage.getItem('access_token');
+        const role = localStorage.getItem('user_role');
+        
+        if (!token || role !== 'super_admin') {
+            // Redirect to home if not authenticated or not super admin
+            window.location.href = '/';
+        }
+
         // Initialize user info
         const userFirstName = localStorage.getItem('user_first_name') || 'Admin';
         const userLastName = localStorage.getItem('user_last_name') || '';
@@ -623,6 +707,8 @@
                 loadVendors();
             } else if (tabName === 'categories') {
                 loadCategories();
+            } else if (tabName === 'orders') {
+                loadOrders();
             }
         }
 
@@ -769,6 +855,90 @@
                 }
             } catch (error) {
                 console.error('Error toggling user status:', error);
+            }
+        }
+
+        async function loadOrders() {
+            try {
+                const paymentStatus = document.getElementById('paymentStatusFilter').value;
+                const shippingStatus = document.getElementById('shippingStatusFilter').value;
+                
+                let url = '/api/admin/orders';
+                const params = new URLSearchParams();
+                if (paymentStatus) params.append('payment_status', paymentStatus);
+                if (shippingStatus) params.append('shipping_status', shippingStatus);
+                if (params.toString()) url += '?' + params.toString();
+
+                const response = await fetch(url, {
+                    headers: {
+                        'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                    }
+                });
+                const data = await response.json();
+
+                const tbody = document.getElementById('ordersTableBody');
+                tbody.innerHTML = '';
+
+                if (data.success && data.orders.length > 0) {
+                    data.orders.forEach(order => {
+                        const row = document.createElement('tr');
+                        
+                        // Format shipping status for display
+                        let shippingStatusDisplay = order.shipping_status || 'pending';
+                        let statusBadgeClass = 'pending';
+                        if (shippingStatusDisplay === 'en_route') {
+                            shippingStatusDisplay = 'En Route';
+                            statusBadgeClass = 'primary';
+                        } else if (shippingStatusDisplay === 'delivered') {
+                            statusBadgeClass = 'success';
+                        }
+
+                        row.innerHTML = `
+                            <td><strong>#${order.id}</strong></td>
+                            <td>${order.customer_name}</td>
+                            <td>${order.vendor_name}</td>
+                            <td>₦${parseFloat(order.total_amount).toLocaleString()}</td>
+                            <td><span class="badge ${order.payment_status === 'paid' ? 'success' : 'warning'}">${order.payment_status}</span></td>
+                            <td><span class="badge ${statusBadgeClass}">${shippingStatusDisplay}</span></td>
+                            <td>${new Date(order.created_at).toLocaleDateString()}</td>
+                            <td>
+                                <select onchange="updateShippingStatus(${order.id}, this.value)" style="padding: 0.3rem; border: 1px solid #ddd; border-radius: 4px;">
+                                    <option value="pending" ${order.shipping_status === 'pending' ? 'selected' : ''}>Pending</option>
+                                    <option value="en_route" ${order.shipping_status === 'en_route' ? 'selected' : ''}>En Route</option>
+                                    <option value="delivered" ${order.shipping_status === 'delivered' ? 'selected' : ''}>Delivered</option>
+                                </select>
+                            </td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 2rem;">No orders found</td></tr>';
+                }
+            } catch (error) {
+                console.error('Error loading orders:', error);
+            }
+        }
+
+        async function updateShippingStatus(orderId, newStatus) {
+            try {
+                const response = await fetch(`/api/admin/orders/${orderId}/shipping-status`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                    },
+                    body: JSON.stringify({ shipping_status: newStatus })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    loadOrders(); // Reload orders to show updated status
+                } else {
+                    alert('Error updating shipping status: ' + (data.message || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error updating shipping status:', error);
+                alert('Error updating shipping status');
             }
         }
 

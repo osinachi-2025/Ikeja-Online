@@ -1,0 +1,168 @@
+{% extends "dist/customerdashboard.html" %}
+
+{% block dashboard_current %}
+  <div class="col-sm-6">
+    <ol class="breadcrumb float-sm-end">
+      <li class="breadcrumb-item"><a href="/customer/dashboard/home">Dashboard</a></li>
+      <li class="breadcrumb-item active" aria-current="page">My Orders</li>
+    </ol>
+  </div>
+{% endblock dashboard_current %}
+
+{% block customer_content %}
+<div class="app-content">
+  <div class="container-fluid">
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title mb-0">My Orders</h3>
+          </div>
+          <div class="card-body">
+            <div id="ordersAlert" class="alert alert-danger d-none" role="alert"></div>
+
+            <!-- Orders Table -->
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead class="table-light">
+                  <tr>
+                    <th>Order #</th>
+                    <th>Date</th>
+                    <th>Items</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                    <th>Payment</th>
+                    <th>Shipping</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="ordersTableBody">
+                  <tr>
+                    <td colspan="8" class="text-center py-5">Loading orders...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Empty State -->
+            <div id="emptyOrders" class="text-center py-5 d-none">
+              <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
+              <h4>No Orders Yet</h4>
+              <p class="text-muted">You haven't placed any orders yet.</p>
+              <a href="/customer/dashboard/browse-products" class="btn btn-primary">Start Shopping</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+async function loadOrders() {
+  const ordersTableBody = document.getElementById('ordersTableBody');
+  const ordersAlert = document.getElementById('ordersAlert');
+  const emptyOrders = document.getElementById('emptyOrders');
+
+  ordersAlert.classList.add('d-none');
+  emptyOrders.classList.add('d-none');
+
+  try {
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      window.location.href = '/login';
+      return;
+    }
+
+    const response = await fetch('/api/orders', {
+      headers: {
+        'Authorization': 'Bearer ' + token
+      }
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => null);
+      throw new Error(errorData?.message || 'Unable to load orders.');
+    }
+
+    const data = await response.json();
+    const orders = data.orders || [];
+
+    if (!orders.length) {
+      emptyOrders.classList.remove('d-none');
+      return;
+    }
+
+    ordersTableBody.innerHTML = orders.map(order => {
+      const orderDate = new Date(order.created_at).toLocaleDateString('en-NG', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+
+      const statusBadge = getStatusBadge(order.status);
+      const paymentBadge = getPaymentBadge(order.payment_status);
+      const shippingBadge = getShippingBadge(order.shipping_status);
+
+      return `
+        <tr>
+          <td>
+            <strong>#${order.id}</strong><br>
+            <small class="text-muted">${order.reference_number}</small>
+          </td>
+          <td>${orderDate}</td>
+          <td>${order.items_count} item${order.items_count !== 1 ? 's' : ''}</td>
+          <td><strong>₦${Number(order.total_amount).toLocaleString()}</strong></td>
+          <td>${statusBadge}</td>
+          <td>${paymentBadge}</td>
+          <td>${shippingBadge}</td>
+          <td>
+            <a href="/customer/my-orders/${order.id}" class="btn btn-sm btn-primary">
+              <i class="fas fa-eye"></i> View
+            </a>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  } catch (error) {
+    ordersAlert.textContent = error.message;
+    ordersAlert.classList.remove('d-none');
+    console.error(error);
+  }
+}
+
+function getStatusBadge(status) {
+  const statusMap = {
+    'pending': 'badge bg-warning',
+    'processing': 'badge bg-info',
+    'shipped': 'badge bg-primary',
+    'delivered': 'badge bg-success',
+    'cancelled': 'badge bg-danger'
+  };
+  return `<span class="${statusMap[status] || 'badge bg-secondary'}">${status.charAt(0).toUpperCase() + status.slice(1)}</span>`;
+}
+
+function getPaymentBadge(status) {
+  const statusMap = {
+    'pending': 'badge bg-warning',
+    'completed': 'badge bg-success',
+    'failed': 'badge bg-danger',
+    'refunded': 'badge bg-info'
+  };
+  return `<span class="${statusMap[status] || 'badge bg-secondary'}">${status.charAt(0).toUpperCase() + status.slice(1)}</span>`;
+}
+
+function getShippingBadge(status) {
+  const statusMap = {
+    'pending': 'badge bg-secondary',
+    'processing': 'badge bg-info',
+    'shipped': 'badge bg-primary',
+    'delivered': 'badge bg-success',
+    'cancelled': 'badge bg-danger'
+  };
+  return `<span class="${statusMap[status] || 'badge bg-secondary'}">${status.charAt(0).toUpperCase() + status.slice(1)}</span>`;
+}
+
+document.addEventListener('DOMContentLoaded', loadOrders);
+</script>
+{% endblock customer_content %}

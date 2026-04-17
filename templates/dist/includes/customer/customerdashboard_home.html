@@ -1,5 +1,108 @@
 {% extends "dist/customerdashboard.html" %}
 
+<style>
+  /* Prevent ANY blur effects on the Latest Orders card and table */
+  .card {
+    opacity: 1 !important;
+    filter: none !important;
+  }
+
+  .card-body {
+    opacity: 1 !important;
+    filter: none !important;
+  }
+
+  .card-body.p-0 {
+    opacity: 1 !important;
+    filter: none !important;
+  }
+
+  .table-responsive {
+    opacity: 1 !important;
+    filter: none !important;
+  }
+
+  .table {
+    opacity: 1 !important;
+    filter: none !important;
+  }
+
+  /* Prevent blur on table headings */
+  .table thead {
+    opacity: 1 !important;
+    filter: none !important;
+  }
+
+  .table thead th {
+    opacity: 1 !important;
+    filter: none !important;
+  }
+
+  /* Prevent blur on table body */
+  .table tbody {
+    opacity: 1 !important;
+    filter: none !important;
+  }
+
+  .table tbody tr {
+    opacity: 1 !important;
+    filter: none !important;
+    visibility: visible !important;
+  }
+
+  .table tbody td {
+    filter: none !important;
+    text-shadow: none !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: none !important;
+  }
+  
+  /* Ensure Order Total values are always visible and sharp */
+  .table tbody td.fw-bold.text-dark {
+    filter: none !important;
+    text-shadow: none !important;
+    opacity: 1 !important;
+    font-weight: 700 !important;
+    visibility: visible !important;
+    transform: none !important;
+  }
+  
+  /* Override any parent element opacity that might cascade */
+  .row > div > .card,
+  .row > div {
+    opacity: 1 !important;
+    filter: none !important;
+  }
+
+  /* Remove any transitions or animations that might cause blur */
+  .card, .card-body, .table, .table tbody tr, .table tbody td {
+    transition: none !important;
+    animation: none !important;
+  }
+
+  /* Force remove blur filters at all levels */
+  * {
+    filter: none !important;
+  }
+
+  /* Restore opacity for everything related to the table */
+  .card, .card-body, .card-body.p-0,
+  .table-responsive, .table, 
+  .table tbody, .table tbody tr, .table tbody td,
+  .table thead, .table thead th {
+    opacity: 1 !important;
+  }
+
+  /* Specifically protect the Order Total column */
+  td.fw-bold.text-dark {
+    opacity: 1 !important;
+    filter: none !important;
+    text-shadow: none !important;
+    font-weight: 700 !important;
+  }
+</style>
+
 {% block dashboard_current %}
   <div class="col-sm-6">
     <ol class="breadcrumb float-sm-end">
@@ -126,14 +229,14 @@
                             <th>Order ID</th>
                             <th>Item</th>
                             <th>Status</th>
-                            <th>Popularity</th>
+                            <th>Order Total</th>
                           </tr>
                         </thead>
                         <tbody>
                           <tr>
                             <td>
                               <a
-                                href="pages/examples/invoice.html"
+                                href="/my-orders/OR9842"
                                 class="link-primary link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover"
                                 >OR9842</a
                               >
@@ -142,14 +245,14 @@
                             <td>
                               <span class="badge text-bg-success"> Shipped </span>
                             </td>
-                            <td>
-                              <div id="table-sparkline-1"></div>
+                            <td class="fw-bold text-dark">
+                              ₦45,999
                             </td>
                           </tr>
                           <tr>
                             <td>
                               <a
-                                href="pages/examples/invoice.html"
+                                href="/my-orders/OR1848"
                                 class="link-primary link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover"
                                 >OR1848</a
                               >
@@ -158,14 +261,14 @@
                             <td>
                               <span class="badge text-bg-warning">Pending</span>
                             </td>
-                            <td>
-                              <div id="table-sparkline-2"></div>
+                            <td class="fw-bold text-dark">
+                              ₦389,900
                             </td>
                           </tr>
                           <tr>
                             <td>
                               <a
-                                href="pages/examples/invoice.html"
+                                href="/my-orders/OR7429"
                                 class="link-primary link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover"
                                 >OR7429</a
                               >
@@ -174,14 +277,14 @@
                             <td>
                               <span class="badge text-bg-danger"> Delivered </span>
                             </td>
-                            <td>
-                              <div id="table-sparkline-3"></div>
+                            <td class="fw-bold text-dark" style="filter: none; text-shadow: none; opacity: 1; font-weight: 700 !important;">
+                              ₦99,999
                             </td>
                           </tr>
                           <tr>
                             <td>
                               <a
-                                href="pages/examples/invoice.html"
+                                href="/my-orders/OR7429"
                                 class="link-primary link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover"
                                 >OR7429</a
                               >
@@ -190,14 +293,14 @@
                             <td>
                               <span class="badge text-bg-info">Processing</span>
                             </td>
-                            <td>
-                              <div id="table-sparkline-4"></div>
+                            <td class="fw-bold text-dark" style="filter: none; text-shadow: none; opacity: 1; font-weight: 700 !important;">
+                              ₦389,900
                             </td>
                           </tr>
                           <tr>
                             <td>
                               <a
-                                href="pages/examples/invoice.html"
+                                href="/my-orders/OR1848"
                                 class="link-primary link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover"
                                 >OR1848</a
                               >
@@ -206,14 +309,14 @@
                             <td>
                               <span class="badge text-bg-warning">Pending</span>
                             </td>
-                            <td>
-                              <div id="table-sparkline-5"></div>
+                            <td class="fw-bold text-dark">
+                              ₦389,900
                             </td>
                           </tr>
                           <tr>
                             <td>
                               <a
-                                href="pages/examples/invoice.html"
+                                href="/my-orders/OR7429"
                                 class="link-primary link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover"
                                 >OR7429</a
                               >
@@ -222,14 +325,14 @@
                             <td>
                               <span class="badge text-bg-danger"> Delivered </span>
                             </td>
-                            <td>
-                              <div id="table-sparkline-6"></div>
+                            <td class="fw-bold text-dark" style="filter: none; text-shadow: none; opacity: 1; font-weight: 700 !important;">
+                              ₦99,999
                             </td>
                           </tr>
                           <tr>
                             <td>
                               <a
-                                href="pages/examples/invoice.html"
+                                href="/my-orders/OR9842"
                                 class="link-primary link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover"
                                 >OR9842</a
                               >
@@ -238,8 +341,8 @@
                             <td>
                               <span class="badge text-bg-success">Shipped</span>
                             </td>
-                            <td>
-                              <div id="table-sparkline-7"></div>
+                            <td class="fw-bold text-dark" style="filter: none; text-shadow: none; opacity: 1; font-weight: 700 !important;">
+                              ₦45,999
                             </td>
                           </tr>
                         </tbody>
@@ -478,12 +581,18 @@
                                 // Get first product name from items
                                 const productName = order.items && order.items.length > 0 ? order.items[0].product_name : 'Product';
                                 
+                                // Format order total as currency
+                                const total = order.total || order.grand_total || 0;
+                                const formattedTotal = typeof total === 'number' 
+                                    ? '₦' + total.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                                    : '₦0.00';
+                                
                                 return `
                                     <tr>
-                                        <td><a href="/customer/my-orders#order-${order.id}" class="link-primary link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover">#${order.id}</a></td>
+                                        <td><a href="/my-orders/${order.id}" class="link-primary link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover">OR${order.id}</a></td>
                                         <td>${productName}</td>
                                         <td><span class="badge text-bg-${statusBadge}">${order.status || 'Unknown'}</span></td>
-                                        <td><div style="width: 100px; height: 30px; background: linear-gradient(to right, #ccc 0%, #0d6efd 50%, #ccc 100%);border-radius: 4px;"></div></td>
+                                        <td class="fw-bold text-dark" style="filter: none; text-shadow: none; opacity: 1; font-weight: 700 !important;">${formattedTotal}</td>
                                     </tr>
                                 `;
                             }).join('');

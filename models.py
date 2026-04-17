@@ -25,9 +25,6 @@ class Users(db.Model):
     created_at = db.Column(db.DateTime, default=func.now())
     role_id = db.Column(db.Integer, db.ForeignKey('roles.id'), nullable=False)
     role = db.relationship('Roles', backref=db.backref('users', lazy=True))
-    profile_image_data = db.Column(db.LargeBinary, nullable=True)  # Binary profile image data
-    profile_image_mime_type = db.Column(db.String(50), default='image/jpeg')  # MIME type
-    profile_image_filename = db.Column(db.String(255), nullable=True)  # Original filename
     profile_image_url = db.Column(db.String(255), nullable=True)  # Cloudinary URL
     
     
@@ -39,9 +36,7 @@ class Vendors (db.Model):
     store_description = db.Column(db.String(255), nullable=True)
     store_slug = db.Column(db.String(100), unique=True, nullable=True)
     phone = db.Column(db.String(20), nullable=True)
-    logo_url = db.Column(db.String(255), nullable=True)
-    logo_data = db.Column(db.LargeBinary, nullable=True)  # Binary logo data
-    logo_mime_type = db.Column(db.String(50), default='image/jpeg')  # MIME type
+    logo_url = db.Column(db.String(255), nullable=True)  # Cloudinary URL
     address = db.Column(db.String(255), nullable=True)
     created_at = db.Column(db.DateTime, default=func.now())
     user = db.relationship('Users', backref=db.backref('vendors', uselist=False))
@@ -87,10 +82,7 @@ class Product_Images (db.Model):
     __tablename__ = 'product_images'
     id = db.Column(db.Integer, primary_key=True)
     product_id = db.Column(db.Integer, db.ForeignKey('products.id'), nullable=False)
-    image_url = db.Column(db.String(255), nullable=True)  # For backward compatibility
-    image_data = db.Column(db.LargeBinary, nullable=True)  # Binary image data
-    mime_type = db.Column(db.String(50), default='image/jpeg')  # MIME type
-    filename = db.Column(db.String(255), nullable=True)  # Original filename
+    image_url = db.Column(db.String(255), nullable=True)  # Cloudinary URL
     is_primary = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=func.now())
     product = db.relationship('Products', backref=db.backref('images', lazy=True))
@@ -117,12 +109,25 @@ class Orders(db.Model):
     __tablename__ = 'orders'
     id = db.Column(db.Integer, primary_key=True)
     customer_id = db.Column(db.Integer, db.ForeignKey('customers.id'), nullable=False)
+    delivery_address_id = db.Column(db.Integer, db.ForeignKey('customer_addresses.id'), nullable=True)
     reference_number = db.Column(db.String(50), unique=True, nullable=False)  # Unique order reference
     total_amount = db.Column(db.Float, nullable=False)
-    status = db.Column(db.String(20), default='pending')  # pending, processing, completed, cancelled
+    status = db.Column(db.String(20), default='pending')  # pending, processing, completed, cancelled, cancellation_requested
     shipping_status = db.Column(db.String(20), default='pending')  # pending, shipped, en_route, delivered
+    tracking_number = db.Column(db.String(100), nullable=True)
+    tracking_carrier = db.Column(db.String(50), nullable=True)  # e.g., DHL, FedEx, UPS
+    shipped_at = db.Column(db.DateTime, nullable=True)
+    delivered_at = db.Column(db.DateTime, nullable=True)
+    cancellation_request_status = db.Column(db.String(20), nullable=True)  # pending, approved, rejected
+    cancellation_reason = db.Column(db.Text, nullable=True)
+    cancellation_requested_at = db.Column(db.DateTime, nullable=True)
+    cancellation_approved_at = db.Column(db.DateTime, nullable=True)
+    cancellation_processed_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     created_at = db.Column(db.DateTime, default=func.now())
+    updated_at = db.Column(db.DateTime, default=func.now(), onupdate=func.now())
     customer = db.relationship('Customers', backref=db.backref('orders', lazy=True))
+    delivery_address = db.relationship('CustomerAddress', backref=db.backref('orders', lazy=True))
+    cancellation_processor = db.relationship('Users', foreign_keys=[cancellation_processed_by])
     
     
 class Order_Items(db.Model):
@@ -177,6 +182,24 @@ class Wishlist_Items(db.Model):
     created_at = db.Column(db.DateTime, default=func.now())
     wishlist = db.relationship('Wishlists', backref=db.backref('items', lazy=True))
     product = db.relationship('Products', backref=db.backref('wishlist_items', lazy=True))
+
+
+class SaveForLater(db.Model):
+    __tablename__ = 'save_for_later'
+    id = db.Column(db.Integer, primary_key=True)
+    customer_id = db.Column(db.Integer, db.ForeignKey('customers.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=func.now())
+    customer = db.relationship('Customers', backref=db.backref('save_for_later', uselist=False))
+
+
+class SaveForLater_Items(db.Model):
+    __tablename__ = 'save_for_later_items'
+    id = db.Column(db.Integer, primary_key=True)
+    save_for_later_id = db.Column(db.Integer, db.ForeignKey('save_for_later.id'), nullable=False)
+    product_id = db.Column(db.Integer, db.ForeignKey('products.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=func.now())
+    save_for_later = db.relationship('SaveForLater', backref=db.backref('items', lazy=True))
+    product = db.relationship('Products', backref=db.backref('save_for_later_items', lazy=True))
 
 
 class Wallet(db.Model):

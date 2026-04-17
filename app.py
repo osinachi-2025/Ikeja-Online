@@ -1,9 +1,10 @@
 from flask import Flask, render_template, request, redirect, url_for, jsonify, send_from_directory, abort, flash, session, make_response, g, after_this_request, current_app,send_file
 from flask_migrate import Migrate
+from sqlalchemy import text
 import requests
 from io import BytesIO
 from flask_cors import CORS
-from models import db, Roles, Users, Vendors, Customers, Categories, Products, Product_Images, Orders, Order_Items, Reviews, Payments, Wishlists, Wishlist_Items, Wallet, Deposits, VendorWallet, WalletTransaction, CustomerWalletTransaction, VendorWalletTransaction, VendorWithdrawal, VendorDeposit, CustomerAddress, DeliveryPreference
+from models import db, Roles, Users, Vendors, Customers, Categories, Products, Product_Images, Orders, Order_Items, Reviews, Payments, Wishlists, Wishlist_Items, SaveForLater, SaveForLater_Items, Wallet, Deposits, VendorWallet, WalletTransaction, CustomerWalletTransaction, VendorWalletTransaction, VendorWithdrawal, VendorDeposit, CustomerAddress, DeliveryPreference
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity, decode_token
@@ -12,12 +13,20 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime
 import os
+try:
+    from dotenv import load_dotenv
+except ImportError:
+    load_dotenv = None
 from slugify import slugify
 from jwt import ExpiredSignatureError, InvalidTokenError
 import base64
 import cloudinary
 import cloudinary.uploader
 import cloudinary.api
+
+# Load environment variables from .env file (only in development)
+if os.path.exists('.env') and load_dotenv:
+    load_dotenv()
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TEMPLATE_DIR = os.path.join(BASE_DIR, 'templates')
@@ -28,22 +37,41 @@ app = Flask(
     template_folder=TEMPLATE_DIR,
     static_folder=STATIC_DIR
 )
+
+# Database configuration
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///ikeja_online.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'Hackeye@1999SecretKey')
-app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', '89421a71f05092d8311486c018417e22')
+
+# Critical Flask configuration - these MUST be set
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
+if not app.config['SECRET_KEY']:
+    raise ValueError("SECRET_KEY environment variable is required")
+
+app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')
+if not app.config['JWT_SECRET_KEY']:
+    raise ValueError("JWT_SECRET_KEY environment variable is required")
+
+# JWT configuration
 app.config['JWT_TOKEN_LOCATION'] = ['headers']
 app.config['JWT_HEADER_NAME'] = 'Authorization'
 app.config['JWT_HEADER_TYPE'] = 'Bearer'
-app.config['TEST_PUBLIC_KEY'] = 'pk_test_0796eb2919d007e2cf058300da852181a60418d0'
-app.config['TEST_SECRET_KEY'] = 'sk_test_8fea2fcf8335cb9211c11b03ae81d79f7c9a165c'
-app.config['CLOUDINARY_CLOUD_NAME'] = os.getenv('CLOUDINARY_CLOUD_NAME', 'dfe6zaubb')
-app.config['CLOUDINARY_API_KEY'] = os.getenv('CLOUDINARY_API_KEY', '573682293696917')
-app.config['CLOUDINARY_API_SECRET'] = os.getenv('CLOUDINARY_API_SECRET', 'YevIXnx1yDCRteyrVSnTEukmkd0')
+
+# Paystack configuration
+app.config['TEST_PUBLIC_KEY'] = os.getenv('TEST_PUBLIC_KEY')
+app.config['TEST_SECRET_KEY'] = os.getenv('TEST_SECRET_KEY')
+
+# Validate critical configuration on startup
+if not app.config['TEST_SECRET_KEY']:
+    raise ValueError("TEST_SECRET_KEY environment variable is required for Paystack payments")
+
+# Cloudinary configuration
+app.config['CLOUDINARY_CLOUD_NAME'] = os.getenv('CLOUDINARY_CLOUD_NAME')
+app.config['CLOUDINARY_API_KEY'] = os.getenv('CLOUDINARY_API_KEY')
+app.config['CLOUDINARY_API_SECRET'] = os.getenv('CLOUDINARY_API_SECRET')
 
 # Gmail SMTP Configuration
-app.config['GMAIL_EMAIL'] = os.getenv('GMAIL_EMAIL', 'chibuikemclinic@gmail.com')
-app.config['GMAIL_PASSWORD'] = os.getenv('GMAIL_PASSWORD', 'bkgr yndz vukl zeas')  # Use Gmail App Password, not regular password
+app.config['GMAIL_EMAIL'] = os.getenv('GMAIL_EMAIL')
+app.config['GMAIL_PASSWORD'] = os.getenv('GMAIL_PASSWORD')  # Use Gmail App Password, not regular password
 
 # Enable CORS
 CORS(app, supports_credentials=True)
@@ -66,12 +94,16 @@ db.init_app(app)
 jwt = JWTManager(app)
 migrate = Migrate(app, db)
 
-# Configure Cloudinary
-cloudinary.config(
-    cloud_name=app.config['CLOUDINARY_CLOUD_NAME'],
-    api_key=app.config['CLOUDINARY_API_KEY'],
-    api_secret=app.config['CLOUDINARY_API_SECRET']
-)
+# Configure Cloudinary (optional - will fail gracefully if not configured)
+if app.config['CLOUDINARY_CLOUD_NAME'] and app.config['CLOUDINARY_API_KEY'] and app.config['CLOUDINARY_API_SECRET']:
+    cloudinary.config(
+        cloud_name=app.config['CLOUDINARY_CLOUD_NAME'],
+        api_key=app.config['CLOUDINARY_API_KEY'],
+        api_secret=app.config['CLOUDINARY_API_SECRET']
+    )
+    print("Cloudinary configured successfully")
+else:
+    print("WARNING: Cloudinary not configured - image uploads will fail")
 
 def upload_to_cloudinary(file, folder="ikeja_online", public_id=None):
     """Upload file to Cloudinary and return the URL"""
@@ -622,7 +654,7 @@ def send_account_confirmation_email(user_email, user_name, action_type, confirma
 def send_product_ordered_email(vendor_email, vendor_name, store_name, products_info, order_ref, customer_name, order_total):
     """Send order notification to vendor when their products are ordered"""
     try:
-        vendor_dashboard_url = "http://localhost:5000/vendor/dashboard"
+        vendor_dashboard_url = "http://localhost:5000/vendor/dashboard/home"
         
         # Build product table
         products_html = ""
@@ -712,7 +744,7 @@ def send_product_ordered_email(vendor_email, vendor_name, store_name, products_i
 def send_low_stock_alert_email(vendor_email, vendor_name, store_name, low_stock_products):
     """Send low stock alert email to vendor when products fall below 5 units"""
     try:
-        vendor_dashboard_url = "http://localhost:5000/vendor/products"
+        vendor_dashboard_url = "http://localhost:5000/vendor/dashboard/home"
         
         # Build low stock products table
         products_html = ""
@@ -790,11 +822,50 @@ def send_low_stock_alert_email(vendor_email, vendor_name, store_name, low_stock_
         print(f"[LOW-STOCK] Error sending low stock alert email: {str(e)}")
         return None
 
+def ensure_order_schema():
+    """Ensure the orders table has all required workflow columns."""
+    with db.engine.connect() as conn:
+        result = conn.execute(text("PRAGMA table_info('orders')"))
+        existing_columns = {row[1] for row in result}
+        alter_statements = []
+
+        if 'delivery_address_id' not in existing_columns:
+            alter_statements.append("ALTER TABLE orders ADD COLUMN delivery_address_id INTEGER")
+        if 'tracking_number' not in existing_columns:
+            alter_statements.append("ALTER TABLE orders ADD COLUMN tracking_number VARCHAR(100)")
+        if 'tracking_carrier' not in existing_columns:
+            alter_statements.append("ALTER TABLE orders ADD COLUMN tracking_carrier VARCHAR(50)")
+        if 'shipped_at' not in existing_columns:
+            alter_statements.append("ALTER TABLE orders ADD COLUMN shipped_at DATETIME")
+        if 'delivered_at' not in existing_columns:
+            alter_statements.append("ALTER TABLE orders ADD COLUMN delivered_at DATETIME")
+        if 'cancellation_request_status' not in existing_columns:
+            alter_statements.append("ALTER TABLE orders ADD COLUMN cancellation_request_status VARCHAR(20)")
+        if 'cancellation_reason' not in existing_columns:
+            alter_statements.append("ALTER TABLE orders ADD COLUMN cancellation_reason TEXT")
+        if 'cancellation_requested_at' not in existing_columns:
+            alter_statements.append("ALTER TABLE orders ADD COLUMN cancellation_requested_at DATETIME")
+        if 'cancellation_approved_at' not in existing_columns:
+            alter_statements.append("ALTER TABLE orders ADD COLUMN cancellation_approved_at DATETIME")
+        if 'cancellation_processed_by' not in existing_columns:
+            alter_statements.append("ALTER TABLE orders ADD COLUMN cancellation_processed_by INTEGER")
+        if 'updated_at' not in existing_columns:
+            alter_statements.append("ALTER TABLE orders ADD COLUMN updated_at DATETIME")
+
+        if alter_statements:
+            for statement in alter_statements:
+                try:
+                    conn.execute(text(statement))
+                    print(f"[DB-MIGRATION] Applied: {statement}")
+                except Exception as e:
+                    print(f"[DB-MIGRATION] Failed to apply: {statement} -> {e}")
+
 # Initialize database and default data
 def init_db():
     """Initialize database with default roles and categories"""
     with app.app_context():
         db.create_all()
+        ensure_order_schema()
         
         # Initialize default roles if they don't exist
         if not Roles.query.filter_by(name='super_admin').first():
@@ -810,6 +881,35 @@ def init_db():
             db.session.add(customer_role)
         
         db.session.commit()
+        
+        # Create super admin from environment variables if it doesn't exist
+        super_admin = Users.query.join(Roles).filter(Roles.name == 'super_admin').first()
+        if not super_admin:
+            super_admin_email = os.getenv('SUPER_ADMIN_EMAIL', '').strip().lower()
+            super_admin_password = os.getenv('SUPER_ADMIN_PASSWORD', '').strip()
+            super_admin_firstname = os.getenv('SUPER_ADMIN_FIRST_NAME', os.getenv('SUPER_ADMIN_FIRSTNAME', 'Super')).strip()
+            super_admin_lastname = os.getenv('SUPER_ADMIN_LAST_NAME', os.getenv('SUPER_ADMIN_LASTNAME', 'Admin')).strip()
+            
+            if super_admin_email and super_admin_password and len(super_admin_password) >= 8:
+                try:
+                    super_admin_role = Roles.query.filter_by(name='super_admin').first()
+                    password_hash = generate_password_hash(super_admin_password)
+                    new_super_admin = Users(
+                        first_name=super_admin_firstname,
+                        last_name=super_admin_lastname,
+                        email=super_admin_email,
+                        passwordhash=password_hash,
+                        role_id=super_admin_role.id
+                    )
+                    db.session.add(new_super_admin)
+                    db.session.commit()
+                    print(f"[STARTUP] Super admin created with email: {super_admin_email}")
+                except Exception as e:
+                    db.session.rollback()
+                    print(f"[STARTUP] Warning: Could not create super admin from environment: {str(e)}")
+            else:
+                if super_admin_email:
+                    print(f"[STARTUP] Super admin email found but password missing or too short (min 8 chars)")
         
         # Initialize default categories if none exist
         if Categories.query.count() == 0:
@@ -892,19 +992,6 @@ def add_claims_to_access_token(identity):
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-# Image handling utilities for BYTEA storage
-def get_mime_type(filename):
-    """Determine MIME type from filename extension"""
-    ext = filename.rsplit('.', 1)[1].lower() if '.' in filename else 'jpeg'
-    mime_types = {
-        'jpg': 'image/jpeg',
-        'jpeg': 'image/jpeg',
-        'png': 'image/png',
-        'gif': 'image/gif',
-        'webp': 'image/webp'
-    }
-    return mime_types.get(ext, 'image/jpeg')
-
 def save_image_to_db(file, product_id=None, is_primary=False):
     """Save uploaded file to Cloudinary and create database record"""
     try:
@@ -919,8 +1006,6 @@ def save_image_to_db(file, product_id=None, is_primary=False):
         product_image = Product_Images(
             product_id=product_id,
             image_url=image_url,
-            mime_type=get_mime_type(file.filename),
-            filename=secure_filename(file.filename),
             is_primary=is_primary
         )
 
@@ -944,8 +1029,6 @@ def save_vendor_logo_to_db(file, vendor):
 
         # Update vendor logo in database
         vendor.logo_url = logo_url
-        vendor.logo_data = None  # Clear binary data since we're using URL now
-        vendor.logo_mime_type = get_mime_type(file.filename)
 
         print(f"Successfully saved vendor logo: {file.filename} with URL: {logo_url}")
         return True
@@ -1384,39 +1467,6 @@ def register():
                     </html>
                     """
                     subject = "Welcome to Ikeja Online - Vendor Registration Complete"
-                    
-                elif role == 'super_admin':
-                    # Admin welcome email
-                    html_content = f"""
-                    <html>
-                        <body style="font-family: Arial, sans-serif; background-color: #f5f5f5; padding: 20px;">
-                            <div style="max-width: 600px; margin: 0 auto; background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-                                <h2 style="color: #FF6B35; margin-bottom: 20px;">Welcome to Ikeja Online Admin Panel, {full_name}!</h2>
-                                <p style="color: #333; font-size: 16px; line-height: 1.6;">Your super admin account has been successfully created on Ikeja Online.</p>
-                                
-                                <h3 style="color: #d4af37; margin-top: 20px;">Account Details:</h3>
-                                <p style="color: #333; background-color: #f9f9f9; padding: 15px; border-left: 4px solid #FF6B35;">
-                                    <strong>Email:</strong> {email}<br>
-                                    <strong>Role:</strong> Super Administrator<br>
-                                    <strong>Permissions:</strong> Full System Access
-                                </p>
-                                
-                                <h3 style="color: #d4af37; margin-top: 20px;">Admin Responsibilities:</h3>
-                                <ul style="color: #333; font-size: 16px; line-height: 1.8;">
-                                    <li>Manage users and vendors</li>
-                                    <li>Monitor platform activities</li>
-                                    <li>Handle disputes and issues</li>
-                                    <li>Manage system configurations</li>
-                                </ul>
-                                
-                                <p style="color: #666; margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px; font-size: 14px;">
-                                    <strong>Ikeja Online Admin Team</strong>
-                                </p>
-                            </div>
-                        </body>
-                    </html>
-                    """
-                    subject = "Welcome to Ikeja Online - Admin Account Created"
                     
                 else:
                     # Customer welcome email
@@ -2055,9 +2105,7 @@ def get_product_images(product_id):
         for img in images:
             images_data.append({
                 'id': img.id,
-                'url': img.image_url,  # Direct Cloudinary URL
-                'filename': img.filename,
-                'mime_type': img.mime_type,
+                'url': img.image_url,
                 'is_primary': img.is_primary,
                 'created_at': img.created_at.isoformat()
             })
@@ -2100,6 +2148,18 @@ def customer_dashboard():
 def customer_my_orders():
     # Client-side will check for token in localStorage
     return render_template('customer/my_orders.html')
+
+
+@app.route('/customer/my-orders/<int:order_id>')
+def customer_order_details(order_id):
+    """Render the customer order details page and load data client-side."""
+    return render_template('customer/order_details.html', order_id=order_id)
+
+
+@app.route('/my-orders/<order_ref>')
+def public_order_tracking(order_ref):
+    """Public order tracking page accessible via email links."""
+    return render_template('customer/order_tracking.html', order_ref=order_ref)
 
 
 @app.route('/api/pay/<int:order_id>', methods=['POST'])
@@ -2496,8 +2556,8 @@ def payment_callback():
         import traceback
         traceback.print_exc()
     
-    # Always redirect to my-orders page with reference for frontend notification
-    return redirect(url_for('customer_my_orders', payment_ref=reference))
+    # Always redirect to customer dashboard to show order status
+    return redirect(url_for('customer_dashboard_home'))
 
 
 # Deposit Routes
@@ -2808,7 +2868,7 @@ def deposit_callback():
         reference = request.args.get('reference')
         if not reference:
             flash('No payment reference provided', 'error')
-            return redirect(url_for('customer_dashboard'))
+            return redirect(url_for('customer_dashboard_home'))
         
         # Verify with Paystack
         url = f'https://api.paystack.co/transaction/verify/{reference}'
@@ -2879,8 +2939,8 @@ def deposit_callback():
         traceback.print_exc()
         flash('Error processing deposit', 'error')
     
-    # Always redirect to customer dashboard
-    return redirect(url_for('customer_dashboard'))
+    # Always redirect to customer dashboard home
+    return redirect(url_for('customer_dashboard_home'))
 
 
 @app.route('/api/customer/deposits', methods=['GET'])
@@ -3256,20 +3316,40 @@ def get_customer_profile():
             db.session.add(customer)
             db.session.commit()
 
+        # Get the default address from address book
+        default_address_obj = CustomerAddress.query.filter_by(
+            customer_id=customer.id, 
+            is_default=True
+        ).first()
+        
+        # Format the default address as a readable string
+        default_address = ''
+        if default_address_obj:
+            address_parts = [
+                default_address_obj.address_line1,
+                default_address_obj.address_line2,
+                default_address_obj.city,
+                default_address_obj.state,
+                default_address_obj.postal_code,
+                default_address_obj.country
+            ]
+            # Filter out None/empty values and join with commas
+            default_address = ', '.join(filter(None, address_parts))
+        else:
+            # Fallback to customer's default_address if no address book entry exists
+            default_address = customer.default_address or ''
+
         return jsonify({
             'success': True,
             'first_name': user.first_name,
             'last_name': user.last_name,
             'email': user.email,
             'phone': customer.phone or '',
-            'address': customer.default_address or '',
+            'address': default_address,
             'created_at': user.created_at.isoformat() if user.created_at else None,
             'profile_image': {
-                'url': user.profile_image_url,
-                'mime_type': user.profile_image_mime_type,
-                'filename': user.profile_image_filename,
-                'data': base64.b64encode(user.profile_image_data).decode('utf-8') if user.profile_image_data else None
-            } if (user.profile_image_url or user.profile_image_data) else None
+                'url': user.profile_image_url
+            } if user.profile_image_url else None
         }), 200
     except Exception as e:
         print(f"Error fetching customer profile: {str(e)}")
@@ -3398,7 +3478,7 @@ def update_customer_account_settings():
         user.last_name = last_name
         user.email = email
         customer.phone = phone or customer.phone
-        customer.default_address = address or customer.default_address
+        # Note: Address is now managed through the address book, not account settings
 
         db.session.commit()
 
@@ -3453,11 +3533,6 @@ def upload_customer_profile_image():
 
         # Update user profile image
         user.profile_image_url = image_url
-        user.profile_image_data = None  # Clear binary data since we're using URL now
-        user.profile_image_mime_type = f'image/{extension}'
-        if extension == 'jpg':
-            user.profile_image_mime_type = 'image/jpeg'
-        user.profile_image_filename = secure_filename(file.filename)
 
         db.session.commit()
         print("Profile image updated successfully")
@@ -3466,9 +3541,7 @@ def upload_customer_profile_image():
             'success': True,
             'message': 'Profile image updated successfully',
             'image': {
-                'url': image_url,
-                'filename': user.profile_image_filename,
-                'mime_type': user.profile_image_mime_type
+                'url': image_url
             }
         }), 200
     except Exception as e:
@@ -3607,23 +3680,48 @@ def get_products():
     if not user or user.role.name != 'customer':
         return jsonify({'error': 'Unauthorized', 'message': 'Only customers can access products'}), 403
 
-    # Only get active products with stock > 0
-    products = Products.query.filter_by(status='active').filter(Products.stock_quantity > 0).all()
+    query = Products.query.filter_by(status='active').filter(Products.stock_quantity > 0)
+
+    # optional filters
+    search = request.args.get('q', '').strip()
+    category_id = request.args.get('category_id', type=int)
+    brand = request.args.get('brand', '').strip()
+    min_price = request.args.get('min_price', type=float)
+    max_price = request.args.get('max_price', type=float)
+    min_rating = request.args.get('min_rating', type=float)
+    sort_by = request.args.get('sort_by', '').strip().lower()
+
+    if category_id:
+        query = query.filter(Products.category_id == category_id)
+
+    if min_price is not None:
+        query = query.filter(Products.price >= min_price)
+
+    if max_price is not None:
+        query = query.filter(Products.price <= max_price)
+
+    if brand:
+        query = query.join(Vendors).filter(Vendors.store_name.ilike(f'%{brand}%'))
+
+    products = query.all()
     product_list = []
+
     for product in products:
-        # Safely get vendor store name, handling both missing vendor and missing store_name
         store_name = 'Unknown Vendor'
         if product.vendor and product.vendor.store_name:
             store_name = product.vendor.store_name
-        
-        # Get primary image if available, otherwise first image
+
         image_url = None
         if product.images:
             primary_image = next((img.id for img in product.images if img.is_primary), None)
             image_id = primary_image or (product.images[0].id if product.images else None)
             if image_id:
                 image_url = f'/api/product-image/{image_id}'
-        
+
+        ratings = [review.rating for review in product.reviews]
+        avg_rating = round(sum(ratings) / len(ratings), 1) if ratings else 0.0
+        review_count = len(ratings)
+
         product_dict = {
             'id': product.id,
             'name': product.name,
@@ -3631,14 +3729,38 @@ def get_products():
             'price': product.price,
             'image': image_url,
             'images': [f'/api/product-image/{image.id}' for image in product.images],
-            'store_name': store_name
+            'store_name': store_name,
+            'category_id': product.category_id,
+            'category_name': product.category.name if product.category else 'Uncategorized',
+            'stock_quantity': product.stock_quantity,
+            'avg_rating': avg_rating,
+            'review_count': review_count,
         }
         product_list.append(product_dict)
+
+    if search:
+        search_lower = search.lower()
+        product_list = [product for product in product_list if
+                        search_lower in (product['name'] or '').lower() or
+                        search_lower in (product['description'] or '').lower() or
+                        search_lower in (product['store_name'] or '').lower() or
+                        search_lower in (product['category_name'] or '').lower()]
+
+    if min_rating is not None:
+        product_list = [product for product in product_list if product['avg_rating'] >= min_rating]
+
+    if sort_by == 'price_low_high':
+        product_list.sort(key=lambda x: x['price'] if x['price'] is not None else 0)
+    elif sort_by == 'price_high_low':
+        product_list.sort(key=lambda x: x['price'] if x['price'] is not None else 0, reverse=True)
+    elif sort_by == 'rating_high':
+        product_list.sort(key=lambda x: x['avg_rating'], reverse=True)
+    else:
+        product_list.sort(key=lambda x: x['id'], reverse=True)
 
     return jsonify({'products': product_list}), 200
 
 
-    
 @app.route('/vendor/dashboard/vendor-settings', methods=['POST'])
 @jwt_required()
 def vendor_settings():
@@ -3672,8 +3794,6 @@ def vendor_settings():
         # Handle logo removal
         remove_logo = request.form.get('remove_logo')
         if remove_logo == 'true':
-            vendor.logo_data = None
-            vendor.logo_mime_type = None
             vendor.logo_url = None
             print("Logo removed from database")
         
@@ -3718,7 +3838,7 @@ def get_vendor_settings():
             'store_description': vendor.store_description,
             'phone': vendor.phone,
             'address': vendor.address,
-            'logo_url': vendor.logo_url if vendor.logo_url else (f'/api/vendor-logo/{vendor.id}' if vendor.logo_data else None)
+            'logo_url': vendor.logo_url
         },
         'user': {
             'email': user.email,
@@ -4567,6 +4687,10 @@ def get_vendor_orders():
                     'shipping_status': order.shipping_status or 'pending',
                     'payment_status': payment_status,
                     'payment_method': payment_method,
+                    'delivery_address_id': order.delivery_address_id,
+                    'delivery_address': get_order_delivery_address(order),
+                    'cancellation_request_status': order.cancellation_request_status,
+                    'cancellation_reason': order.cancellation_reason,
                     'created_at': order.created_at.isoformat() if order.created_at else None
                 }
                 orders_list.append(order_data)
@@ -4644,6 +4768,29 @@ def get_vendor_order_details(order_id):
                     'total': item_total
                 })
         
+        # Get the default address from address book
+        default_address_obj = CustomerAddress.query.filter_by(
+            customer_id=customer.id, 
+            is_default=True
+        ).first()
+        
+        # Format the default address as a readable string
+        default_address = ''
+        if default_address_obj:
+            address_parts = [
+                default_address_obj.address_line1,
+                default_address_obj.address_line2,
+                default_address_obj.city,
+                default_address_obj.state,
+                default_address_obj.postal_code,
+                default_address_obj.country
+            ]
+            # Filter out None/empty values and join with commas
+            default_address = ', '.join(filter(None, address_parts))
+        elif customer.default_address:
+            # Fallback to customer's default_address if no address book entry exists
+            default_address = customer.default_address
+
         return jsonify({'success': True,
             'order': {
                 'id': order.id,
@@ -4651,8 +4798,9 @@ def get_vendor_order_details(order_id):
                 'customer_name': f"{customer_user.first_name} {customer_user.last_name}" if customer_user else 'Unknown',
                 'customer_email': customer_user.email if customer_user else 'unknown@email.com',
                 'customer_phone': customer.phone if customer else '',
-                'customer_address': customer.default_address if customer else '',
-                'delivery_address': customer.default_address if customer else '',
+                'customer_address': default_address,
+                'delivery_address_id': order.delivery_address_id,
+                'delivery_address': get_order_delivery_address(order),
                 'total_amount': float(order.total_amount),
                 'subtotal': float(order.total_amount),
                 'status': order.status or 'pending',
@@ -4660,6 +4808,10 @@ def get_vendor_order_details(order_id):
                 'payment_method': payment_method,
                 'payment_amount': payment_amount,
                 'shipping_status': order.shipping_status or 'pending',
+                'cancellation_request_status': order.cancellation_request_status,
+                'cancellation_reason': order.cancellation_reason,
+                'cancellation_requested_at': order.cancellation_requested_at.isoformat() if order.cancellation_requested_at else None,
+                'cancellation_approved_at': order.cancellation_approved_at.isoformat() if order.cancellation_approved_at else None,
                 'created_at': order.created_at.isoformat() if order.created_at else None,
                 'items': items,
                 'vendor_total': vendor_total
@@ -4773,18 +4925,30 @@ def get_product_details(product_id):
         if not product:
             return jsonify({'success': False, 'error': 'Product not found'}), 404
         
-        # Get vendor store name
         store_name = 'Unknown Vendor'
         if product.vendor and product.vendor.store_name:
             store_name = product.vendor.store_name
         
-        # Get primary image if available
         image_url = None
         if product.images:
             primary_image = next((img.id for img in product.images if img.is_primary), None)
             image_id = primary_image or (product.images[0].id if product.images else None)
             if image_id:
                 image_url = f'/api/product-image/{image_id}'
+
+        ratings = [review.rating for review in product.reviews]
+        avg_rating = round(sum(ratings) / len(ratings), 1) if ratings else 0.0
+        review_count = len(ratings)
+        review_samples = [
+            {
+                'id': review.id,
+                'rating': review.rating,
+                'comment': review.comment,
+                'customer_name': f"{review.customer.user.first_name} {review.customer.user.last_name}" if review.customer and review.customer.user else 'Customer',
+                'created_at': review.created_at.isoformat()
+            }
+            for review in product.reviews
+        ]
         
         product_dict = {
             'id': product.id,
@@ -4798,10 +4962,107 @@ def get_product_details(product_id):
             'category_id': product.category_id,
             'store_name': store_name,
             'image': image_url,
-            'created_at': product.created_at.isoformat()
+            'created_at': product.created_at.isoformat(),
+            'avg_rating': avg_rating,
+            'review_count': review_count,
+            'reviews': review_samples
         }
         
         return jsonify({'success': True, 'product': product_dict}), 200
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/products/<int:product_id>/reviews', methods=['GET'])
+def get_product_reviews(product_id):
+    try:
+        product = Products.query.get(product_id)
+        if not product:
+            return jsonify({'success': False, 'error': 'Product not found'}), 404
+
+        review_items = []
+        for review in product.reviews:
+            reviewer = review.customer.user if review.customer else None
+            review_items.append({
+                'id': review.id,
+                'rating': review.rating,
+                'comment': review.comment,
+                'customer_name': f"{reviewer.first_name} {reviewer.last_name}" if reviewer else 'Customer',
+                'customer_id': review.customer_id,
+                'created_at': review.created_at.isoformat()
+            })
+
+        avg_rating = round(sum([r['rating'] for r in review_items]) / len(review_items), 1) if review_items else 0.0
+        review_count = len(review_items)
+
+        return jsonify({
+            'success': True,
+            'product_id': product.id,
+            'avg_rating': avg_rating,
+            'review_count': review_count,
+            'reviews': sorted(review_items, key=lambda r: r['created_at'], reverse=True)
+        }), 200
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/products/<int:product_id>/reviews', methods=['POST'])
+@jwt_required()
+def add_product_review(product_id):
+    try:
+        user_id = int(get_jwt_identity())
+        user = Users.query.get(user_id)
+        if not user or user.role.name != 'customer':
+            return jsonify({'success': False, 'error': 'Unauthorized', 'message': 'Only customers may leave reviews'}), 403
+
+        customer = Customers.query.filter_by(user_id=user_id).first()
+        if not customer:
+            return jsonify({'success': False, 'error': 'Customer profile not found'}), 404
+
+        product = Products.query.get(product_id)
+        if not product:
+            return jsonify({'success': False, 'error': 'Product not found'}), 404
+
+        data = request.get_json() or {}
+        rating = data.get('rating')
+        comment = (data.get('comment') or '').strip()
+
+        if rating is None:
+            return jsonify({'success': False, 'error': 'Rating is required'}), 400
+
+        try:
+            rating = int(rating)
+        except (ValueError, TypeError):
+            return jsonify({'success': False, 'error': 'Rating must be an integer between 1 and 5'}), 400
+
+        if rating < 1 or rating > 5:
+            return jsonify({'success': False, 'error': 'Rating must be between 1 and 5'}), 400
+
+        existing_review = Reviews.query.filter_by(product_id=product.id, customer_id=customer.id).first()
+        if existing_review:
+            existing_review.rating = rating
+            existing_review.comment = comment
+            db.session.commit()
+            message = 'Review updated successfully'
+            review = existing_review
+        else:
+            review = Reviews(product_id=product.id, customer_id=customer.id, rating=rating, comment=comment)
+            db.session.add(review)
+            db.session.commit()
+            message = 'Review submitted successfully'
+
+        return jsonify({
+            'success': True,
+            'message': message,
+            'review': {
+                'id': review.id,
+                'product_id': review.product_id,
+                'customer_id': review.customer_id,
+                'rating': review.rating,
+                'comment': review.comment,
+                'created_at': review.created_at.isoformat()
+            }
+        }), 201
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
@@ -4909,7 +5170,7 @@ def init_first_admin():
 
 @app.route('/admin/dashboard')
 def admin_dashboard():
-    # Client-side will check for token in localStorage
+    # Client-side will check for token and super admin role
     return render_template('admin/admin_dashboard.html')
 
 
@@ -5059,6 +5320,305 @@ def admin_toggle_user_status(user_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'error': 'Server Error', 'message': str(e)}), 500
+
+
+@app.route('/api/admin/orders', methods=['GET'])
+@jwt_required()
+def admin_get_all_orders():
+    """Get all orders with optional payment filter for super admin"""
+    try:
+        admin_id = int(get_jwt_identity())
+        admin = Users.query.get(admin_id)
+        
+        if not admin or admin.role.name != 'super_admin':
+            return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+        
+        # Get filter from query params
+        payment_filter = request.args.get('payment_status', 'all').lower()  # all, paid, pending, failed
+        shipping_filter = request.args.get('shipping_status', 'all').lower()  # all, pending, en_route, delivered
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 20, type=int)
+        
+        # Build query
+        query = Orders.query
+        
+        # Apply payment filter if not 'all'
+        if payment_filter != 'all':
+            query = query.join(Payments, Orders.id == Payments.order_id, isouter=True)
+            if payment_filter == 'paid':
+                query = query.filter(Payments.status == 'completed')
+            elif payment_filter == 'pending':
+                query = query.filter((Payments.status != 'completed') | (Payments.status == None))
+            elif payment_filter == 'failed':
+                query = query.filter(Payments.status == 'failed')
+        
+        # Apply shipping status filter if not 'all'
+        if shipping_filter != 'all':
+            if shipping_filter == 'pending':
+                query = query.filter((Orders.shipping_status == None) | (Orders.shipping_status == 'pending'))
+            else:
+                query = query.filter(Orders.shipping_status == shipping_filter)
+        
+        # Order by most recent first
+        query = query.order_by(Orders.created_at.desc())
+        
+        # Paginate
+        paginated = query.paginate(page=page, per_page=per_page)
+        
+        orders_data = []
+        for order in paginated.items:
+            # Get payment info
+            payment = Payments.query.filter_by(order_id=order.id).first()
+            payment_status = payment.status if payment else 'pending'
+            
+            # Get customer info
+            customer = Customers.query.get(order.customer_id)
+            user = Users.query.get(customer.user_id) if customer else None
+            
+            # Get vendor info
+            vendor = None
+            if order.items:
+                first_item = order.items[0]
+                if first_item.product:
+                    vendor = Vendors.query.get(first_item.product.vendor_id)
+            
+            order_dict = {
+                'id': order.id,
+                'reference_number': order.reference_number,
+                'customer_name': f"{user.first_name} {user.last_name}" if user else 'Unknown',
+                'customer_email': user.email if user else 'Unknown',
+                'vendor_name': vendor.store_name if vendor else 'Unknown',
+                'total_amount': float(order.total_amount),
+                'status': order.status,
+                'payment_status': payment_status,
+                'shipping_status': order.shipping_status or 'pending',
+                'delivery_address_id': order.delivery_address_id,
+                'delivery_address': get_order_delivery_address(order),
+                'cancellation_request_status': order.cancellation_request_status,
+                'created_at': order.created_at.isoformat(),
+                'items_count': len(order.items)
+            }
+            orders_data.append(order_dict)
+        
+        return jsonify({
+            'success': True,
+            'orders': orders_data,
+            'pagination': {
+                'total': paginated.total,
+                'pages': paginated.pages,
+                'current_page': page,
+                'per_page': per_page
+            }
+        }), 200
+    except Exception as e:
+        print(f"[ADMIN-ORDERS] Error: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': 'Server Error', 'message': str(e)}), 500
+
+
+@app.route('/api/admin/orders/<int:order_id>', methods=['GET'])
+@jwt_required()
+def admin_get_order_details(order_id):
+    """Get detailed order information for super admin"""
+    try:
+        admin_id = int(get_jwt_identity())
+        admin = Users.query.get(admin_id)
+        
+        if not admin or admin.role.name != 'super_admin':
+            return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+        
+        order = Orders.query.get(order_id)
+        if not order:
+            return jsonify({'success': False, 'error': 'Order not found'}), 404
+        
+        # Get customer info
+        customer = Customers.query.get(order.customer_id)
+        customer_user = Users.query.get(customer.user_id) if customer else None
+        
+        # Get payment info
+        payment = Payments.query.filter_by(order_id=order.id).first()
+        payment_status = payment.status if payment else 'pending'
+        
+        # Get order items with vendor info
+        items_data = []
+        vendors_involved = set()
+        for item in order.items:
+            vendor = None
+            vendor_name = 'Unknown'
+            if item.product and item.product.vendor_id:
+                vendor = Vendors.query.get(item.product.vendor_id)
+                vendor_name = vendor.store_name if vendor else 'Unknown'
+                vendors_involved.add((vendor.id, vendor_name) if vendor else None)
+            
+            items_data.append({
+                'product_id': item.product_id,
+                'product_name': item.product.name if item.product else 'Unknown',
+                'vendor_name': vendor_name,
+                'quantity': item.quantity,
+                'price_at_purchase': float(item.price_at_purchase),
+                'total': float(item.quantity * item.price_at_purchase)
+            })
+        
+        order_dict = {
+            'id': order.id,
+            'customer_id': order.customer_id,
+            'reference_number': order.reference_number,
+            'customer_name': f"{customer_user.first_name} {customer_user.last_name}" if customer_user else 'Unknown',
+            'customer_email': customer_user.email if customer_user else 'Unknown',
+            'customer_phone': customer.phone if customer else 'Unknown',
+            'total_amount': float(order.total_amount),
+            'status': order.status,
+            'payment_status': payment_status,
+            'shipping_status': order.shipping_status or 'pending',
+            'tracking_number': order.tracking_number,
+            'tracking_carrier': order.tracking_carrier,
+            'shipped_at': order.shipped_at.isoformat() if order.shipped_at else None,
+            'delivered_at': order.delivered_at.isoformat() if order.delivered_at else None,
+            'delivery_address_id': order.delivery_address_id,
+            'delivery_address': get_order_delivery_address(order),
+            'cancellation_request_status': order.cancellation_request_status,
+            'cancellation_reason': order.cancellation_reason,
+            'cancellation_requested_at': order.cancellation_requested_at.isoformat() if order.cancellation_requested_at else None,
+            'cancellation_approved_at': order.cancellation_approved_at.isoformat() if order.cancellation_approved_at else None,
+            'cancellation_processed_by': order.cancellation_processor.id if order.cancellation_processor else None,
+            'created_at': order.created_at.isoformat(),
+            'items': items_data,
+            'vendors_count': len([v for v in vendors_involved if v])
+        }
+        
+        return jsonify({
+            'success': True,
+            'order': order_dict
+        }), 200
+    except Exception as e:
+        print(f"[ADMIN-ORDER-DETAILS] Error: {str(e)}")
+        return jsonify({'success': False, 'error': 'Server Error', 'message': str(e)}), 500
+
+
+@app.route('/api/admin/orders/<int:order_id>/shipping-status', methods=['PUT', 'POST'])
+@jwt_required()
+def admin_update_shipping_status(order_id):
+    """Update shipping status for an order"""
+    try:
+        admin_id = int(get_jwt_identity())
+        admin = Users.query.get(admin_id)
+        
+        if not admin or admin.role.name != 'super_admin':
+            return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+        
+        data = request.get_json()
+        new_status = data.get('shipping_status', '').lower().strip()
+        
+        if not new_status:
+            return jsonify({'success': False, 'error': 'shipping_status is required'}), 400
+        
+        # Valid statuses
+        valid_statuses = ['pending', 'en_route', 'delivered', 'cancelled']
+        if new_status not in valid_statuses:
+            return jsonify({'success': False, 'error': f'Invalid status. Must be one of: {", ".join(valid_statuses)}'}), 400
+        
+        order = Orders.query.get(order_id)
+        if not order:
+            return jsonify({'success': False, 'error': 'Order not found'}), 404
+        
+        old_status = order.shipping_status or 'pending'
+        order.shipping_status = new_status
+        db.session.commit()
+        
+        print(f"[ADMIN-UPDATE-SHIPPING] Order {order_id} shipping status updated from {old_status} to {new_status}")
+        
+        return jsonify({
+            'success': True,
+            'message': f'Shipping status updated to {new_status}',
+            'order_id': order_id,
+            'old_status': old_status,
+            'new_status': new_status
+        }), 200
+    except Exception as e:
+        db.session.rollback()
+        print(f"[ADMIN-UPDATE-SHIPPING] Error: {str(e)}")
+        return jsonify({'success': False, 'error': 'Server Error', 'message': str(e)}), 500
+
+
+@app.route('/api/admin/customers/<int:customer_id>/details', methods=['GET'])
+@jwt_required()
+def admin_get_customer_details(customer_id):
+    """Get detailed customer information including addresses and delivery preferences for super admin"""
+    try:
+        admin_id = int(get_jwt_identity())
+        admin = Users.query.get(admin_id)
+        
+        if not admin or admin.role.name != 'super_admin':
+            return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+        
+        customer = Customers.query.get(customer_id)
+        if not customer:
+            return jsonify({'success': False, 'error': 'Customer not found'}), 404
+        
+        customer_user = Users.query.get(customer.user_id)
+        
+        # Get all customer addresses
+        addresses = CustomerAddress.query.filter_by(customer_id=customer_id).all()
+        addresses_data = [
+            {
+                'id': addr.id,
+                'label': addr.label or 'Unlabeled',
+                'address_line1': addr.address_line1,
+                'address_line2': addr.address_line2,
+                'city': addr.city,
+                'state': addr.state,
+                'postal_code': addr.postal_code,
+                'country': addr.country,
+                'phone': addr.phone,
+                'is_default': addr.is_default,
+                'created_at': addr.created_at.isoformat()
+            }
+            for addr in addresses
+        ]
+        
+        # Get delivery preferences
+        delivery_pref = DeliveryPreference.query.filter_by(customer_id=customer_id).first()
+        delivery_pref_data = None
+        if delivery_pref:
+            delivery_pref_data = {
+                'id': delivery_pref.id,
+                'delivery_method': delivery_pref.delivery_method,
+                'signature_required': delivery_pref.signature_required,
+                'leave_at_door': delivery_pref.leave_at_door,
+                'fragile_handling': delivery_pref.fragile_handling,
+                'special_instructions': delivery_pref.special_instructions,
+                'created_at': delivery_pref.created_at.isoformat()
+            }
+        
+        customer_dict = {
+            'id': customer.id,
+            'first_name': customer_user.first_name if customer_user else 'Unknown',
+            'last_name': customer_user.last_name if customer_user else 'Unknown',
+            'full_name': f"{customer_user.first_name} {customer_user.last_name}" if customer_user else 'Unknown',
+            'email': customer_user.email if customer_user else 'Unknown',
+            'phone': customer.phone,
+            'default_address': customer.default_address,
+            'created_at': customer.created_at.isoformat(),
+            'addresses': addresses_data,
+            'delivery_preferences': delivery_pref_data,
+            'total_addresses': len(addresses_data),
+            'has_delivery_preferences': delivery_pref_data is not None
+        }
+        
+        return jsonify({
+            'success': True,
+            'customer': customer_dict
+        }), 200
+    except Exception as e:
+        print(f"[ADMIN-CUSTOMER-DETAILS] Error: {str(e)}")
+        return jsonify({'success': False, 'error': 'Server Error', 'message': str(e)}), 500
+
+
+@app.route('/admin/orders')
+def admin_orders_page():
+    """Admin orders management page"""
+    return render_template('admin/admin_orders.html')
 
 
 @app.route('/browse-products')
@@ -5228,10 +5788,33 @@ def get_customer_settings():
         customer = Customers.query.filter_by(user_id=user_id).first()
         if not customer:
             return jsonify({'error': 'Not Found', 'message': 'Customer profile not found'}), 404
+
+        # Get the default address from address book
+        default_address_obj = CustomerAddress.query.filter_by(
+            customer_id=customer.id, 
+            is_default=True
+        ).first()
         
+        # Format the default address as a readable string
+        default_address = ''
+        if default_address_obj:
+            address_parts = [
+                default_address_obj.address_line1,
+                default_address_obj.address_line2,
+                default_address_obj.city,
+                default_address_obj.state,
+                default_address_obj.postal_code,
+                default_address_obj.country
+            ]
+            # Filter out None/empty values and join with commas
+            default_address = ', '.join(filter(None, address_parts))
+        elif customer.default_address:
+            # Fallback to customer's default_address if no address book entry exists
+            default_address = customer.default_address
+
         return jsonify({
             'phone': customer.phone or '',
-            'address': customer.default_address or ''
+            'address': default_address
         }), 200
     except Exception as e:
         print(f"Error fetching customer settings: {str(e)}")
@@ -5282,7 +5865,7 @@ def update_customer_phone():
 @app.route('/customer/update-address', methods=['POST'])
 @jwt_required()
 def update_customer_address():
-    """Update customer billing address"""
+    """Update customer billing address - DEPRECATED: Use address book instead"""
     try:
         user_id = int(get_jwt_identity())
         user = Users.query.get(user_id)
@@ -5308,7 +5891,7 @@ def update_customer_address():
         if len(address) > 255:
             return jsonify({'message': 'Address must not exceed 255 characters'}), 400
         
-        # Update address
+        # Update address (legacy - now using address book system)
         customer.default_address = address
         db.session.commit()
         
@@ -5563,6 +6146,181 @@ def clear_wishlist():
         return jsonify({'success': False, 'error': 'Server Error', 'message': str(e)}), 500
 
 
+# ========== SAVE FOR LATER ROUTES ==========
+
+@app.route('/api/save-for-later/add', methods=['POST'])
+@jwt_required()
+def add_to_save_for_later():
+    try:
+        user_id = int(get_jwt_identity())
+        user = Users.query.get(user_id)
+        if not user or user.role.name != 'customer':
+            return jsonify({'success': False, 'error': 'Unauthorized', 'message': 'Only customers can use save-for-later'}), 403
+
+        customer = Customers.query.filter_by(user_id=user_id).first()
+        if not customer:
+            return jsonify({'success': False, 'error': 'Not Found', 'message': 'Customer profile not found'}), 404
+
+        data = request.get_json() or {}
+        product_id = data.get('product_id')
+        if not product_id:
+            return jsonify({'success': False, 'message': 'product_id is required'}), 400
+
+        product = Products.query.get(product_id)
+        if not product:
+            return jsonify({'success': False, 'error': 'Not Found', 'message': 'Product not found'}), 404
+
+        bucket = SaveForLater.query.filter_by(customer_id=customer.id).first()
+        if not bucket:
+            bucket = SaveForLater(customer_id=customer.id)
+            db.session.add(bucket)
+            db.session.flush()
+
+        existing_item = SaveForLater_Items.query.filter_by(save_for_later_id=bucket.id, product_id=product_id).first()
+        if existing_item:
+            return jsonify({'success': False, 'message': 'Item already saved for later'}), 409
+
+        new_item = SaveForLater_Items(save_for_later_id=bucket.id, product_id=product_id)
+        db.session.add(new_item)
+        db.session.commit()
+
+        return jsonify({'success': True, 'message': f'{product.name} saved for later', 'product_id': product_id}), 201
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error adding to save for later: {str(e)}")
+        return jsonify({'success': False, 'error': 'Server Error', 'message': str(e)}), 500
+
+
+@app.route('/api/save-for-later/remove/<int:product_id>', methods=['DELETE'])
+@jwt_required()
+def remove_from_save_for_later(product_id):
+    try:
+        user_id = int(get_jwt_identity())
+        user = Users.query.get(user_id)
+        if not user or user.role.name != 'customer':
+            return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+
+        customer = Customers.query.filter_by(user_id=user_id).first()
+        if not customer:
+            return jsonify({'success': False, 'error': 'Not Found', 'message': 'Customer profile not found'}), 404
+
+        bucket = SaveForLater.query.filter_by(customer_id=customer.id).first()
+        if not bucket:
+            return jsonify({'success': False, 'error': 'Not Found', 'message': 'Save-for-later list not found'}), 404
+
+        item = SaveForLater_Items.query.filter_by(save_for_later_id=bucket.id, product_id=product_id).first()
+        if not item:
+            return jsonify({'success': False, 'error': 'Not Found', 'message': 'Item not found in save-for-later'}), 404
+
+        db.session.delete(item)
+        db.session.commit()
+
+        return jsonify({'success': True, 'message': 'Item removed from save-for-later', 'product_id': product_id}), 200
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error removing from save for later: {str(e)}")
+        return jsonify({'success': False, 'error': 'Server Error', 'message': str(e)}), 500
+
+
+@app.route('/api/save-for-later', methods=['GET'])
+@jwt_required()
+def get_save_for_later():
+    try:
+        user_id = int(get_jwt_identity())
+        user = Users.query.get(user_id)
+        if not user or user.role.name != 'customer':
+            return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+
+        customer = Customers.query.filter_by(user_id=user_id).first()
+        if not customer:
+            return jsonify({'success': False, 'error': 'Not Found', 'message': 'Customer profile not found'}), 404
+
+        bucket = SaveForLater.query.filter_by(customer_id=customer.id).first()
+        if not bucket:
+            return jsonify({'success': True, 'items': []}), 200
+
+        items_data = []
+        for item in bucket.items:
+            product = item.product
+            store_name = 'Unknown Vendor'
+            if product.vendor and product.vendor.store_name:
+                store_name = product.vendor.store_name
+
+            image_url = '/static/uploads/products/placeholder.png'
+            if product.images:
+                primary_image = next((img for img in product.images if img.is_primary), None)
+                if primary_image:
+                    image_url = primary_image.image_url
+                elif product.images:
+                    image_url = product.images[0].image_url
+
+            items_data.append({
+                'id': product.id,
+                'name': product.name,
+                'price': product.price,
+                'image': image_url,
+                'store_name': store_name,
+                'added_date': item.created_at.isoformat(),
+                'stock_quantity': product.stock_quantity,
+                'avg_rating': round(sum([review.rating for review in product.reviews]) / len(product.reviews), 1) if product.reviews else 0.0,
+                'review_count': len(product.reviews)
+            })
+
+        return jsonify({'success': True, 'items': items_data, 'count': len(items_data)}), 200
+    except Exception as e:
+        print(f"Error fetching save-for-later: {str(e)}")
+        return jsonify({'success': False, 'error': 'Server Error', 'message': str(e)}), 500
+
+
+@app.route('/api/save-for-later/check/<int:product_id>', methods=['GET'])
+@jwt_required()
+def check_save_for_later(product_id):
+    try:
+        user_id = int(get_jwt_identity())
+        user = Users.query.get(user_id)
+        if not user or user.role.name != 'customer':
+            return jsonify({'success': False, 'in_save_for_later': False}), 403
+
+        customer = Customers.query.filter_by(user_id=user.id).first()
+        if not customer:
+            return jsonify({'success': True, 'in_save_for_later': False}), 200
+
+        bucket = SaveForLater.query.filter_by(customer_id=customer.id).first()
+        if not bucket:
+            return jsonify({'success': True, 'in_save_for_later': False}), 200
+
+        item = SaveForLater_Items.query.filter_by(save_for_later_id=bucket.id, product_id=product_id).first()
+        return jsonify({'success': True, 'in_save_for_later': item is not None, 'product_id': product_id}), 200
+    except Exception as e:
+        print(f"Error checking save-for-later: {str(e)}")
+        return jsonify({'success': False, 'in_save_for_later': False, 'error': str(e)}), 500
+
+
+@app.route('/api/save-for-later/clear', methods=['POST'])
+@jwt_required()
+def clear_save_for_later():
+    try:
+        user_id = int(get_jwt_identity())
+        user = Users.query.get(user_id)
+        if not user or user.role.name != 'customer':
+            return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+
+        customer = Customers.query.filter_by(user_id=user_id).first()
+        if not customer:
+            return jsonify({'success': False, 'error': 'Not Found', 'message': 'Customer profile not found'}), 404
+
+        bucket = SaveForLater.query.filter_by(customer_id=customer.id).first()
+        if bucket:
+            SaveForLater_Items.query.filter_by(save_for_later_id=bucket.id).delete()
+            db.session.commit()
+
+        return jsonify({'success': True, 'message': 'Save-for-later cleared successfully'}), 200
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error clearing save-for-later: {str(e)}")
+        return jsonify({'success': False, 'error': 'Server Error', 'message': str(e)}), 500
+
+
 # ========== CHECKOUT & ORDER ROUTES ==========
 
 def generate_order_reference():
@@ -5575,6 +6333,109 @@ def generate_order_reference():
     date_str = datetime.utcnow().strftime("%Y%m%d")
     random_str = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
     return f"ORD-{date_str}-{random_str}"
+
+
+try:
+    from fpdf import FPDF
+except ImportError:
+    FPDF = None
+
+
+def get_address_string(address_obj):
+    if not address_obj:
+        return ''
+    address_parts = [
+        address_obj.label,
+        address_obj.address_line1,
+        address_obj.address_line2,
+        address_obj.city,
+        address_obj.state,
+        address_obj.postal_code,
+        address_obj.country,
+        f"Phone: {address_obj.phone}" if address_obj.phone else None
+    ]
+    return ', '.join([part for part in address_parts if part])
+
+
+def get_order_delivery_address(order):
+    if order.delivery_address:
+        return get_address_string(order.delivery_address)
+    if order.customer:
+        default_address_obj = CustomerAddress.query.filter_by(customer_id=order.customer.id, is_default=True).first()
+        if default_address_obj:
+            return get_address_string(default_address_obj)
+        if order.customer.default_address:
+            return order.customer.default_address
+    return 'Not provided'
+
+
+def build_invoice_pdf(order):
+    if not FPDF:
+        raise RuntimeError('PDF generation library is not installed. Install fpdf to enable PDF invoices.')
+
+    pdf = FPDF()
+    pdf.set_auto_page_break(auto=True, margin=15)
+    pdf.add_page()
+
+    pdf.set_font('Arial', 'B', 16)
+    pdf.cell(0, 10, 'Invoice', ln=True, align='C')
+    pdf.ln(5)
+
+    pdf.set_font('Arial', 'B', 12)
+    pdf.cell(0, 8, f'Invoice #: {order.reference_number}', ln=True)
+    invoice_date = order.created_at.strftime('%Y-%m-%d %H:%M:%S') if order.created_at else 'N/A'
+    pdf.cell(0, 8, f'Date: {invoice_date}', ln=True)
+    pdf.cell(0, 8, f'Status: {order.status or "pending"}', ln=True)
+    pdf.cell(0, 8, f'Shipping Status: {order.shipping_status or "pending"}', ln=True)
+    pdf.ln(5)
+
+    pdf.set_font('Arial', '', 11)
+    customer_name = f"{order.customer.user.first_name} {order.customer.user.last_name}" if order.customer and order.customer.user else 'Unknown Customer'
+    pdf.cell(0, 7, f'Customer: {customer_name}', ln=True)
+    customer_email = order.customer.user.email if order.customer and order.customer.user else 'N/A'
+    customer_phone = order.customer.phone if order.customer else 'N/A'
+    pdf.cell(0, 7, f'Email: {customer_email}', ln=True)
+    pdf.cell(0, 7, f'Phone: {customer_phone}', ln=True)
+    pdf.ln(5)
+
+    pdf.set_font('Arial', 'B', 12)
+    pdf.cell(0, 8, 'Delivery Address:', ln=True)
+    pdf.set_font('Arial', '', 11)
+    delivery_address = get_order_delivery_address(order)
+    pdf.multi_cell(0, 7, delivery_address if delivery_address else 'Not provided')
+    pdf.ln(5)
+
+    pdf.set_font('Arial', 'B', 12)
+    pdf.cell(60, 8, 'Product', border=1)
+    pdf.cell(30, 8, 'Qty', border=1, align='C')
+    pdf.cell(40, 8, 'Unit Price', border=1, align='R')
+    pdf.cell(40, 8, 'Total', border=1, align='R')
+    pdf.ln()
+
+    pdf.set_font('Arial', '', 11)
+    for item in order.items:
+        product_name = item.product.name if item.product else 'Unknown'
+        pdf.cell(60, 7, product_name[:35], border=1)
+        pdf.cell(30, 7, str(item.quantity), border=1, align='C')
+        pdf.cell(40, 7, f'₦{item.price_at_purchase:,.2f}', border=1, align='R')
+        pdf.cell(40, 7, f'₦{item.quantity * item.price_at_purchase:,.2f}', border=1, align='R')
+        pdf.ln()
+
+    pdf.ln(3)
+    pdf.set_font('Arial', 'B', 12)
+    pdf.cell(0, 8, f'Total: ₦{order.total_amount:,.2f}', ln=True, align='R')
+
+    if order.cancellation_request_status:
+        pdf.set_font('Arial', '', 10)
+        pdf.ln(3)
+        pdf.cell(0, 6, f'Cancellation Request Status: {order.cancellation_request_status}', ln=True)
+        if order.cancellation_reason:
+            pdf.multi_cell(0, 6, f'Reason: {order.cancellation_reason}')
+
+    output = BytesIO()
+    output.write(pdf.output(dest='S').encode('latin-1'))
+    output.seek(0)
+    return output
 
 
 @app.route('/api/checkout', methods=['POST'])
@@ -5593,10 +6454,20 @@ def checkout():
         if not customer:
             return jsonify({'success': False, 'error': 'Not Found', 'message': 'Customer profile not found'}), 404
         
-        # Get cart items from request
-        data = request.get_json()
+        # Get cart items and delivery address from request
+        data = request.get_json() or {}
         items = data.get('items', [])
-        
+        delivery_address_id = data.get('delivery_address_id')
+
+        if delivery_address_id:
+            delivery_address = CustomerAddress.query.filter_by(id=delivery_address_id, customer_id=customer.id).first()
+            if not delivery_address:
+                return jsonify({'success': False, 'message': 'Delivery address not found'}), 404
+        else:
+            delivery_address = CustomerAddress.query.filter_by(customer_id=customer.id, is_default=True).first()
+            if delivery_address:
+                delivery_address_id = delivery_address.id
+
         if not items or len(items) == 0:
             return jsonify({'success': False, 'message': 'Cart is empty'}), 400
         
@@ -5642,6 +6513,7 @@ def checkout():
         # Create order
         order = Orders(
             customer_id=customer.id,
+            delivery_address_id=delivery_address_id,
             reference_number=reference_number,
             total_amount=total_amount,
             status='pending'
@@ -5788,10 +6660,20 @@ def checkout_and_pay():
         if not customer:
             return jsonify({'success': False, 'error': 'Not Found', 'message': 'Customer profile not found'}), 404
         
-        # Get cart items from request
-        data = request.get_json()
+        # Get cart items and delivery address from request
+        data = request.get_json() or {}
         items = data.get('items', [])
         payment_method = data.get('payment_method', 'paystack').lower()
+        delivery_address_id = data.get('delivery_address_id')
+
+        if delivery_address_id:
+            delivery_address = CustomerAddress.query.filter_by(id=delivery_address_id, customer_id=customer.id).first()
+            if not delivery_address:
+                return jsonify({'success': False, 'message': 'Delivery address not found'}), 404
+        else:
+            delivery_address = CustomerAddress.query.filter_by(customer_id=customer.id, is_default=True).first()
+            if delivery_address:
+                delivery_address_id = delivery_address.id
         
         # Validate payment method
         valid_payment_methods = ['paystack', 'bank-transfer', 'wallet']
@@ -5847,6 +6729,7 @@ def checkout_and_pay():
         # Create order
         order = Orders(
             customer_id=customer.id,
+            delivery_address_id=delivery_address_id,
             reference_number=reference_number,
             total_amount=total_amount,
             status='pending'
@@ -6085,7 +6968,14 @@ def get_customer_orders():
                 'status': order.status,
                 'shipping_status': order.shipping_status or 'pending',
                 'payment_status': payment_status,
+                'delivery_address_id': order.delivery_address_id,
+                'delivery_address': get_order_delivery_address(order),
+                'cancellation_request_status': order.cancellation_request_status,
+                'cancellation_reason': order.cancellation_reason,
+                'cancellation_requested_at': order.cancellation_requested_at.isoformat() if order.cancellation_requested_at else None,
+                'cancellation_approved_at': order.cancellation_approved_at.isoformat() if order.cancellation_approved_at else None,
                 'created_at': order.created_at.isoformat(),
+                'items_count': len(order.items),
                 'items': []
             }
             
@@ -6143,6 +7033,29 @@ def get_order_details(order_id):
             print(f"[GET-ORDER-DETAILS] Order {order_id} does not belong to customer {customer.id}")
             return jsonify({'success': False, 'error': 'Unauthorized', 'message': 'You do not own this order'}), 403
         
+        # Get the default address from address book
+        default_address_obj = CustomerAddress.query.filter_by(
+            customer_id=customer.id, 
+            is_default=True
+        ).first()
+        
+        # Format the default address as a readable string
+        default_address = 'Not provided'
+        if default_address_obj:
+            address_parts = [
+                default_address_obj.address_line1,
+                default_address_obj.address_line2,
+                default_address_obj.city,
+                default_address_obj.state,
+                default_address_obj.postal_code,
+                default_address_obj.country
+            ]
+            # Filter out None/empty values and join with commas
+            default_address = ', '.join(filter(None, address_parts))
+        elif customer.default_address:
+            # Fallback to customer's default_address if no address book entry exists
+            default_address = customer.default_address
+
         # Build order details
         order_dict = {
             'id': order.id,
@@ -6150,11 +7063,17 @@ def get_order_details(order_id):
             'customer_name': f"{user.first_name} {user.last_name}",
             'customer_email': user.email,
             'customer_phone': customer.phone or 'Not provided',
-            'customer_address': customer.default_address or 'Not provided',
+            'customer_address': default_address,
+            'delivery_address_id': order.delivery_address_id,
+            'delivery_address': get_order_delivery_address(order),
             'total_amount': float(order.total_amount),
             'status': order.status or 'pending',
             'payment_status': 'pending',
             'shipping_status': order.shipping_status or 'pending',
+            'cancellation_request_status': order.cancellation_request_status,
+            'cancellation_reason': order.cancellation_reason,
+            'cancellation_requested_at': order.cancellation_requested_at.isoformat() if order.cancellation_requested_at else None,
+            'cancellation_approved_at': order.cancellation_approved_at.isoformat() if order.cancellation_approved_at else None,
             'created_at': order.created_at.isoformat() if order.created_at else None,
             'items': []
         }
@@ -6187,6 +7106,130 @@ def get_order_details(order_id):
         traceback.print_exc()
         return jsonify({'success': False, 'error': 'Server Error', 'message': str(e)}), 500
 
+@app.route('/api/orders/track/<order_ref>', methods=['GET'])
+def track_order_by_reference(order_ref):
+    """Public endpoint to track order by reference number"""
+    try:
+        # Find order by reference number
+        order = Orders.query.filter_by(reference_number=order_ref).first()
+        if not order:
+            return jsonify({'success': False, 'message': 'Order not found'}), 404
+
+        # Get payment status
+        payment = Payments.query.filter_by(order_id=order.id).first()
+        payment_status = payment.status if payment else 'pending'
+
+        # Build order data
+        order_data = {
+            'id': order.id,
+            'reference_number': order.reference_number,
+            'total_amount': float(order.total_amount),
+            'status': order.status or 'pending',
+            'payment_status': payment_status,
+            'shipping_status': order.shipping_status or 'pending',
+            'created_at': order.created_at.isoformat() if order.created_at else None,
+            'items': []
+        }
+
+        # Add order items
+        for item in order.items:
+            item_dict = {
+                'product_id': item.product_id,
+                'product_name': item.product.name if item.product else 'Unknown Product',
+                'quantity': item.quantity,
+                'price_at_purchase': float(item.price_at_purchase),
+                'total': float(item.quantity * item.price_at_purchase)
+            }
+            order_data['items'].append(item_dict)
+
+        # Build timeline based on order status
+        timeline = build_order_timeline(order, payment)
+
+        return jsonify({
+            'success': True,
+            'order': order_data,
+            'timeline': timeline
+        }), 200
+    except Exception as e:
+        print(f"Error tracking order: {str(e)}")
+        return jsonify({'success': False, 'message': 'Server Error'}), 500
+
+
+def build_order_timeline(order, payment):
+    """Build order timeline based on status and dates"""
+    timeline = []
+
+    # Order placed
+    timeline.append({
+        'title': 'Order Placed',
+        'description': 'Your order has been successfully placed and is being processed.',
+        'date': order.created_at.strftime('%B %d, %Y at %I:%M %p') if order.created_at else 'Date not available',
+        'completed': True,
+        'active': order.status == 'pending'
+    })
+
+    # Payment processing
+    if payment:
+        if payment.status == 'completed':
+            timeline.append({
+                'title': 'Payment Confirmed',
+                'description': 'Your payment has been successfully processed.',
+                'date': payment.created_at.strftime('%B %d, %Y at %I:%M %p') if payment.created_at else 'Date not available',
+                'completed': True,
+                'active': order.status == 'processing'
+            })
+        elif payment.status == 'pending':
+            timeline.append({
+                'title': 'Payment Processing',
+                'description': 'Your payment is being processed.',
+                'date': 'In progress',
+                'completed': False,
+                'active': True
+            })
+
+    # Order processing
+    if order.status in ['processing', 'shipped', 'delivered']:
+        timeline.append({
+            'title': 'Order Processing',
+            'description': 'Your order is being prepared for shipment.',
+            'date': 'In progress' if order.status == 'processing' else 'Completed',
+            'completed': order.status != 'processing',
+            'active': order.status == 'processing'
+        })
+
+    # Shipping
+    if order.status in ['shipped', 'delivered']:
+        timeline.append({
+            'title': 'Order Shipped',
+            'description': f'Your order has been shipped. {f"Tracking number: {order.tracking_number}" if order.tracking_number else ""}',
+            'date': order.shipped_at.strftime('%B %d, %Y at %I:%M %p') if hasattr(order, 'shipped_at') and order.shipped_at else 'Date not available',
+            'completed': True,
+            'active': order.status == 'shipped'
+        })
+
+    # Delivery
+    if order.status == 'delivered':
+        timeline.append({
+            'title': 'Order Delivered',
+            'description': 'Your order has been successfully delivered.',
+            'date': order.delivered_at.strftime('%B %d, %Y at %I:%M %p') if hasattr(order, 'delivered_at') and order.delivered_at else 'Date not available',
+            'completed': True,
+            'active': True
+        })
+
+    # Cancelled
+    if order.status == 'cancelled':
+        timeline.append({
+            'title': 'Order Cancelled',
+            'description': 'Your order has been cancelled.',
+            'date': order.updated_at.strftime('%B %d, %Y at %I:%M %p') if hasattr(order, 'updated_at') and order.updated_at else 'Date not available',
+            'completed': True,
+            'active': False
+        })
+
+    return timeline
+
+
 @app.route('/vendor/dashboard/home')
 def vendor_dashboard_home():
     return render_template('dist/includes/vendor/vendordashboard_home.html')
@@ -6206,6 +7249,10 @@ def customer_dashboard_categories():
 @app.route('/customer/dashboard/wishlist')
 def customer_dashboard_wishlist():
     return render_template('dist/includes/customer/wishlist.html')
+
+@app.route('/customer/dashboard/save-for-later')
+def customer_dashboard_save_for_later():
+    return render_template('dist/includes/customer/save_for_later.html')
 
 @app.route('/customer/dashboard/orders')
 def customer_dashboard_orders():

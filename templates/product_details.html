@@ -111,10 +111,11 @@
             background: transparent;
             color: var(--muted);
             border: 1px solid rgba(212,175,55,0.3);
-            padding: 8px 16px;
+            padding: 6px 12px;
             border-radius: var(--radius);
             cursor: pointer;
             font-weight: 600;
+            font-size: 0.85rem;
             transition: var(--transition);
             text-decoration: none;
         }
@@ -128,10 +129,11 @@
             background: linear-gradient(135deg, var(--orange) 0%, #F7931E 100%);
             color: white;
             border: none;
-            padding: 10px 20px;
+            padding: 6px 14px;
             border-radius: var(--radius);
             cursor: pointer;
             font-weight: 600;
+            font-size: 0.85rem;
             transition: var(--transition);
             text-decoration: none;
             display: inline-block;
@@ -157,6 +159,13 @@
             display: none;
             align-items: center;
             gap: 15px;
+        }
+
+        .user-profile {
+            display: none;
+            align-items: center;
+            gap: 15px;
+            cursor: pointer;
         }
 
         .user-profile.active {
@@ -251,9 +260,10 @@
 
         .product-details-container {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 0.25fr 0.75fr;
             gap: 60px;
             align-items: start;
+            margin-bottom: 280px;
         }
 
         /* Product Images */
@@ -265,23 +275,25 @@
 
         .product-main-image {
             width: 100%;
-            height: 500px;
-            background: linear-gradient(135deg, rgba(212,175,55,0.1), rgba(255,107,53,0.1));
-            border: 2px solid rgba(212,175,55,0.2);
-            border-radius: var(--radius);
+            min-height: 640px;
+            max-height: 90vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 5rem;
-            color: var(--gold);
-            overflow: hidden;
             position: relative;
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 14px;
+            padding: 14px;
+            overflow: hidden;
         }
 
         .product-main-image img {
             width: 100%;
-            height: 100%;
-            object-fit: cover;
+            height: auto;
+            display: block;
+            object-fit: contain;
+            border-radius: 10px;
         }
 
         .product-thumbnails {
@@ -587,8 +599,256 @@
             font-size: 0.9rem;
         }
 
-        /* ==================== RESPONSIVE ==================== */
+        /* ==================== REVIEWS SECTION ==================== */
+        .reviews-section {
+            margin-top: 80px;
+            padding: 40px;
+            background: linear-gradient(135deg, rgba(212,175,55,0.05) 0%, rgba(255,107,53,0.05) 100%);
+            border: 1px solid rgba(212,175,55,0.2);
+            border-radius: var(--radius);
+        }
+
+        /* Flash Message */
+        .flash-message {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            max-width: 400px;
+            padding: 16px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            z-index: 2000;
+            animation: slideIn 0.3s ease, slideOut 0.3s ease 4.7s;
+            font-weight: 600;
+        }
+
+        .flash-message.success {
+            background: #28a745;
+            color: white;
+            border-left: 4px solid #20c997;
+        }
+
+        .flash-message.error {
+            background: #dc3545;
+            color: white;
+            border-left: 4px solid #ff6b6b;
+        }
+
+        .flash-message.info {
+            background: #17a2b8;
+            color: white;
+            border-left: 4px solid #20c997;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
+
+        .reviews-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+        }
+
+        .reviews-header h2 {
+            font-size: 1.8rem;
+            font-weight: 800;
+        }
+
+        .rating-summary {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .rating-number {
+            font-size: 2.4rem;
+            font-weight: 900;
+            color: var(--orange);
+        }
+
+        .rating-stars {
+            display: flex;
+            gap: 4px;
+            font-size: 1.2rem;
+            color: var(--gold);
+        }
+
+        .rating-count {
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+
+        /* Review Form */
+        .review-form-container {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(212,175,55,0.1);
+            padding: 24px;
+            border-radius: var(--radius);
+            margin-bottom: 32px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--white);
+        }
+
+        .star-rating {
+            display: flex;
+            gap: 8px;
+            font-size: 1.8rem;
+        }
+
+        .star-rating .star {
+            cursor: pointer;
+            color: rgba(212,175,55,0.4);
+            transition: var(--transition);
+        }
+
+        .star-rating .star:hover,
+        .star-rating .star.active {
+            color: var(--gold);
+            transform: scale(1.2);
+        }
+
+        .form-group textarea {
+            width: 100%;
+            background: transparent;
+            border: 1px solid rgba(212,175,55,0.2);
+            color: var(--white);
+            padding: 12px;
+            border-radius: 8px;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .form-group textarea::placeholder {
+            color: var(--muted);
+        }
+
+        .submit-review-btn {
+            background: linear-gradient(135deg, var(--orange) 0%, #F7931E 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .submit-review-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255,107,53,0.3);
+        }
+
+        .submit-review-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Reviews List */
+        .reviews-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .review-card {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(212,175,55,0.1);
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .review-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 12px;
+        }
+
+        .reviewer-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .reviewer-name {
+            font-weight: 700;
+            color: var(--white);
+        }
+
+        .review-date {
+            color: var(--muted);
+            font-size: 0.85rem;
+        }
+
+        .review-stars {
+            display: flex;
+            gap: 2px;
+            font-size: 0.9rem;
+            color: var(--gold);
+        }
+
+        .review-text {
+            color: var(--muted);
+            line-height: 1.6;
+        }
+
+        .empty-reviews {
+            text-align: center;
+            padding: 40px;
+            color: var(--muted);
+        }
+
+        /* ==================== RESPONSIVE REVIEWS ==================== */
         @media (max-width: 768px) {
+            .reviews-section {
+                padding: 24px;
+            }
+
+            .reviews-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .review-form-container {
+                padding: 16px;
+            }
+
+            .star-rating {
+                font-size: 1.4rem;
+            }
+        }
+
+        
             .nav {
                 display: none;
                 position: absolute;
@@ -617,7 +877,17 @@
             }
 
             .auth-buttons {
-                display: none;
+                gap: 6px;
+            }
+
+            .btn-signin {
+                padding: 5px 10px;
+                font-size: 0.75rem;
+            }
+
+            .btn-signup {
+                padding: 5px 10px;
+                font-size: 0.75rem;
             }
 
             .user-profile.active {
@@ -628,7 +898,9 @@
             }
 
             .user-info {
-                display: none;
+                display: flex;
+                align-items: center;
+                justify-content: center;
             }
 
             .product-details-container {
@@ -637,8 +909,13 @@
             }
 
             .product-main-image {
-                height: 350px;
-                font-size: 3rem;
+                height: auto;
+                max-height: 400px;
+                padding: 12px;
+            }
+
+            .product-main-image img {
+                border-radius: 6px;
             }
 
             .product-title {
@@ -656,23 +933,62 @@
 
         @media (max-width: 480px) {
             .header-inner {
-                padding: 12px 0;
+                padding: 10px 0;
             }
 
             .brand {
-                font-size: 1.3rem;
+                font-size: 1.2rem;
+            }
+
+            .nav a {
+                font-size: 0.8rem;
+                padding: 8px 12px;
+            }
+
+            .btn-signin,
+            .btn-signup {
+                font-size: 0.75rem;
+                padding: 5px 10px;
+            }
+
+            .product-main-image {
+                max-height: 300px;
+                padding: 8px;
+            }
+
+            .user-info strong {
+                font-size: 0.9rem;
             }
 
             .product-title {
-                font-size: 1.4rem;
+                font-size: 1.2rem;
             }
 
             .price {
-                font-size: 1.6rem;
+                font-size: 1.4rem;
+            }
+
+            .product-vendor,
+            .product-rating,
+            .stock-status,
+            .description-section h3,
+            .specifications h3 {
+                font-size: 0.9rem;
             }
 
             .product-thumbnails {
                 grid-template-columns: repeat(3, 1fr);
+            }
+
+            .btn-primary,
+            .btn-secondary {
+                font-size: 0.9rem;
+                padding: 12px 18px;
+            }
+
+            .product-main-image {
+                max-height: 300px;
+                padding: 8px;
             }
         }
 
@@ -1148,14 +1464,10 @@
                 <a href="/login" class="btn-signin">Sign In</a>
                 <a href="/register" class="btn-signup">Get Started</a>
             </div>
-            <div class="user-profile" id="userProfile">
-                <div class="user-avatar" id="userAvatar">U</div>
+            <div class="user-profile" id="userProfile" data-dashboard-url="">
                 <div class="user-info">
                     <strong id="userName">User</strong>
-                    <small>Account</small>
                 </div>
-                <button id="dashboardBtn" class="btn-dashboard">Dashboard</button>
-                <button id="logoutBtn" class="btn-logout">Logout</button>
             </div>
             <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">☰</button>
         </div>
@@ -1272,8 +1584,6 @@
             
             const authButtons = document.getElementById('authButtons');
             const userProfile = document.getElementById('userProfile');
-            const dashboardBtn = document.getElementById('dashboardBtn');
-            const logoutBtn = document.getElementById('logoutBtn');
 
             if (token && firstName) {
                 authButtons.style.display = 'none';
@@ -1281,16 +1591,15 @@
                 
                 const fullName = firstName + (lastName ? ' ' + lastName : '');
                 document.getElementById('userName').textContent = fullName;
-                document.getElementById('userAvatar').textContent = firstName[0].toUpperCase();
                 
                 if (role === 'vendor') {
-                    dashboardBtn.dataset.dashboardUrl = '/vendor/dashboard';
+                    userProfile.dataset.dashboardUrl = '/vendor/dashboard';
                 } else if (role === 'customer') {
-                    dashboardBtn.dataset.dashboardUrl = '/customer/dashboard';
+                    userProfile.dataset.dashboardUrl = '/customer/dashboard';
                 } else if (role === 'super_admin') {
-                    dashboardBtn.dataset.dashboardUrl = '/admin/dashboard';
+                    userProfile.dataset.dashboardUrl = '/admin/dashboard';
                 } else {
-                    dashboardBtn.dataset.dashboardUrl = '/customer/dashboard';
+                    userProfile.dataset.dashboardUrl = '/customer/dashboard';
                 }
             } else {
                 authButtons.style.display = 'flex';
@@ -1313,19 +1622,17 @@
         document.addEventListener('DOMContentLoaded', () => {
             checkAuth();
             
-            const dashboardBtn = document.getElementById('dashboardBtn');
-            dashboardBtn.addEventListener('click', (e) => {
+            const userProfile = document.getElementById('userProfile');
+            userProfile.addEventListener('click', (e) => {
                 e.preventDefault();
-                const dashboardUrl = dashboardBtn.dataset.dashboardUrl;
+                const dashboardUrl = userProfile.dataset.dashboardUrl;
                 if (dashboardUrl) {
                     window.location.href = dashboardUrl;
                 }
             });
-            
-            document.getElementById('logoutBtn').addEventListener('click', (e) => {
-                e.preventDefault();
-                logout();
-            });
+
+            // Re-check auth on window resize to handle mobile/desktop changes
+            window.addEventListener('resize', checkAuth);
         });
 
         // Menu toggle for mobile
@@ -1472,10 +1779,66 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Reviews Section -->
+                        <div class="reviews-section">
+                            <div class="reviews-header">
+                                <h2>Reviews & Ratings</h2>
+                                <div class="rating-summary">
+                                    <div class="rating-number" id="avgRating">0.0</div>
+                                    <div>
+                                        <div class="rating-stars" id="ratingStarsDisplay"></div>
+                                        <div class="rating-count" id="reviewCount">No reviews yet</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Review Form -->
+                            <div class="review-form-container" id="reviewFormContainer">
+                                <h3 style="margin-bottom: 20px; color: var(--white);">Share Your Review</h3>
+                                <div class="form-group">
+                                    <label>Rating</label>
+                                    <div class="star-rating" id="starRating">
+                                        <span class="star" data-rating="1">★</span>
+                                        <span class="star" data-rating="2">★</span>
+                                        <span class="star" data-rating="3">★</span>
+                                        <span class="star" data-rating="4">★</span>
+                                        <span class="star" data-rating="5">★</span>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label>Your Review</label>
+                                    <textarea id="reviewText" placeholder="Share your thoughts about this product..."></textarea>
+                                </div>
+                                <button class="submit-review-btn" onclick="submitReview();">Submit Review</button>
+                            </div>
+
+                            <!-- Reviews List -->
+                            <div id="reviewsList" class="reviews-list">
+                                <div class="empty-reviews">Loading reviews...</div>
+                            </div>
+                        </div>
                     `;
 
                     // Update page title
                     document.title = `${product.name} - Ikeja Online`;
+
+                    // Setup star rating selector
+                    setupStarRating();
+                    
+                    // Load reviews
+                    loadReviews(productId);
+
+                    // Check if user is logged in and show form accordingly
+                    const token = localStorage.getItem('access_token');
+                    const formContainer = document.getElementById('reviewFormContainer');
+                    if (!token && formContainer) {
+                        formContainer.innerHTML = `
+                            <p style="text-align: center; color: var(--muted); padding: 20px;">
+                                <a href="/login" style="color: var(--orange);">Sign in</a> to leave a review
+                            </p>
+                        `;
+                    }
                 } else {
                     console.error('API error:', data.error);
                     contentSection.innerHTML = `
@@ -1505,6 +1868,174 @@
             element.classList.add('active');
             const imgSrc = element.querySelector('img').src;
             document.getElementById('mainImage').innerHTML = `<img src="${imgSrc}">`;
+        }
+
+        // Star Rating Setup
+        let selectedRating = 0;
+        function setupStarRating() {
+            const stars = document.querySelectorAll('.star-rating .star');
+            stars.forEach(star => {
+                star.addEventListener('click', () => {
+                    selectedRating = parseInt(star.dataset.rating);
+                    stars.forEach(s => {
+                        if (parseInt(s.dataset.rating) <= selectedRating) {
+                            s.classList.add('active');
+                        } else {
+                            s.classList.remove('active');
+                        }
+                    });
+                });
+                star.addEventListener('mouseenter', () => {
+                    const hoverRating = parseInt(star.dataset.rating);
+                    stars.forEach(s => {
+                        if (parseInt(s.dataset.rating) <= hoverRating) {
+                            s.style.color = 'var(--gold)';
+                        } else {
+                            s.style.color = 'rgba(212,175,55,0.4)';
+                        }
+                    });
+                });
+                star.addEventListener('mouseleave', () => {
+                    stars.forEach(s => {
+                        if (parseInt(s.dataset.rating) <= selectedRating) {
+                            s.style.color = 'var(--gold)';
+                        } else {
+                            s.style.color = 'rgba(212,175,55,0.4)';
+                        }
+                    });
+                });
+            });
+        }
+
+        // Load Reviews
+        async function loadReviews(productId) {
+            try {
+                const response = await fetch(`/api/products/${productId}/reviews`);
+                const data = await response.json();
+
+                if (data.success && data.reviews) {
+                    const reviews = data.reviews;
+                    const summaryData = data.summary || {};
+
+                    // Update rating summary
+                    document.getElementById('avgRating').textContent = 
+                        summaryData.avg_rating ? summaryData.avg_rating.toFixed(1) : '0.0';
+                    document.getElementById('reviewCount').textContent = 
+                        `${reviews.length} review${reviews.length !== 1 ? 's' : ''}`;
+
+                    // Display rating stars
+                    const avgRating = summaryData.avg_rating || 0;
+                    let starsHtml = '';
+                    for (let i = 1; i <= 5; i++) {
+                        starsHtml += i <= Math.round(avgRating) ? '★' : '☆';
+                    }
+                    document.getElementById('ratingStarsDisplay').innerHTML = starsHtml;
+
+                    // Display reviews
+                    const reviewsList = document.getElementById('reviewsList');
+                    if (reviews.length === 0) {
+                        reviewsList.innerHTML = '<div class="empty-reviews">No reviews yet. Be the first to review!</div>';
+                    } else {
+                        reviewsList.innerHTML = reviews.map(review => {
+                            let starsHtml = '';
+                            for (let i = 1; i <= 5; i++) {
+                                starsHtml += i <= review.rating ? '★' : '☆';
+                            }
+                            const date = new Date(review.created_at).toLocaleDateString('en-NG', {
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric'
+                            });
+                            return `
+                                <div class="review-card">
+                                    <div class="review-header">
+                                        <div class="reviewer-info">
+                                            <div class="reviewer-name">${review.customer_name || 'Anonymous'}</div>
+                                            <div class="review-date">${date}</div>
+                                        </div>
+                                        <div class="review-stars">${starsHtml}</div>
+                                    </div>
+                                    <div class="review-text">${review.comment}</div>
+                                </div>
+                            `;
+                        }).join('');
+                    }
+                } else {
+                    document.getElementById('reviewsList').innerHTML = 
+                        '<div class="empty-reviews">Could not load reviews</div>';
+                }
+            } catch (error) {
+                console.error('Error loading reviews:', error);
+                document.getElementById('reviewsList').innerHTML = 
+                    '<div class="empty-reviews">Could not load reviews</div>';
+            }
+        }
+
+        // Submit Review
+        async function submitReview() {
+            const token = localStorage.getItem('access_token');
+            if (!token) {
+                window.location.href = '/login';
+                return;
+            }
+
+            if (selectedRating === 0) {
+                showFlashMessage('Please select a rating', 'error');
+                return;
+            }
+
+            const reviewText = document.getElementById('reviewText').value.trim();
+            if (!reviewText) {
+                showFlashMessage('Please enter a review', 'error');
+                return;
+            }
+
+            const submitBtn = document.querySelector('.submit-review-btn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Submitting...';
+
+            try {
+                const response = await fetch(`/api/products/${productId}/reviews`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + token,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        rating: selectedRating,
+                        comment: reviewText
+                    })
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    showFlashMessage('Review submitted successfully!', 'success');
+                    document.getElementById('reviewText').value = '';
+                    selectedRating = 0;
+                    document.querySelectorAll('.star-rating .star').forEach(s => s.classList.remove('active'));
+                    loadReviews(productId);
+                } else {
+                    throw new Error(data.message || 'Failed to submit review');
+                }
+            } catch (error) {
+                showFlashMessage('Error submitting review: ' + error.message, 'error');
+                console.error(error);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit Review';
+            }
+        }
+
+        // Flash Message Function
+        function showFlashMessage(message, type = 'info') {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `flash-message ${type}`;
+            messageDiv.textContent = message;
+            document.body.appendChild(messageDiv);
+            
+            setTimeout(() => {
+                messageDiv.remove();
+            }, 5000);
         }
 
         // Load on page load
