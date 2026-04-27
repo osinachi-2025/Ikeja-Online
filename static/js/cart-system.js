@@ -14,6 +14,7 @@ class ShoppingCart {
     saveCart() {
         localStorage.setItem('shopping_cart', JSON.stringify(this.items));
         this.updateCartUI();
+        this.renderCartPanel();
     }
 
     // Add item to cart
@@ -61,21 +62,71 @@ class ShoppingCart {
         return this.items.reduce((total, item) => total + item.quantity, 0);
     }
 
-    // Get cart total
-    getCartTotal() {
-        return this.items.reduce((total, item) => total + (item.price * item.quantity), 0);
+    // Format price for display
+    formatCurrency(amount) {
+        return new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN' }).format(amount);
     }
 
-    // Clear cart
-    clearCart() {
-        this.items = [];
-        this.saveCart();
+    // Render the cart drawer panel
+    renderCartPanel() {
+        const panel = document.getElementById('cart-panel');
+        if(!panel) return;
+        const listEl = panel.querySelector('#cart-items');
+        const totalEl = panel.querySelector('#cart-total');
+        const countEl = panel.querySelector('#cart-item-count');
+        const actions = panel.querySelector('.cart-actions');
+        if(!listEl || !totalEl || !countEl || !actions) return;
+
+        if(this.items.length === 0) {
+            listEl.innerHTML = '<div class="cart-empty">Your cart is empty. Add products to get started.</div>';
+            actions.style.display = 'none';
+        } else {
+            listEl.innerHTML = this.items.map(item => `
+                <div class="cart-item">
+                    <div class="cart-item-image">
+                        ${item.image ? `<img src="${item.image}" alt="${item.name}">` : `<div class="cart-item-image-fallback">🛍️</div>`}
+                    </div>
+                    <div class="cart-item-details">
+                        <div class="cart-item-head">
+                            <div class="cart-item-name">${item.name}</div>
+                            <div class="cart-item-price">${this.formatCurrency(item.price)}</div>
+                        </div>
+                        <div class="cart-item-store">${item.store_name}</div>
+                        <div class="quantity-controls">
+                            <button type="button" onclick="cart.updateQuantity(${item.id}, ${item.quantity - 1})">−</button>
+                            <span>${item.quantity}</span>
+                            <button type="button" onclick="cart.updateQuantity(${item.id}, ${item.quantity + 1})">+</button>
+                            <button type="button" class="cart-remove" onclick="cart.removeItem(${item.id})">Remove</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            actions.style.display = 'grid';
+        }
+
+        countEl.textContent = `${this.items.length} item${this.items.length === 1 ? '' : 's'}`;
+        totalEl.textContent = this.formatCurrency(this.getCartTotal());
     }
 
-    // Checkout - create order
-    async checkout() {
+    openCartDrawer() {
+        this.renderCartPanel();
+        const overlay = document.getElementById('cart-overlay');
+        if(overlay) {
+            overlay.classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+    }
+
+    closeCartDrawer() {
+        const overlay = document.getElementById('cart-overlay');
+        if(overlay) {
+            overlay.classList.remove('open');
+            document.body.style.overflow = '';
+        }
+    }
+
+    async checkout(paymentMethod = 'paystack') {
         const token = localStorage.getItem('access_token');
-        
         if (!token) {
             this.showCartNotification('Please login to checkout');
             window.location.href = '/login';
@@ -87,48 +138,55 @@ class ShoppingCart {
             return false;
         }
 
-        try {
-            // Prepare cart items for order
-            const checkoutItems = this.items.map(item => ({
-                product_id: item.id,
-                id: item.id,
-                quantity: item.quantity
-            }));
+        const checkoutItems = this.items.map(item => ({
+            product_id: item.id,
+            id: item.id,
+            quantity: item.quantity
+        }));
 
-            const response = await fetch('/api/checkout', {
+        try {
+            const response = await fetch('/api/checkout-and-pay', {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    items: checkoutItems
+                    items: checkoutItems,
+                    payment_method: paymentMethod
                 })
             });
 
             const data = await response.json();
+            if (response.ok && data.success) {
+                if (paymentMethod === 'paystack' && data.authorization_url) {
+                    this.showCartNotification('Redirecting to Paystack...');
+                    setTimeout(() => {
+                        window.location.href = data.authorization_url;
+                    }, 600);
+                    return {
+                        success: true,
+                        order: data.order
+                    };
+                }
 
-            if (response.ok) {
-                // Clear cart after successful order
                 this.clearCart();
-                this.showCartNotification('Order created successfully!');
-                
-                // Redirect to order confirmation or dashboard
+                this.showCartNotification(data.message || 'Payment completed!');
                 setTimeout(() => {
-                    window.location.href = `/customer/dashboard?order_ref=${data.order.reference_number}`;
-                }, 1500);
-                
+                    window.location.href = `/customer/dashboard?order_ref=${encodeURIComponent(data.order.reference_number)}`;
+                }, 1000);
                 return {
                     success: true,
                     order: data.order
                 };
-            } else {
-                this.showCartNotification(data.message || 'Checkout failed');
-                return {
-                    success: false,
-                    error: data.message || 'Unknown error'
-                };
             }
+
+            const message = data.message || data.error || 'Checkout failed';
+            this.showCartNotification(message);
+            return {
+                success: false,
+                error: message
+            };
         } catch (error) {
             console.error('Checkout error:', error);
             this.showCartNotification('Error during checkout');
@@ -139,14 +197,27 @@ class ShoppingCart {
         }
     }
 
+    // Get cart total
+    getCartTotal() {
+        return this.items.reduce((total, item) => total + (item.price * item.quantity), 0);
+    }
+
+    // Clear cart
+    clearCart() {
+        this.items = [];
+        this.saveCart();
+    }
+
     // Update UI
     updateCartUI() {
-        const cartCount = document.getElementById('cartCount');
-        if (cartCount) {
-            const count = this.getCartCount();
-            cartCount.textContent = count;
-            cartCount.style.display = count > 0 ? 'flex' : 'none';
-        }
+        const count = this.getCartCount();
+        
+        // Update all cart badges
+        const cartBadges = document.querySelectorAll('#navCartBadge, #floatingCartBadge, #mobileCartBadge, #cartCount, #cart-badge');
+        cartBadges.forEach(badge => {
+            badge.textContent = count;
+            badge.style.display = count > 0 ? 'flex' : 'none';
+        });
     }
 
     // Show notification
@@ -177,6 +248,10 @@ class ShoppingCart {
 
 // Initialize cart
 let cart = new ShoppingCart();
+
+// Expose cart drawer helpers globally
+function openCartDrawer() { cart.openCartDrawer(); }
+function closeCartDrawer() { cart.closeCartDrawer(); }
 
 // Add animation styles
 const style = document.createElement('style');

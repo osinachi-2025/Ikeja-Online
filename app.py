@@ -41,8 +41,6 @@ app = Flask(
 # Database configuration
 db_url = os.getenv('DATABASE_URL', 'sqlite:///ikeja_online.db')
 # Fix PostgreSQL URL format for SQLAlchemy compatibility
-if db_url and db_url.startswith('postgresql://'):
-    db_url = db_url.replace('postgresql://', 'postgresql+psycopg2://', 1)
 app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -1069,7 +1067,27 @@ def save_vendor_logo_to_db(file, vendor):
 @app.route('/')
 
 def home():
-    return render_template('home/home.html')
+    return render_template('home/new_home.html')
+
+@app.route('/all-products')
+def all_products():
+    """All products page - displays all available products with pagination"""
+    return render_template('all-products.html')
+
+@app.route('/product-detail')
+def product_detail():
+    """Product detail page - displays single product information"""
+    return render_template('product_details.html')
+
+@app.route('/product-detail-extended')
+def product_detail_extended():
+    """Extended product detail page - extends new_home.html layout"""
+    return render_template('home/product-detail-extended.html')
+
+@app.route('/all-categories')
+def all_categories():
+    """All categories page - shows all product categories"""
+    return render_template('home/all-categories.html')
 
 @app.route('/verify-gmail')
 def verify_gmail():
@@ -1384,37 +1402,51 @@ def confirm_action(token):
         flash(f'Error confirming action: {str(e)}', 'danger')
         return redirect(url_for('login'))
 
+@app.route('/new_home')
+def new_home():
+    return render_template('home/new_home.html')
 
 @app.route('/register', methods=['POST', 'GET'])
 def register():
     if request.method == 'POST':
+        data = request.get_json(silent=True) or request.form
         # Get form data
-        role = request.form.get('role', 'customer').lower()
-        first_name = request.form.get('firstname', '').strip()
-        last_name = request.form.get('lastname', '').strip()
-        email = request.form.get('email', '').strip().lower()
-        password = request.form.get('password', '')
-        confirm_password = request.form.get('confirm_password', '')
-        store_name = request.form.get('store', '').strip()
-        category = request.form.get('vendor_class', '').strip()
+        role = (data.get('role') or data.get('role', 'customer')).lower()
+        first_name = (data.get('firstname') or data.get('firstname', '')).strip()
+        last_name = (data.get('lastname') or data.get('lastname', '')).strip()
+        email = (data.get('email') or data.get('email', '')).strip().lower()
+        password = data.get('password', '')
+        confirm_password = data.get('confirm_password', '')
+        store_name = (data.get('store') or data.get('store', '')).strip()
+        category = (data.get('vendor_class') or data.get('vendor_class', '')).strip()
 
         # Validation
         if not all([first_name, last_name, email, password]):
+            if request.is_json:
+                return jsonify({'success': False, 'error': 'All fields are required'}), 400
             return render_template('auth/register.html', error='All fields are required')
         
         if password != confirm_password:
+            if request.is_json:
+                return jsonify({'success': False, 'error': 'Passwords do not match'}), 400
             return render_template('auth/register.html', error='Passwords do not match')
         
         if len(password) < 8:
+            if request.is_json:
+                return jsonify({'success': False, 'error': 'Password must be at least 8 characters'}), 400
             return render_template('auth/register.html', error='Password must be at least 8 characters')
         
         # Check if email already exists
         if Users.query.filter_by(email=email).first():
+            if request.is_json:
+                return jsonify({'success': False, 'error': 'Email already registered'}), 409
             return render_template('auth/register.html', error='Email already registered')
         
         # Get role from database
         role_obj = Roles.query.filter_by(name=role).first()
         if not role_obj:
+            if request.is_json:
+                return jsonify({'success': False, 'error': f'Invalid role: {role}'}), 400
             return render_template('auth/register.html', error=f'Invalid role: {role}')
         
         try:
@@ -1440,10 +1472,14 @@ def register():
                 
                 if store_name and Vendors.query.filter_by(store_name=store_name).first():
                     db.session.rollback()
+                    if request.is_json:
+                        return jsonify({'success': False, 'error': 'Store name already exists'}), 409
                     return render_template('auth/register.html', error='Store name already exists')
                 
                 if Vendors.query.filter_by(store_slug=store_slug).first():
                     db.session.rollback()
+                    if request.is_json:
+                        return jsonify({'success': False, 'error': 'Store slug already exists'}), 409
                     return render_template('auth/register.html', error='Store slug already exists')
                 
                 vendor = Vendors(
@@ -1558,12 +1594,16 @@ def register():
                 traceback.print_exc()
             
             # Flash success message
+            if request.is_json:
+                return jsonify({'success': True, 'message': 'Registration successful! Check your email to verify your account.'}), 200
             flash(f'Registration successful! Check your email to verify your account.', 'success')
             return redirect(url_for('login'))
             
         except Exception as e:
             db.session.rollback()
-            return render_template('register.html', error=f'Registration failed: {str(e)}')
+            if request.is_json:
+                return jsonify({'success': False, 'error': f'Registration failed: {str(e)}'}), 500
+            return render_template('auth/register.html', error=f'Registration failed: {str(e)}')
     
     return render_template('auth/register.html')
 
@@ -1571,16 +1611,21 @@ def register():
 def login():
     
     if request.method == 'POST':
-        email = request.form.get('email', '').strip().lower()
-        password = request.form.get('password', '')
+        data = request.get_json(silent=True) or request.form
+        email = (data.get('email') or '').strip().lower()
+        password = data.get('password', '')
         
         if not email or not password:
+            if request.is_json:
+                return jsonify({'success': False, 'message': 'Email and password are required'}), 400
             return render_template('auth/login.html', error='Email and password are required')
         
         # Find user by email
         user = Users.query.filter_by(email=email).first()
         
         if not user or not check_password_hash(user.passwordhash, password):
+            if request.is_json:
+                return jsonify({'success': False, 'message': 'Invalid email or password'}), 401
             return render_template('auth/login.html', error='Invalid email or password')
         
         try:
@@ -1897,6 +1942,97 @@ def get_vendor_products():
     
     except Exception as e:
         print(f"Error in get_vendor_products: {str(e)}")
+        return jsonify({'success': False, 'error': 'Server Error', 'message': f'Failed to fetch products: {str(e)}'}), 500
+
+
+# GET all public products (no auth required) - for homepage
+@app.route('/api/public-products', methods=['GET'])
+def get_public_products():
+    try:
+        # Get pagination parameters
+        page = request.args.get('page', 1, type=int)
+        limit = request.args.get('limit', 8, type=int)
+        category_id = request.args.get('category_id', None, type=int)
+        
+        # Validate pagination parameters
+        if page < 1:
+            page = 1
+        if limit < 1 or limit > 100:
+            limit = 8
+        
+        # Build query
+        query = Products.query.filter_by(status='active')
+        
+        # Filter by category if provided
+        if category_id:
+            query = query.filter_by(category_id=category_id)
+        
+        # Get paginated products
+        pagination = query.paginate(page=page, per_page=limit, error_out=False)
+        
+        products_data = []
+        for product in pagination.items:
+            try:
+                # Get primary image
+                primary_image = None
+                if product.images:
+                    primary_image = product.images[0].image_url if product.images[0].image_url else f'/api/product-image/{product.images[0].id}'
+                
+                # Calculate average rating from reviews
+                avg_rating = 0
+                review_count = 0
+                if product.reviews:
+                    review_count = len(product.reviews)
+                    if review_count > 0:
+                        total_rating = sum(review.rating for review in product.reviews)
+                        avg_rating = total_rating / review_count
+                
+                product_dict = {
+                    'id': product.id,
+                    'name': product.name,
+                    'slug': product.slug,
+                    'description': product.description,
+                    'price': float(product.price),
+                    'stock_quantity': product.stock_quantity,
+                    'status': product.status,
+                    'created_at': product.created_at.isoformat(),
+                    'category_id': product.category_id,
+                    'category_name': product.category.name if product.category else 'Uncategorized',
+                    'vendor_id': product.vendor_id,
+                    'vendor_name': product.vendor.store_name if product.vendor else 'Unknown',
+                    'image': primary_image,
+                    'images': [
+                        {
+                            'id': img.id,
+                            'image_url': img.image_url if img.image_url else f'/api/product-image/{img.id}',
+                            'is_primary': img.is_primary
+                        } for img in product.images
+                    ],
+                    'average_rating': round(avg_rating, 1),
+                    'review_count': review_count
+                }
+                products_data.append(product_dict)
+            except Exception as e:
+                print(f"Error processing product {product.id}: {str(e)}")
+                continue
+        
+        return jsonify({
+            'success': True,
+            'products': products_data,
+            'pagination': {
+                'page': pagination.page,
+                'per_page': pagination.per_page,
+                'total': pagination.total,
+                'pages': pagination.pages,
+                'has_next': pagination.has_next,
+                'has_prev': pagination.has_prev,
+                'next_page': pagination.next_num if pagination.has_next else None,
+                'prev_page': pagination.prev_num if pagination.has_prev else None
+            }
+        }), 200
+    
+    except Exception as e:
+        print(f"Error in get_public_products: {str(e)}")
         return jsonify({'success': False, 'error': 'Server Error', 'message': f'Failed to fetch products: {str(e)}'}), 500
 
 

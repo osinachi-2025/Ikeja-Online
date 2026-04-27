@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Product Details — Ikeja Online</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #080A0E;
+    --surface: #0E1117;
+    --surface2: #141820;
+    --border: rgba(255,255,255,0.07);
+    --accent: #22c55e;
+    --accent2: #FF3D6E;
+    --gold: #FFD166;
+    --text: #F0F2F5;
+    --muted: #6B7280;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none; z-index: 0; opacity: 0.35;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 5%;
+    height: 72px;
+    background: rgba(8,10,14,0.7);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .nav-logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 1.5rem;
+    letter-spacing: -0.04em;
+    color: var(--text);
+    text-decoration: none;
+  }
+  .nav-logo span { color: var(--accent); }
+
+  .nav-links {
+    display: flex; gap: 2rem; list-style: none;
+  }
+  .nav-links a {
+    color: var(--muted); font-size: 0.875rem; font-weight: 400;
+    text-decoration: none; letter-spacing: 0.02em;
+    transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--text); }
+
+  .nav-actions { display: flex; align-items: center; gap: 1rem; }
+
+  .btn-nav {
+    background: var(--accent);
+    color: #000;
+    border: none;
+    padding: 0.55rem 1.4rem;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    font-size: 0.875rem;
+    letter-spacing: 0.02em;
+    transition: all 0.25s;
+    clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+  }
+  .btn-nav:hover { background: #fff; transform: translateY(-1px); }
+
+  .cart-icon {
+    width: 40px; height: 40px;
+    display: flex; align-items: center; justify-content: center;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    color: var(--muted);
+    transition: all 0.2s;
+    position: relative;
+    cursor: pointer;
+  }
+  .cart-icon:hover { border-color: var(--accent); color: var(--accent); }
+  .cart-badge {
+    position: absolute; top: -4px; right: -4px;
+    width: 18px; height: 18px;
+    background: var(--accent2);
+    border-radius: 50%;
+    font-size: 0.65rem;
+    font-weight: 500;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  /* ── PAGE HEADER ── */
+  .page-header {
+    margin-top: 72px;
+    padding: 2rem 5%;
+    background: linear-gradient(135deg, rgba(34,197,94,0.05) 0%, rgba(255,61,110,0.05) 100%);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 2rem;
+  }
+
+  .back-link {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: color 0.2s;
+    display: flex; align-items: center; gap: 0.5rem;
+  }
+  .back-link:hover { color: var(--text); }
+
+  /* ── CONTENT ── */
+  .content-section {
+    padding: 3rem 5%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem;
+    margin-top: 2rem;
+  }
+
+  .product-gallery {
+    display: flex; flex-direction: column; gap: 1rem;
+  }
+
+  .gallery-main {
+    aspect-ratio: 1 / 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+  }
+
+  .gallery-main img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .gallery-thumbnails {
+    display: flex; gap: 0.75rem;
+  }
+
+  .thumbnail {
+    width: 80px; height: 80px;
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    overflow: hidden;
+    transition: all 0.3s;
+  }
+
+  .thumbnail img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .thumbnail:hover {
+    border-color: var(--accent);
+  }
+
+  .thumbnail.active {
+    border-color: var(--accent);
+    background: rgba(34,197,94,0.1);
+  }
+
+  .product-details {
+    display: flex; flex-direction: column; gap: 1.5rem;
+  }
+
+  .product-header {
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 1.5rem;
+  }
+
+  .product-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 2rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+  }
+
+  .product-meta {
+    display: flex; align-items: center; gap: 1rem;
+    font-size: 0.9rem;
+    color: var(--muted);
+  }
+
+  .product-rating {
+    display: flex; align-items: center; gap: 0.5rem;
+  }
+
+  .stars { color: var(--gold); }
+
+  .product-price-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 1.5rem;
+    border-radius: 12px;
+  }
+
+  .price-label {
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .product-price {
+    font-family: 'Syne', sans-serif;
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--text);
+    margin-bottom: 1rem;
+  }
+
+  .stock-status {
+    display: flex; align-items: center; gap: 0.5rem;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+  }
+
+  .stock-status.in-stock { color: var(--accent); }
+  .stock-status.low-stock { color: var(--gold); }
+  .stock-status.out-of-stock { color: var(--accent2); }
+
+  .action-buttons {
+    display: flex; gap: 1rem;
+  }
+
+  .btn-add-cart {
+    flex: 1;
+    background: var(--accent);
+    color: #000;
+    border: none;
+    padding: 1rem;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 600;
+    font-size: 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+  }
+
+  .btn-add-cart:hover {
+    background: #fff;
+    color: #000;
+    transform: translateY(-2px);
+  }
+
+  .btn-wishlist {
+    width: 50px; height: 50px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--muted);
+    font-size: 1.3rem;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .btn-wishlist:hover {
+    border-color: var(--accent2);
+    color: var(--accent2);
+    background: rgba(255,61,110,0.1);
+  }
+
+  .product-description {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 1.5rem;
+    border-radius: 12px;
+  }
+
+  .product-specs {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 1.5rem;
+    border-radius: 12px;
+  }
+
+  .specs-list {
+    display: flex; flex-direction: column; gap: 1rem;
+  }
+
+  .spec-item {
+    display: grid;
+    grid-template-columns: 150px 1fr;
+    gap: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .spec-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  .spec-label {
+    color: var(--muted);
+    font-weight: 500;
+  }
+
+  .spec-value {
+    color: var(--text);
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    padding: 4rem 5% 2rem;
+    margin-top: 4rem;
+  }
+
+  .footer-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 3rem;
+    margin-bottom: 3rem;
+  }
+
+  .footer-col-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.85rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 1.25rem;
+  }
+
+  .footer-links { list-style: none; display: flex; flex-direction: column; gap: 0.65rem; }
+  .footer-links a {
+    color: var(--muted); font-size: 0.85rem;
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .footer-links a:hover { color: var(--text); }
+
+  .footer-bottom {
+    border-top: 1px solid var(--border);
+    padding-top: 2rem;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 1024px) {
+    .content-section { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 768px) {
+    .product-title { font-size: 1.5rem; }
+    nav { padding: 0 3%; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="/" class="nav-logo">Ikeja <span>Online</span></a>
+
+  <ul class="nav-links">
+    <li><a href="/">Home</a></li>
+    <li><a href="/all-products">Products</a></li>
+    <li><a href="/all-categories">Categories</a></li>
+    <li><a href="#">Deals</a></li>
+    <li><a href="#">About</a></li>
+  </ul>
+
+  <div class="nav-actions">
+    <div class="cart-icon" id="navCartIcon">
+      🛒
+      <span class="cart-badge" id="navCartBadge">0</span>
+    </div>
+    <button class="btn-nav"><i class="fas fa-user"></i></button>
+  </div>
+</nav>
+
+<!-- PAGE HEADER -->
+<div class="page-header">
+  <a href="javascript:history.back()" class="back-link"><i class="fas fa-arrow-left"></i> Back</a>
+</div>
+
+<!-- CONTENT -->
+<div class="content-section" id="productContainer">
+  <div style="text-align: center; padding: 4rem; color: var(--muted);">Loading product details...</div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-grid">
+    <div>
+      <a href="/" class="nav-logo">Ikeja <span>Online</span></a>
+      <p style="color: var(--muted); font-size: 0.85rem; margin-top: 1rem;">Your trusted electronics destination in Ikeja.</p>
+    </div>
+
+    <div>
+      <div class="footer-col-title">Products</div>
+      <ul class="footer-links">
+        <li><a href="/all-products">All Products</a></li>
+        <li><a href="/all-categories">Categories</a></li>
+        <li><a href="#">Best Sellers</a></li>
+      </ul>
+    </div>
+
+    <div>
+      <div class="footer-col-title">Company</div>
+      <ul class="footer-links">
+        <li><a href="#">About Us</a></li>
+        <li><a href="#">Careers</a></li>
+        <li><a href="#">Contact</a></li>
+      </ul>
+    </div>
+
+    <div>
+      <div class="footer-col-title">Support</div>
+      <ul class="footer-links">
+        <li><a href="#">Help Centre</a></li>
+        <li><a href="#">Track Order</a></li>
+        <li><a href="#">Returns</a></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="footer-bottom">
+    <div style="color: var(--muted); font-size: 0.8rem;">© 2025 Ikeja Online Ltd. All rights reserved.</div>
+  </div>
+</footer>
+
+<script>
+  // Shopping Cart System
+  class ShoppingCart {
+    constructor() {
+      this.items = this.loadCart();
+      this.updateCartUI();
+    }
+
+    loadCart() {
+      const stored = localStorage.getItem('shopping_cart');
+      return stored ? JSON.parse(stored) : [];
+    }
+
+    saveCart() {
+      localStorage.setItem('shopping_cart', JSON.stringify(this.items));
+      this.updateCartUI();
+    }
+
+    addItem(product) {
+      const existingItem = this.items.find(item => item.id === product.id);
+      
+      if (existingItem) {
+        existingItem.quantity += product.quantity || 1;
+      } else {
+        this.items.push({
+          id: product.id,
+          name: product.name,
+          price: product.price,
+          image: product.image || null,
+          quantity: product.quantity || 1,
+          store_name: product.store_name || 'Ikeja Online'
+        });
+      }
+      
+      this.saveCart();
+      this.showCartNotification(`${product.name} added to cart!`);
+    }
+
+    updateCartUI() {
+      const count = this.getCartCount();
+      const navBadge = document.getElementById('navCartBadge');
+      if (navBadge) navBadge.textContent = count;
+    }
+
+    getCartCount() {
+      return this.items.reduce((total, item) => total + item.quantity, 0);
+    }
+
+    showCartNotification(message) {
+      const notification = document.createElement('div');
+      notification.style.cssText = `
+        position: fixed;
+        top: 100px;
+        right: 20px;
+        background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+        color: white;
+        padding: 16px 24px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        z-index: 9999;
+        animation: slideIn 0.3s ease;
+        font-weight: 600;
+        font-family: 'DM Sans', sans-serif;
+      `;
+      notification.textContent = message;
+      document.body.appendChild(notification);
+      
+      setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => notification.remove(), 300);
+      }, 2500);
+    }
+  }
+
+  let cart = new ShoppingCart();
+
+  // Get product ID from URL
+  const urlParams = new URLSearchParams(window.location.search);
+  const productId = urlParams.get('id');
+
+  // Load product details
+  async function loadProductDetails() {
+    if (!productId || isNaN(productId)) {
+      document.getElementById('productContainer').innerHTML = `
+        <div style="text-align: center; padding: 4rem; color: var(--muted); grid-column: 1/-1;">
+          <p>Product not found</p>
+          <a href="/" style="color: var(--accent); text-decoration: none;">Back to home</a>
+        </div>
+      `;
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/public-products?id=${productId}`);
+      const data = await response.json();
+
+      if (data.products && data.products.length > 0) {
+        const product = data.products[0];
+        renderProduct(product);
+      } else {
+        document.getElementById('productContainer').innerHTML = `
+          <div style="text-align: center; padding: 4rem; color: var(--muted); grid-column: 1/-1;">
+            <p>Product not found</p>
+            <a href="/" style="color: var(--accent); text-decoration: none;">Back to home</a>
+          </div>
+        `;
+      }
+    } catch (error) {
+      console.error('Error loading product:', error);
+      document.getElementById('productContainer').innerHTML = `
+        <div style="text-align: center; padding: 4rem; color: var(--muted); grid-column: 1/-1;">
+          <p>Error loading product</p>
+          <a href="/" style="color: var(--accent); text-decoration: none;">Back to home</a>
+        </div>
+      `;
+    }
+  }
+
+  function renderProduct(product) {
+    const productImages = product.images || [];
+    const mainImage = productImages.length > 0 ? productImages[0].image_url : '/static/assets/img/no-image.png';
+    
+    const rating = product.average_rating || 0;
+    const stars = '★'.repeat(Math.round(rating)) + '☆'.repeat(5 - Math.round(rating));
+    
+    const stockStatus = product.stock_quantity > 10 ? 'in-stock' : 
+                        product.stock_quantity > 0 ? 'low-stock' : 'out-of-stock';
+    const stockText = product.stock_quantity > 10 ? `${product.stock_quantity} in stock` :
+                      product.stock_quantity > 0 ? `Only ${product.stock_quantity} left` : 'Out of stock';
+
+    const thumbnailsHtml = productImages.map((img, idx) => `
+      <div class="thumbnail ${idx === 0 ? 'active' : ''}" data-image="${img.image_url}" onclick="changeImage(this)">
+        <img src="${img.image_url}" alt="Product image ${idx + 1}" onerror="this.src='/static/assets/img/no-image.png'">
+      </div>
+    `).join('');
+
+    const specsHtml = `
+      <div class="spec-item">
+        <span class="spec-label">Category</span>
+        <span class="spec-value">${product.category_name || 'N/A'}</span>
+      </div>
+      <div class="spec-item">
+        <span class="spec-label">Vendor</span>
+        <span class="spec-value">${product.vendor_name || 'Ikeja Online'}</span>
+      </div>
+      <div class="spec-item">
+        <span class="spec-label">Availability</span>
+        <span class="spec-value">${stockText}</span>
+      </div>
+      <div class="spec-item">
+        <span class="spec-label">Product ID</span>
+        <span class="spec-value">#${product.id}</span>
+      </div>
+    `;
+
+    document.getElementById('productContainer').innerHTML = `
+      <div class="product-gallery">
+        <div class="gallery-main">
+          <img src="${mainImage}" id="mainImage" alt="${product.name}" onerror="this.src='/static/assets/img/no-image.png'">
+        </div>
+        ${productImages.length > 1 ? `<div class="gallery-thumbnails">${thumbnailsHtml}</div>` : ''}
+      </div>
+
+      <div class="product-details">
+        <div class="product-header">
+          <div class="product-title">${product.name}</div>
+          <div class="product-meta">
+            <div class="product-rating">
+              <span class="stars">${stars}</span>
+              <span>(${product.review_count || 0} reviews)</span>
+            </div>
+            <span>•</span>
+            <span>${product.vendor_name || 'Ikeja Online'}</span>
+          </div>
+        </div>
+
+        <div class="product-price-section">
+          <div class="price-label">Price</div>
+          <div class="product-price">₦${parseFloat(product.price).toLocaleString()}</div>
+          <div class="stock-status ${stockStatus}">
+            <i class="fas ${stockStatus === 'in-stock' ? 'fa-check-circle' : stockStatus === 'low-stock' ? 'fa-exclamation-circle' : 'fa-times-circle'}"></i>
+            <span>${stockText}</span>
+          </div>
+          <div class="action-buttons">
+            <button class="btn-add-cart" onclick="addToCart(${product.id}, '${product.name}', ${product.price}, '${mainImage}')">
+              <i class="fas fa-shopping-cart"></i> Add to Cart
+            </button>
+            <button class="btn-wishlist" onclick="toggleWishlist(this)">♡</button>
+          </div>
+        </div>
+
+        <div class="product-description">
+          <h3 style="margin-bottom: 1rem; font-family: 'Syne', sans-serif;">About This Product</h3>
+          <p style="color: var(--muted); line-height: 1.6;">${product.description || 'No description available'}</p>
+        </div>
+
+        <div class="product-specs">
+          <h3 style="margin-bottom: 1.5rem; font-family: 'Syne', sans-serif;">Product Details</h3>
+          <div class="specs-list">${specsHtml}</div>
+        </div>
+      </div>
+    `;
+  }
+
+  function changeImage(element) {
+    document.querySelectorAll('.thumbnail').forEach(t => t.classList.remove('active'));
+    element.classList.add('active');
+    const imageUrl = element.getAttribute('data-image');
+    document.getElementById('mainImage').src = imageUrl;
+  }
+
+  function addToCart(id, name, price, image) {
+    cart.addItem({
+      id: id,
+      name: name,
+      price: price,
+      image: image,
+      store_name: 'Ikeja Online'
+    });
+  }
+
+  function toggleWishlist(btn) {
+    btn.textContent = btn.textContent === '♡' ? '♥' : '♡';
+    btn.style.color = btn.textContent === '♥' ? 'var(--accent2)' : '';
+  }
+
+  // Nav cart click
+  document.getElementById('navCartIcon').addEventListener('click', () => {
+    if (cart.items.length > 0) {
+      window.location.href = '/checkout';
+    }
+  });
+
+  // Add animations
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes slideIn {
+      from { transform: translateX(400px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes slideOut {
+      from { transform: translateX(0); opacity: 1; }
+      to { transform: translateX(400px); opacity: 0; }
+    }
+  `;
+  document.head.appendChild(style);
+
+  // Initialize
+  document.addEventListener('DOMContentLoaded', () => {
+    loadProductDetails();
+  });
+</script>
+</body>
+</html>

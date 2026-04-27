@@ -1560,9 +1560,9 @@
     </footer>
 
     <script>
-        // Get product ID from URL path
-        const pathParts = window.location.pathname.split('/');
-        const productId = pathParts[pathParts.length - 1];
+        // Get product ID from URL query parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        const productId = urlParams.get('id');
 
         if (!productId || isNaN(productId)) {
             document.getElementById('contentSection').innerHTML = `
@@ -1657,7 +1657,7 @@
             }
 
             try {
-                const url = `/api/product-details/${productId}`;
+                const url = `/api/public-products?id=${productId}`;
                 console.log('Loading product from:', url);
                 
                 const response = await fetch(url);
@@ -1665,8 +1665,8 @@
 
                 console.log('API Response:', data);
 
-                if (data.success && data.product) {
-                    const product = data.product;
+                if (data.products && data.products.length > 0) {
+                    const product = data.products[0];
                     const contentSection = document.getElementById('contentSection');
 
                     // Update back link

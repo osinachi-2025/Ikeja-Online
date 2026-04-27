@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>All Categories — Ikeja Online</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #080A0E;
+    --surface: #0E1117;
+    --surface2: #141820;
+    --border: rgba(255,255,255,0.07);
+    --accent: #22c55e;
+    --accent2: #FF3D6E;
+    --gold: #FFD166;
+    --text: #F0F2F5;
+    --muted: #6B7280;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none; z-index: 0; opacity: 0.35;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 5%;
+    height: 72px;
+    background: rgba(8,10,14,0.7);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .nav-logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 1.5rem;
+    letter-spacing: -0.04em;
+    color: var(--text);
+    text-decoration: none;
+  }
+  .nav-logo span { color: var(--accent); }
+
+  .nav-links {
+    display: flex; gap: 2rem; list-style: none;
+  }
+  .nav-links a {
+    color: var(--muted); font-size: 0.875rem; font-weight: 400;
+    text-decoration: none; letter-spacing: 0.02em;
+    transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--text); }
+
+  .nav-actions { display: flex; align-items: center; gap: 1rem; }
+
+  .btn-nav {
+    background: var(--accent);
+    color: #000;
+    border: none;
+    padding: 0.55rem 1.4rem;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    font-size: 0.875rem;
+    letter-spacing: 0.02em;
+    transition: all 0.25s;
+    clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+  }
+  .btn-nav:hover { background: #fff; transform: translateY(-1px); }
+
+  .cart-icon {
+    width: 40px; height: 40px;
+    display: flex; align-items: center; justify-content: center;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    color: var(--muted);
+    transition: all 0.2s;
+    position: relative;
+    cursor: pointer;
+  }
+  .cart-icon:hover { border-color: var(--accent); color: var(--accent); }
+  .cart-badge {
+    position: absolute; top: -4px; right: -4px;
+    width: 18px; height: 18px;
+    background: var(--accent2);
+    border-radius: 50%;
+    font-size: 0.65rem;
+    font-weight: 500;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  /* ── PAGE HEADER ── */
+  .page-header {
+    margin-top: 72px;
+    padding: 3rem 5%;
+    background: linear-gradient(135deg, rgba(34,197,94,0.05) 0%, rgba(255,61,110,0.05) 100%);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .page-header h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+  }
+
+  .page-header p {
+    color: var(--muted);
+    font-size: 1rem;
+  }
+
+  /* ── SECTION LABEL ── */
+  .section-label {
+    display: flex; align-items: center; gap: 0.75rem;
+    margin-bottom: 1.5rem;
+  }
+  .section-label span {
+    font-size: 0.72rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 500;
+  }
+  .section-label::before {
+    content: '';
+    width: 30px; height: 1px;
+    background: var(--accent);
+  }
+
+  /* ── CATEGORIES GRID ── */
+  .content-section {
+    padding: 4rem 5%;
+  }
+
+  .categories-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+  }
+
+  .category-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 2rem 1.5rem;
+    display: flex; flex-direction: column; align-items: center;
+    gap: 1rem;
+    text-align: center;
+    transition: all 0.35s cubic-bezier(.17,.67,.35,1.2);
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+  }
+  .category-card::before {
+    content: '';
+    position: absolute; bottom: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    transform: scaleX(0);
+    transition: transform 0.4s;
+  }
+  .category-card:hover {
+    transform: translateY(-8px);
+    background: var(--surface2);
+    border-color: rgba(0,229,255,0.2);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+  }
+  .category-card:hover::before { transform: scaleX(1); }
+
+  .category-icon {
+    width: 64px; height: 64px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2rem;
+    background: rgba(34,197,94,0.08);
+    border-radius: 12px;
+    border: 1px solid rgba(34,197,94,0.12);
+    transition: all 0.3s;
+  }
+  .category-card:hover .category-icon {
+    background: rgba(34,197,94,0.15);
+    transform: scale(1.15);
+  }
+
+  .category-name {
+    font-family: 'Syne', sans-serif;
+    font-weight: 600;
+    font-size: 1.05rem;
+    color: var(--text);
+  }
+  .category-count {
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    padding: 4rem 5% 2rem;
+    margin-top: 4rem;
+  }
+
+  .footer-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 3rem;
+    margin-bottom: 3rem;
+  }
+
+  .footer-col-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.85rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 1.25rem;
+  }
+  .footer-links { list-style: none; display: flex; flex-direction: column; gap: 0.65rem; }
+  .footer-links a {
+    color: var(--muted); font-size: 0.85rem;
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .footer-links a:hover { color: var(--text); }
+
+  .footer-bottom {
+    border-top: 1px solid var(--border);
+    padding-top: 2rem;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 1100px) {
+    .categories-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+
+  @media (max-width: 768px) {
+    .categories-grid { grid-template-columns: repeat(2, 1fr); }
+    .page-header h1 { font-size: 1.8rem; }
+    nav { padding: 0 3%; }
+    .nav-links { gap: 1rem; }
+  }
+
+  @media (max-width: 480px) {
+    .categories-grid { grid-template-columns: 1fr; }
+    .page-header { padding: 2rem 3%; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="/" class="nav-logo">Ikeja <span>Online</span></a>
+
+  <ul class="nav-links">
+    <li><a href="/">Home</a></li>
+    <li><a href="/all-products">Products</a></li>
+    <li><a href="/all-categories">Categories</a></li>
+    <li><a href="#">Deals</a></li>
+    <li><a href="#">About</a></li>
+  </ul>
+
+  <div class="nav-actions">
+    <div class="cart-icon" id="navCartIcon">
+      🛒
+      <span class="cart-badge" id="navCartBadge">0</span>
+    </div>
+    <button class="btn-nav"><i class="fas fa-user"></i></button>
+  </div>
+</nav>
+
+<!-- PAGE HEADER -->
+<div class="page-header">
+  <h1>All Categories</h1>
+  <p>Explore our complete range of product categories</p>
+</div>
+
+<!-- CONTENT SECTION -->
+<section class="content-section">
+  <div class="section-label"><span>Browse Categories</span></div>
+  
+  <div class="categories-grid" id="categoriesGrid">
+    <div style="grid-column: 1/-1; text-align: center; padding: 3rem; color: var(--muted);">
+      <p>Loading categories...</p>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-grid">
+    <div>
+      <a href="/" class="nav-logo">Ikeja <span>Online</span></a>
+      <p style="color: var(--muted); font-size: 0.85rem; margin-top: 1rem;">Your trusted electronics destination in Ikeja.</p>
+    </div>
+
+    <div>
+      <div class="footer-col-title">Products</div>
+      <ul class="footer-links">
+        <li><a href="/all-products">All Products</a></li>
+        <li><a href="/all-categories">Categories</a></li>
+        <li><a href="#">Best Sellers</a></li>
+      </ul>
+    </div>
+
+    <div>
+      <div class="footer-col-title">Company</div>
+      <ul class="footer-links">
+        <li><a href="#">About Us</a></li>
+        <li><a href="#">Careers</a></li>
+        <li><a href="#">Contact</a></li>
+      </ul>
+    </div>
+
+    <div>
+      <div class="footer-col-title">Support</div>
+      <ul class="footer-links">
+        <li><a href="#">Help Centre</a></li>
+        <li><a href="#">Track Order</a></li>
+        <li><a href="#">Returns</a></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="footer-bottom">
+    <div style="color: var(--muted); font-size: 0.8rem;">© 2025 Ikeja Online Ltd. All rights reserved.</div>
+  </div>
+</footer>
+
+<script>
+  // Shopping Cart System
+  class ShoppingCart {
+    constructor() {
+      this.items = this.loadCart();
+      this.updateCartUI();
+    }
+
+    loadCart() {
+      const stored = localStorage.getItem('shopping_cart');
+      return stored ? JSON.parse(stored) : [];
+    }
+
+    updateCartUI() {
+      const count = this.getCartCount();
+      const navBadge = document.getElementById('navCartBadge');
+      if (navBadge) navBadge.textContent = count;
+    }
+
+    getCartCount() {
+      return this.items.reduce((total, item) => total + item.quantity, 0);
+    }
+  }
+
+  let cart = new ShoppingCart();
+
+  // ========== LOAD ALL CATEGORIES ==========
+  async function loadAllCategories() {
+    try {
+      const response = await fetch('/api/categories');
+      const data = await response.json();
+
+      const categoriesGrid = document.getElementById('categoriesGrid');
+      if (!categoriesGrid) return;
+
+      if (data.categories && data.categories.length > 0) {
+        categoriesGrid.innerHTML = '';
+        data.categories.forEach(category => {
+          const categoryCard = document.createElement('div');
+          categoryCard.className = 'category-card';
+
+          categoryCard.innerHTML = `
+            <div class="category-icon">📦</div>
+            <div class="category-name">${category.name}</div>
+            <div class="category-count">${category.product_count || 0} items</div>
+          `;
+
+          categoryCard.addEventListener('click', () => {
+            window.location.href = `/?category=${category.id}`;
+          });
+
+          categoriesGrid.appendChild(categoryCard);
+        });
+      } else {
+        categoriesGrid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 3rem; color: var(--muted);">No categories found</div>';
+      }
+    } catch (error) {
+      console.error('Error loading categories:', error);
+      const categoriesGrid = document.getElementById('categoriesGrid');
+      if (categoriesGrid) {
+        categoriesGrid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 3rem; color: var(--muted);">Error loading categories. Please refresh the page.</div>';
+      }
+    }
+  }
+
+  // ========== NAV CART CLICK ==========
+  const navCartIcon = document.getElementById('navCartIcon');
+  if (navCartIcon) {
+    navCartIcon.addEventListener('click', () => {
+      if (cart.items.length > 0) {
+        window.location.href = '/checkout' || '/customer/dashboard';
+      }
+    });
+  }
+
+  // ========== INITIALIZE ==========
+  document.addEventListener('DOMContentLoaded', () => {
+    loadAllCategories();
+    cart.updateCartUI();
+  });
+</script>
+</body>
+</html>
