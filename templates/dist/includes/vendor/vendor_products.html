@@ -128,6 +128,98 @@
                                 <small class="form-text text-muted">Provide a detailed description of your product, including features, specifications, and usage instructions</small>
                               </div>
 
+                              <div class="card mb-4">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                  <h5 class="card-title mb-0">
+                                    <i class="fas fa-sliders-h mr-2"></i>
+                                    Optional Specifications
+                                  </h5>
+                                  <button type="button" class="btn btn-sm btn-outline-secondary" id="toggleSpecsBtn" onclick="toggleOptionalSpecs()">
+                                    Add Optional Specs
+                                  </button>
+                                </div>
+                                <div class="card-body optional-specs" id="optionalSpecsSection" style="display: none;">
+                                  <div class="row">
+                                    <div class="col-md-6">
+                                      <div class="form-group">
+                                        <label for="processor">Processor</label>
+                                        <input type="text" class="form-control" id="processor" name="processor" placeholder="e.g., Apple M2">
+                                      </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                      <div class="form-group">
+                                        <label for="ram">RAM</label>
+                                        <input type="text" class="form-control" id="ram" name="ram" placeholder="e.g., 16GB DDR5">
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div class="row">
+                                    <div class="col-md-6">
+                                      <div class="form-group">
+                                        <label for="storage">Storage</label>
+                                        <input type="text" class="form-control" id="storage" name="storage" placeholder="e.g., 512GB SSD">
+                                      </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                      <div class="form-group">
+                                        <label for="display">Display</label>
+                                        <input type="text" class="form-control" id="display" name="display" placeholder="e.g., 6.7-inch AMOLED">
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div class="row">
+                                    <div class="col-md-6">
+                                      <div class="form-group">
+                                        <label for="battery">Battery</label>
+                                        <input type="text" class="form-control" id="battery" name="battery" placeholder="e.g., 5000mAh">
+                                      </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                      <div class="form-group">
+                                        <label for="chip">Chip</label>
+                                        <input type="text" class="form-control" id="chip" name="chip" placeholder="e.g., Snapdragon 8 Gen 3">
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div class="row">
+                                    <div class="col-md-6">
+                                      <div class="form-group">
+                                        <label for="type">Type</label>
+                                        <input type="text" class="form-control" id="type" name="type" placeholder="e.g., Smartphone">
+                                      </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                      <div class="form-group">
+                                        <label for="rating">Rating</label>
+                                        <input type="text" class="form-control" id="rating" name="rating" placeholder="e.g., 4.5/5">
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div class="row">
+                                    <div class="col-md-6">
+                                      <div class="form-group">
+                                        <label for="charging">Charging</label>
+                                        <input type="text" class="form-control" id="charging" name="charging" placeholder="e.g., 65W fast charge">
+                                      </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                      <div class="form-group">
+                                        <label for="weight">Weight</label>
+                                        <input type="text" class="form-control" id="weight" name="weight" placeholder="e.g., 189g">
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div class="row">
+                                    <div class="col-md-12">
+                                      <div class="form-group">
+                                        <label for="connectivity">Connectivity</label>
+                                        <input type="text" class="form-control" id="connectivity" name="connectivity" placeholder="e.g., 5G, Wi-Fi 6, Bluetooth 5.3">
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+
                               <div class="form-group">
                                 <div class="custom-control custom-switch">
                                   <input type="checkbox" class="custom-control-input" id="productActive" name="status" value="active" checked>
@@ -714,8 +806,12 @@
               this.reset();
               const imagePreview = document.getElementById('imagePreview');
               const previewContainer = document.getElementById('previewContainer');
+              const optionalSection = document.getElementById('optionalSpecsSection');
+              const toggleSpecsBtn = document.getElementById('toggleSpecsBtn');
               if (imagePreview) imagePreview.style.display = 'none';
               if (previewContainer) previewContainer.innerHTML = '';
+              if (optionalSection) optionalSection.style.display = 'none';
+              if (toggleSpecsBtn) toggleSpecsBtn.textContent = 'Add Optional Specs';
 
               // Switch to products tab and reload
               const productsTabLink = document.querySelector('[href="#my-products"]');
@@ -793,6 +889,16 @@
       // Show modal using Bootstrap 5
       const modal = new bootstrap.Modal(document.getElementById('imagePreviewModal'));
       modal.show();
+    }
+
+    function toggleOptionalSpecs() {
+      const section = document.getElementById('optionalSpecsSection');
+      const button = document.getElementById('toggleSpecsBtn');
+      if (!section || !button) return;
+
+      const isVisible = section.style.display === 'block';
+      section.style.display = isVisible ? 'none' : 'block';
+      button.textContent = isVisible ? 'Add Optional Specs' : 'Hide Optional Specs';
     }
 
     // Load categories for the add product form
@@ -899,8 +1005,16 @@
         document.getElementById('addProductForm').reset();
         const imagePreview = document.getElementById('imagePreview');
         const previewContainer = document.getElementById('previewContainer');
+        const optionalSection = document.getElementById('optionalSpecsSection');
+        const toggleSpecsBtn = document.getElementById('toggleSpecsBtn');
         if (imagePreview) imagePreview.style.display = 'none';
         if (previewContainer) previewContainer.innerHTML = '';
+        if (optionalSection) optionalSection.style.display = 'none';
+        if (toggleSpecsBtn) toggleSpecsBtn.textContent = 'Add Optional Specs';
+
+        // Clear any validation states
+        const invalidFields = document.querySelectorAll('.is-invalid');
+        invalidFields.forEach(field => field.classList.remove('is-invalid'));
       }
     }
 

@@ -898,6 +898,24 @@
     .pcard-stars { font-size: 10px; color: #c87941; letter-spacing: 0.5px; }
     .pcard-rc { font-size: 10px; color: var(--ink-4); margin-left: 3px; }
     .pcard-meta { margin-bottom: 9px; }
+    .pcard-specs {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+    .pcard-spec {
+      background: #f8f4ee;
+      border-radius: 9px;
+      padding: 4px 8px;
+      font-size: 11px;
+      color: #5f5a52;
+      line-height: 1.3;
+    }
+    .pcard-spec strong {
+      color: #2a2720;
+      font-weight: 700;
+    }
 
     .pcard-foot {
       display: flex; align-items: center; justify-content: space-between; gap: 6px;
@@ -1686,9 +1704,9 @@
         <div class="profile-email" id="prof-email">—</div>
         <div class="profile-actions">
           <div class="profile-action-btn" onclick="goToDashboard()"><span class="pa-ico">🏠</span><span>Go to Dashboard</span><span>›</span></div>
-          <div class="profile-action-btn" onclick="showToast('Orders coming soon','📦');closeAuth()"><span class="pa-ico">📦</span><span>My Orders</span><span>›</span></div>
-          <div class="profile-action-btn" onclick="showWishlist(); closeAuth()"><span class="pa-ico">♡</span><span>Saved Items</span><span>›</span></div>
-          <div class="profile-action-btn" onclick="showToast('Settings coming soon','⚙️');closeAuth()"><span class="pa-ico">⚙️</span><span>Account Settings</span><span>›</span></div>
+          <div class="profile-action-btn" id="prof-orders-btn" onclick="roleDashboardPath('orders')"><span class="pa-ico">📦</span><span>My Orders</span><span>›</span></div>
+          <div class="profile-action-btn" id="prof-saved-items-btn" onclick="roleDashboardPath('wishlist')"><span class="pa-ico">♡</span><span>Saved Items</span><span>›</span></div>
+          <div class="profile-action-btn" id="prof-account-btn" onclick="roleDashboardPath('account-settings')"><span class="pa-ico">⚙️</span><span>Account Settings</span><span>›</span></div>
         </div>
         <button class="profile-logout" onclick="doLogout()">Sign Out</button>
       </div>
@@ -1848,6 +1866,7 @@ function toggleMore(){
 
 /* ── CATEGORY (desktop sidebar) ── */
 function pickCat(cat,el,fromDrawer=false){
+  closeWishlist();
   aCat=cat;
   // sync both sidebar and drawer
   document.querySelectorAll('.cat-li').forEach(i=>i.classList.remove('on'));
@@ -1866,6 +1885,7 @@ function pickCat(cat,el,fromDrawer=false){
 
 /* ── FILTER CHIPS (mobile) ── */
 function chipCat(cat,el){
+  closeWishlist();
   aCat=cat;
   document.querySelectorAll('.fchip').forEach(c=>c.classList.remove('on'));
   if(el) el.classList.add('on');
@@ -1938,6 +1958,28 @@ function paint(list){
 }
 
 function cardHTML(p){
+  const specFieldOrder = ['Processor','RAM','Storage','Display','Battery','Chip','Charging','Weight','Connectivity','Type','Rating'];
+  const hasSpecsObject = p.specs && typeof p.specs === 'object' && Object.keys(p.specs).length > 0;
+  const specsMap = hasSpecsObject ? p.specs : {
+    Processor: p.processor,
+    RAM: p.ram,
+    Storage: p.storage,
+    Display: p.display,
+    Battery: p.battery,
+    Chip: p.chip,
+    Charging: p.charging,
+    Weight: p.weight,
+    Connectivity: p.connectivity,
+    Type: p.type || p.product_type,
+    Rating: p.rating
+  };
+
+  const specItems = specFieldOrder
+    .filter(key => specsMap && specsMap[key])
+    .slice(0, 4)
+    .map(key => `<div class="pcard-spec"><strong>${key}</strong>: ${specsMap[key]}</div>`)
+    .join('');
+
   return`<div class="pcard" onclick="openDetail(${p.id})">
     <div class="pcard-img">
       ${p.tag?`<div class="pcard-tag tag-${p.tag}">${p.tag.toUpperCase()}</div>`:''}
@@ -1948,6 +1990,7 @@ function cardHTML(p){
       <div class="pcard-brand">${p.brand}</div>
       <div class="pcard-name">${p.name}</div>
       <div class="pcard-meta"><span class="pcard-stars">${strs(p.rating)}</span><span class="pcard-rc">(${p.reviews})</span></div>
+      ${specItems ? `<div class="pcard-specs">${specItems}</div>` : ''}
       <div class="pcard-foot">
         <div>${p.was?`<div class="pcard-was">₦${fmt(p.was)}</div>`:''}<div class="pcard-now">₦${fmt(p.price)}</div></div>
         <button class="pcard-add" onclick="event.stopPropagation();doCart(${p.id})">+</button>
@@ -1981,7 +2024,24 @@ function openDetail(id){
   if(p.was){dw.textContent='₦'+fmt(p.was);dw.style.display='';ds.textContent=Math.round((1-p.price/p.was)*100)+'% off';ds.style.display='';}
   else{dw.style.display='none';ds.style.display='none';}
   document.getElementById('d-desc').textContent=p.desc;
-  document.getElementById('d-specs').innerHTML=Object.entries(p.specs).map(([k,v])=>`<div><div class="sk">${k}</div><div class="sv">${v}</div></div>`).join('');
+  const hasDetailSpecsObject = p.specs && typeof p.specs === 'object' && Object.keys(p.specs).length > 0;
+  const detailSpecs = hasDetailSpecsObject ? p.specs : {
+    Processor: p.processor,
+    RAM: p.ram,
+    Storage: p.storage,
+    Display: p.display,
+    Battery: p.battery,
+    Chip: p.chip,
+    Charging: p.charging,
+    Weight: p.weight,
+    Connectivity: p.connectivity,
+    Type: p.type || p.product_type,
+    Rating: p.rating
+  };
+  document.getElementById('d-specs').innerHTML = Object.entries(detailSpecs)
+    .filter(([k, v]) => v)
+    .map(([k, v]) => `<div><div class="sk">${k}</div><div class="sv">${v}</div></div>`)
+    .join('');
   document.getElementById('d-cart').onclick=()=>doCart(p.id);
   const rel=P.filter(x=>x.cat===p.cat&&x.id!==p.id).slice(0,4);
   document.getElementById('rel-grid').innerHTML=rel.map(cardHTML).join('');
@@ -2075,7 +2135,7 @@ async function submitReview(){
   const token = localStorage.getItem('access_token');
   if(!token){
     setReviewMessage('Please sign in to leave a review.','err');
-    openAuth();
+    redirectToHomeAuth('login');
     return;
   }
 
@@ -2088,6 +2148,10 @@ async function submitReview(){
       },
       body: JSON.stringify({ rating, comment })
     });
+    if(response.status === 401 || response.status === 403){
+      sessionExpired();
+      return;
+    }
     const data = await response.json();
     if(!response.ok || !data.success){
       throw new Error(data.message || data.error || 'Unable to submit review');
@@ -2165,9 +2229,14 @@ function doWish(id){
   showToast(p.brand+' '+p.name.split(' ').slice(0,2).join(' ')+' saved','♡');
 }
 function showWishlist(){
+  const role = localStorage.getItem('user_role') || 'customer';
+  if(role === 'vendor'){
+    showToast('Saved items are only available for customer accounts.', '⚠️');
+    return;
+  }
   const token = localStorage.getItem('access_token');
   if (!token) {
-    openAuth();
+    redirectToHomeAuth('login');
     return;
   }
   document.getElementById('listing-view').classList.add('off');
@@ -2270,6 +2339,21 @@ function showProfilePanel(){
   document.getElementById('prof-avatar').textContent = initials || '👤';
   document.getElementById('prof-name').textContent = currentUser.fname + ' ' + currentUser.lname;
   document.getElementById('prof-email').textContent = currentUser.email;
+
+  const role = localStorage.getItem('user_role') || 'customer';
+  const savedBtn = document.getElementById('prof-saved-items-btn');
+  const accountBtn = document.getElementById('prof-account-btn');
+  const ordersBtn = document.getElementById('prof-orders-btn');
+
+  if(role === 'vendor'){
+    if(savedBtn) savedBtn.style.display = 'none';
+    if(accountBtn) accountBtn.dataset.path = '/vendor/store-profile';
+    if(ordersBtn) ordersBtn.dataset.path = '/vendor/orders';
+  } else {
+    if(savedBtn) savedBtn.style.display = '';
+    if(accountBtn) accountBtn.dataset.path = '/customer/dashboard/account-settings';
+    if(ordersBtn) ordersBtn.dataset.path = '/customer/dashboard/orders';
+  }
 }
 function openPaymentModal(){
   const cartTotal = cart.getCartTotal();
@@ -2462,6 +2546,56 @@ function doLogout(){
   closeAuth();
   showToast('You\'ve been signed out.', '👋');
 }
+
+function redirectToHomeAuth(tab = 'login'){
+  const query = new URLSearchParams();
+  query.set('auth', tab);
+  const target = '/?' + query.toString();
+  if(window.location.pathname === '/' || window.location.pathname === '/home'){
+    window.history.replaceState({}, '', target);
+    openAuth();
+    switchTab(tab);
+    return;
+  }
+  window.location.href = target;
+}
+
+function sessionExpired(){
+  ['access_token','user_role','user_first_name','user_last_name','user_email'].forEach(k=>localStorage.removeItem(k));
+  currentUser = null;
+  updateAuthButton();
+  showToast('Session expired. Please sign in again.', '⚠️');
+  redirectToHomeAuth('login');
+}
+
+function navigateToDashboardPath(path){
+  closeAuth();
+  window.location.href = path;
+}
+
+function roleDashboardPath(action){
+  const role = localStorage.getItem('user_role') || 'customer';
+  const routes = {
+    customer: {
+      orders: '/customer/dashboard/orders',
+      wishlist: '/customer/dashboard/wishlist',
+      'account-settings': '/customer/dashboard/account-settings'
+    },
+    vendor: {
+      orders: '/vendor/orders',
+      wishlist: null,
+      'account-settings': '/vendor/store-profile'
+    }
+  };
+  const path = routes[role]?.[action] || routes.customer[action];
+  if(!path){
+    showToast('This section is only available for customer accounts.', '⚠️');
+    return;
+  }
+  closeAuth();
+  window.location.href = path;
+}
+
 function socialAuth(provider){
   currentUser = { fname: 'Guest', lname: '', email: 'guest@' + provider.toLowerCase() + '.com' };
   onLoginSuccess();
@@ -2483,7 +2617,18 @@ function mapApiProduct(item){
     emoji: '🛍️',
     tag: null,
     desc: item.description || '',
-    specs: {}
+    processor: item.processor || null,
+    ram: item.ram || null,
+    storage: item.storage || null,
+    display: item.display || null,
+    battery: item.battery || null,
+    chip: item.chip || null,
+    type: item.type || item.product_type || null,
+    product_type: item.product_type || null,
+    charging: item.charging || null,
+    weight: item.weight || null,
+    connectivity: item.connectivity || null,
+    specs: item.specs && typeof item.specs === 'object' ? item.specs : {}
   };
 }
 
@@ -2508,6 +2653,12 @@ async function fetchProducts(){
 
 async function initPage(){
   restoreAuthState();
+  const params = new URLSearchParams(window.location.search);
+  const authTab = params.get('auth');
+  if(authTab === 'login' || authTab === 'register'){
+    openAuth();
+    switchTab(authTab);
+  }
   await fetchCategories();
   await fetchProducts();
 }

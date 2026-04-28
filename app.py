@@ -1761,6 +1761,17 @@ def add_product_api():
         price = request.form.get('price', type=float)
         stock_quantity = request.form.get('stock_quantity', type=int)
         status = request.form.get('status', 'active')
+        processor = request.form.get('processor', '').strip() or None
+        ram = request.form.get('ram', '').strip() or None
+        storage = request.form.get('storage', '').strip() or None
+        display = request.form.get('display', '').strip() or None
+        battery = request.form.get('battery', '').strip() or None
+        chip = request.form.get('chip', '').strip() or None
+        product_type = request.form.get('type', '').strip() or None
+        rating = request.form.get('rating', '').strip() or None
+        charging = request.form.get('charging', '').strip() or None
+        weight = request.form.get('weight', '').strip() or None
+        connectivity = request.form.get('connectivity', '').strip() or None
         
         # Validation
         if not all([category_id, product_name, description, price, stock_quantity]):
@@ -1805,7 +1816,18 @@ def add_product_api():
             description=description,
             price=price,
             stock_quantity=stock_quantity,
-            status=status
+            status=status,
+            processor=processor,
+            ram=ram,
+            storage=storage,
+            display=display,
+            battery=battery,
+            chip=chip,
+            product_type=product_type,
+            rating=rating,
+            charging=charging,
+            weight=weight,
+            connectivity=connectivity
         )
         
         db.session.add(new_product)
@@ -2008,6 +2030,18 @@ def get_public_products():
                             'is_primary': img.is_primary
                         } for img in product.images
                     ],
+                    'processor': product.processor,
+                    'ram': product.ram,
+                    'storage': product.storage,
+                    'display': product.display,
+                    'battery': product.battery,
+                    'chip': product.chip,
+                    'type': product.product_type,
+                    'product_type': product.product_type,
+                    'charging': product.charging,
+                    'weight': product.weight,
+                    'connectivity': product.connectivity,
+                    'rating': product.rating,
                     'average_rating': round(avg_rating, 1),
                     'review_count': review_count
                 }
