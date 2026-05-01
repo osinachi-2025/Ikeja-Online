@@ -1074,11 +1074,6 @@ def all_products():
     """All products page - displays all available products with pagination"""
     return render_template('all-products.html')
 
-@app.route('/product-detail')
-def product_detail():
-    """Product detail page - displays single product information"""
-    return render_template('product_details.html')
-
 @app.route('/product-detail-extended')
 def product_detail_extended():
     """Extended product detail page - extends new_home.html layout"""

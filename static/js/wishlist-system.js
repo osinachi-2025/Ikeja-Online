@@ -53,7 +53,16 @@ class WishlistManager {
     async addItem(product) {
         const token = localStorage.getItem('access_token');
         if (!token) {
-            window.location.href = '/login';
+            if (typeof window.openAuth === 'function') {
+                window.openAuth();
+                if (typeof window.switchTab === 'function') {
+                    window.switchTab('login');
+                }
+            } else if (typeof window.redirectToHomeAuth === 'function') {
+                window.redirectToHomeAuth('login');
+            } else {
+                window.location.href = '/login';
+            }
             return false;
         }
 
@@ -87,6 +96,21 @@ class WishlistManager {
                 this.updateUI();
                 this.showNotification(`${product.name} added to wishlist!`);
                 return true;
+            } else if (response.status === 401) {
+                localStorage.removeItem('access_token');
+                if (typeof window.sessionExpired === 'function') {
+                    window.sessionExpired();
+                } else if (typeof window.openAuth === 'function') {
+                    window.openAuth();
+                    if (typeof window.switchTab === 'function') {
+                        window.switchTab('login');
+                    }
+                } else if (typeof window.redirectToHomeAuth === 'function') {
+                    window.redirectToHomeAuth('login');
+                } else {
+                    window.location.href = '/login';
+                }
+                return false;
             } else if (response.status === 409) {
                 this.showNotification('Item already in wishlist');
                 return false;

@@ -910,7 +910,7 @@
           if (!token || role !== 'vendor') {
             localStorage.removeItem('access_token');
             localStorage.removeItem('user_role');
-            window.location.href = '/login';
+            window.location.href = '/new_home';
             return;
           }
 
@@ -924,7 +924,7 @@
           localStorage.removeItem('access_token');
           localStorage.removeItem('user_role');
           localStorage.removeItem('user_id');
-          window.location.href = '/login';
+          window.location.href = '/new_home';
         }
       </script>
     {% block extra_scripts %}{% endblock %}
