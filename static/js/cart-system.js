@@ -72,10 +72,17 @@ class ShoppingCart {
         const panel = document.getElementById('cart-panel');
         if(!panel) return;
         const listEl = panel.querySelector('#cart-items');
+        const subtotalEl = panel.querySelector('#cart-subtotal');
         const totalEl = panel.querySelector('#cart-total');
         const countEl = panel.querySelector('#cart-item-count');
         const actions = panel.querySelector('.cart-actions');
-        if(!listEl || !totalEl || !countEl || !actions) return;
+        if(!listEl || !subtotalEl || !totalEl || !countEl || !actions) return;
+
+        const token = localStorage.getItem('access_token');
+        const role = localStorage.getItem('user_role');
+        const canCheckout = !!token && role === 'customer';
+        const checkoutBtn = panel.querySelector('#cart-checkout-btn');
+        const checkoutNote = panel.querySelector('#cart-checkout-note');
 
         if(this.items.length === 0) {
             listEl.innerHTML = '<div class="cart-empty">Your cart is empty. Add products to get started.</div>';
@@ -104,22 +111,41 @@ class ShoppingCart {
             actions.style.display = 'grid';
         }
 
-        countEl.textContent = `${this.items.length} item${this.items.length === 1 ? '' : 's'}`;
+        if (checkoutBtn) {
+            checkoutBtn.disabled = !canCheckout;
+            checkoutBtn.textContent = this.items.length === 0 ? 'Proceed to Checkout' : (canCheckout ? 'Proceed to Checkout' : (token ? 'Customers only' : 'Sign in to checkout'));
+        }
+        if (checkoutNote) {
+            checkoutNote.textContent = this.items.length === 0 ? '' : (canCheckout ? '' : (token ? 'Only customer accounts can checkout.' : 'Sign in to checkout to proceed.'));
+        }
+
+        countEl.textContent = `${this.getCartCount()} item${this.getCartCount() === 1 ? '' : 's'}`;
+        subtotalEl.textContent = this.formatCurrency(this.getCartTotal());
         totalEl.textContent = this.formatCurrency(this.getCartTotal());
     }
 
     openCartDrawer() {
         this.renderCartPanel();
+        const panel = document.getElementById('cart-panel');
+        if (panel) {
+            panel.style.transform = 'translateX(0)';
+            panel.classList.add('open');
+        }
         const overlay = document.getElementById('cart-overlay');
-        if(overlay) {
+        if (overlay) {
             overlay.classList.add('open');
             document.body.style.overflow = 'hidden';
         }
     }
 
     closeCartDrawer() {
+        const panel = document.getElementById('cart-panel');
+        if (panel) {
+            panel.style.transform = 'translateX(100%)';
+            panel.classList.remove('open');
+        }
         const overlay = document.getElementById('cart-overlay');
-        if(overlay) {
+        if (overlay) {
             overlay.classList.remove('open');
             document.body.style.overflow = '';
         }
@@ -248,6 +274,7 @@ class ShoppingCart {
 
 // Initialize cart
 let cart = new ShoppingCart();
+window.cart = cart;
 
 // Expose cart drawer helpers globally
 function openCartDrawer() { cart.openCartDrawer(); }

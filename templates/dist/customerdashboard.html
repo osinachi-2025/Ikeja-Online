@@ -1,1085 +1,1415 @@
 <!doctype html>
-<html lang="en">
-  <!--begin::Head-->
-  <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Ikeja Online | Customer Dashboard</title>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8"/>
+<title>Ikeja Online | Customer Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" crossorigin="anonymous"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" crossorigin="anonymous"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Syne:wght@700;800&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/apexcharts@3.37.1/dist/apexcharts.min.js" crossorigin="anonymous"></script>
+<style>
+  /* ─── TOKENS ─────────────────────────────────── */
+  :root{
+    --green:#00A651; --green-d:#007A3C; --green-l:#E6F7EE;
+    --orange:#F97316; --orange-l:#FFF3EA;
+    --gold:#F59E0B;   --blue:#3B82F6;
+    --sidebar-w:260px;
+    --topbar-h:60px;
+    --radius:10px; --radius-lg:16px;
+    --transition:all .22s cubic-bezier(.4,0,.2,1);
 
-    <!--begin::Accessibility Meta Tags-->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
-    <meta name="color-scheme" content="light dark" />
-    <meta name="theme-color" content="#007bff" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#1a1a1a" media="(prefers-color-scheme: dark)" />
-    <!--end::Accessibility Meta Tags-->
+    /* LIGHT */
+    --bg:#F0F4F8;
+    --surface:#FFFFFF;
+    --sidebar-bg:#0D1B2A;
+    --sidebar-brand:#091420;
+    --sidebar-text:rgba(255,255,255,.7);
+    --sidebar-hover:rgba(0,166,81,.13);
+    --sidebar-section:rgba(255,255,255,.3);
+    --topbar-bg:#FFFFFF;
+    --topbar-border:#E2E8F0;
+    --text:#1A2332;
+    --text2:#64748B;
+    --text3:#94A3B8;
+    --border:#E2E8F0;
+    --shadow:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.04);
+    --shadow-md:0 4px 16px rgba(0,0,0,.09);
+    --shadow-lg:0 8px 32px rgba(0,0,0,.12);
+  }
+  [data-theme=dark]{
+    --bg:#0B1826;
+    --surface:#112030;
+    --sidebar-bg:#071018;
+    --sidebar-brand:#040C14;
+    --topbar-bg:#112030;
+    --topbar-border:#1A3048;
+    --text:#DDE6F0;
+    --text2:#7A9AB8;
+    --text3:#3D607C;
+    --border:#1A3048;
+    --shadow:0 1px 3px rgba(0,0,0,.4);
+    --shadow-md:0 4px 16px rgba(0,0,0,.5);
+    --shadow-lg:0 8px 32px rgba(0,0,0,.6);
+    --green-l:rgba(0,166,81,.12);
+    --orange-l:rgba(249,115,22,.12);
+  }
 
-    <!--begin::Primary Meta Tags-->
-    <meta name="title" content="AdminLTE | Dashboard v2" />
-    <meta name="author" content="ColorlibHQ" />
-    <meta
-      name="description"
-      content="AdminLTE is a Free Bootstrap 5 Admin Dashboard, 30 example pages using Vanilla JS. Fully accessible with WCAG 2.1 AA compliance."
-    />
-    <meta
-      name="keywords"
-      content="bootstrap 5, bootstrap, bootstrap 5 admin dashboard, bootstrap 5 dashboard, bootstrap 5 charts, bootstrap 5 calendar, bootstrap 5 datepicker, bootstrap 5 tables, bootstrap 5 datatable, vanilla js datatable, colorlibhq, colorlibhq dashboard, colorlibhq admin dashboard, accessible admin panel, WCAG compliant"
-    />
-    <!--end::Primary Meta Tags-->
+  /* ─── RESET ──────────────────────────────────── */
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html{font-size:15px}
+  body{
+    font-family:'Plus Jakarta Sans',sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    min-height:100vh;
+    transition:background .3s,color .3s;
+    overflow-x:hidden;
+  }
+  a{text-decoration:none;color:inherit}
+  ul{list-style:none}
+  button{cursor:pointer;font-family:inherit}
 
-    <!--begin::Accessibility Features-->
-    <!-- Skip links will be dynamically added by accessibility.js -->
-    <meta name="supported-color-schemes" content="light dark" />
-    <!--end::Accessibility Features-->
+  /* ─── LAYOUT GRID ────────────────────────────── */
+  .layout{
+    display:grid;
+    grid-template-columns:var(--sidebar-w) 1fr;
+    grid-template-rows:var(--topbar-h) 1fr auto;
+    grid-template-areas:
+      "sidebar topbar"
+      "sidebar main"
+      "sidebar footer";
+    min-height:100vh;
+    transition:grid-template-columns .28s cubic-bezier(.4,0,.2,1);
+  }
+  .layout.collapsed{
+    --sidebar-w:0px;
+    grid-template-columns:0 1fr;
+  }
 
-    <!--begin::Bootstrap CSS (Required Foundation)-->
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css"
-      integrity="sha256-VPJx9w3NBJFL7oLqBBiMjvvUhxUJoWEUhWtCmvtFRE="
-      crossorigin="anonymous"
-    />
-    <!--end::Bootstrap CSS-->
+  /* ─── SIDEBAR ────────────────────────────────── */
+  .sidebar{
+    grid-area:sidebar;
+    background:var(--sidebar-bg);
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+    position:sticky;
+    top:0;
+    height:100vh;
+    z-index:200;
+    transition:width .28s cubic-bezier(.4,0,.2,1),transform .28s cubic-bezier(.4,0,.2,1);
+    width:var(--sidebar-w);
+  }
 
-    <!--begin::Fonts-->
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/@fontsource/source-sans-3@5.0.12/index.css"
-      integrity="sha256-tXJfXfp6Ewt1ilPzLDtQnJV4hclT9XuaZUKyUvmyr+Q="
-      crossorigin="anonymous"
-      media="print"
-      onload="this.media = 'all'"
-    />
-    <!--end::Fonts-->
+  /* Brand */
+  .sidebar-brand{
+    height:var(--topbar-h);
+    background:var(--sidebar-brand);
+    display:flex;
+    align-items:center;
+    padding:0 1.1rem;
+    flex-shrink:0;
+    gap:.75rem;
+    border-bottom:1px solid rgba(255,255,255,.05);
+    white-space:nowrap;
+  }
+  .brand-icon{
+    width:34px;height:34px;
+    background:linear-gradient(135deg,var(--green),var(--green-d));
+    border-radius:8px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:1.1rem;
+    flex-shrink:0;
+  }
+  .brand-name{
+    font-family:'Syne',sans-serif;
+    font-weight:800;
+    font-size:1.05rem;
+    color:#fff;
+    letter-spacing:-.02em;
+    transition:opacity .2s,width .2s;
+  }
+  .brand-name span{color:var(--green)}
 
-    <!--begin::Third Party Plugin(OverlayScrollbars)-->
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/overlayscrollbars@2.11.0/styles/overlayscrollbars.min.css"
-      crossorigin="anonymous"
-    />
-    <!--end::Third Party Plugin(OverlayScrollbars)-->
+  /* Nav scroll area */
+  .sidebar-scroll{
+    flex:1;
+    overflow-y:auto;
+    overflow-x:hidden;
+    padding:.75rem 0 2rem;
+    scrollbar-width:thin;
+    scrollbar-color:rgba(255,255,255,.08) transparent;
+  }
+  .sidebar-scroll::-webkit-scrollbar{width:3px}
+  .sidebar-scroll::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:2px}
 
-    <!--begin::Third Party Plugin(Bootstrap Icons)-->
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css"
-      crossorigin="anonymous"
-    />
-    <!--end::Third Party Plugin(Bootstrap Icons)-->
+  /* Section label */
+  .nav-section{
+    font-size:.62rem;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.1em;
+    color:var(--sidebar-section);
+    padding:.9rem 1.1rem .3rem;
+    white-space:nowrap;
+    overflow:hidden;
+  }
 
-    <!--begin::Required Plugin(AdminLTE) - Local CSS-->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/adminlte.min.css') }}" />
-    <!--end::Required Plugin(AdminLTE)-->
+  /* Nav links */
+  .nav-item{position:relative}
+  .nav-link{
+    display:flex;
+    align-items:center;
+    gap:.7rem;
+    padding:.55rem 1.1rem;
+    color:var(--sidebar-text);
+    font-size:.83rem;
+    font-weight:500;
+    white-space:nowrap;
+    transition:var(--transition);
+    position:relative;
+  }
+  .nav-link:hover{background:var(--sidebar-hover);color:#fff}
+  .nav-link.active{color:#fff;background:var(--sidebar-hover)}
+  .nav-link.active::before{
+    content:'';
+    position:absolute;left:0;top:5px;bottom:5px;
+    width:3px;background:var(--green);border-radius:0 3px 3px 0;
+  }
+  .nav-icon{width:1.1rem;text-align:center;font-size:.95rem;flex-shrink:0}
+  .nav-label{flex:1}
+  .nav-arrow{
+    font-size:.65rem;
+    opacity:.5;
+    transition:transform .22s;
+    margin-left:auto;
+    flex-shrink:0;
+  }
+  .nav-item.open>.nav-link .nav-arrow{transform:rotate(90deg)}
 
-    <!-- Custom Styles for Orders Dropdown -->
-    <style>
-      .nav-treeview {
-        display: none !important;
-      }
-      .nav-item.menu-open > .nav-treeview {
-        display: block !important;
-      }
-    </style>
+  /* Treeview */
+  .nav-sub{
+    overflow:hidden;
+    max-height:0;
+    transition:max-height .3s cubic-bezier(.4,0,.2,1);
+    background:rgba(0,0,0,.18);
+  }
+  .nav-item.open>.nav-sub{max-height:600px}
+  .nav-sub .nav-link{
+    padding:.48rem 1.1rem .48rem 2.9rem;
+    font-size:.8rem;
+    color:rgba(255,255,255,.5);
+  }
+  .nav-sub .nav-link:hover{color:rgba(255,255,255,.88)}
+  .nav-sub .nav-link.active{color:var(--green);background:rgba(0,166,81,.1)}
 
-    <!-- apexcharts -->
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/apexcharts@3.37.1/dist/apexcharts.css"
-      integrity="sha256-4MX+61mt9NVvvuPjUWdUdyfZfxSB1/Rf9WtqRHgG5S0="
-      crossorigin="anonymous"
-    />
-  </head>
+  /* Soon badge */
+  .nav-badge{
+    font-size:.58rem;font-weight:700;
+    padding:1px 5px;border-radius:20px;
+    background:rgba(249,115,22,.22);color:var(--orange);
+    text-transform:uppercase;letter-spacing:.04em;
+    flex-shrink:0;
+  }
 
-  <body class="layout-fixed sidebar-expand-lg bg-body-tertiary">
-    <!--begin::App Wrapper-->
-    <div class="app-wrapper">
-      <!--begin::Header-->
-      <nav class="app-header navbar navbar-expand bg-body">
-        <!--begin::Container-->
-        <div class="container-fluid">
-          <!--begin::Start Navbar Links-->
-          <ul class="navbar-nav">
-            <li class="nav-item">
-              <a class="nav-link" data-lte-toggle="sidebar" href="#" role="button">
-                <i class="bi bi-list"></i>
-              </a>
-            </li>
-            <li class="nav-item d-none d-md-block">
-              <a href="/" class="nav-link">Home</a>
-            </li>
-            <li class="nav-item d-none d-md-block">
-              <a href="/contact" class="nav-link">Contact</a>
-            </li>
-          </ul>
-          <!--end::Start Navbar Links-->
+  /* ─── TOPBAR ─────────────────────────────────── */
+  .topbar{
+    grid-area:topbar;
+    height:var(--topbar-h);
+    background:var(--topbar-bg);
+    border-bottom:1px solid var(--topbar-border);
+    box-shadow:var(--shadow);
+    display:flex;
+    align-items:center;
+    padding:0 1.25rem;
+    gap:.75rem;
+    position:sticky;
+    top:0;
+    z-index:150;
+  }
+  .topbar-left{display:flex;align-items:center;gap:.6rem;flex-shrink:0}
+  .topbar-right{display:flex;align-items:center;gap:.5rem;margin-left:auto;flex-shrink:0}
 
-          <!--begin::End Navbar Links-->
-          <ul class="navbar-nav ms-auto">
-            <!--begin::Navbar Search-->
-            <li class="nav-item">
-              <a class="nav-link" data-widget="navbar-search" href="#" role="button">
-                <i class="bi bi-search"></i>
-              </a>
-            </li>
-            <!--end::Navbar Search-->
+  .icon-btn{
+    width:36px;height:36px;
+    border:none;background:transparent;
+    border-radius:8px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:1.05rem;color:var(--text2);
+    transition:var(--transition);
+    flex-shrink:0;
+    padding:0;
+  }
+  .icon-btn:hover{background:var(--bg);color:var(--green)}
 
-            <!--begin::Messages Dropdown Menu-->
-            
-            <!--end::Messages Dropdown Menu-->
+  .topbar-search{
+    display:flex;align-items:center;gap:.5rem;
+    background:var(--bg);
+    border:1px solid var(--border);
+    border-radius:24px;
+    padding:.3rem .85rem;
+    font-size:.8rem;
+    color:var(--text2);
+    transition:var(--transition);
+    max-width:220px;
+    flex:1;
+  }
+  .topbar-search input{
+    border:none;background:transparent;outline:none;
+    font-family:inherit;font-size:.8rem;color:var(--text);
+    width:100%;
+    min-width:0;
+  }
+  .topbar-search input::placeholder{color:var(--text3)}
+  .topbar-search:focus-within{border-color:var(--green);box-shadow:0 0 0 3px rgba(0,166,81,.1)}
 
-            <!--begin::Notifications Dropdown Menu-->
-            <li class="nav-item dropdown">
-              <a class="nav-link" data-bs-toggle="dropdown" href="#">
-                <i class="bi bi-bell-fill"></i>
-                <span class="navbar-badge badge text-bg-warning" id="notifCount">0</span>
-              </a>
-              <div class="dropdown-menu dropdown-menu-lg dropdown-menu-end" style="max-height: 400px; overflow-y: auto;">
-                <span class="dropdown-item dropdown-header" id="notifHeader">0 Notifications</span>
-                <div class="dropdown-divider"></div>
-                <div id="notifList">
-                  <a href="#" class="dropdown-item text-secondary"><i class="bi bi-hourglass-split me-2"></i>Loading...</a>
-                </div>
-                <div class="dropdown-divider"></div>
-                <a href="#" class="dropdown-item dropdown-footer" onclick="clearNotifications141(event)">Clear All</a>
-              </div>
-            </li>
-            <!--end::Notifications Dropdown Menu-->
+  .theme-btn{
+    width:36px;height:36px;
+    border:1px solid var(--border);
+    border-radius:8px;
+    background:transparent;
+    display:flex;align-items:center;justify-content:center;
+    font-size:.95rem;color:var(--text2);
+    transition:var(--transition);
+    flex-shrink:0;
+  }
+  .theme-btn:hover{border-color:var(--green);color:var(--green);background:var(--green-l)}
 
-            <!--begin::Fullscreen Toggle-->
-            
-            <!--end::Fullscreen Toggle-->
+  /* Notif */
+  .notif-wrap{position:relative}
+  .notif-dot{
+    position:absolute;top:3px;right:3px;
+    width:17px;height:17px;
+    background:var(--orange);
+    border:2px solid var(--topbar-bg);
+    border-radius:50%;
+    font-size:.6rem;font-weight:700;color:#fff;
+    display:flex;align-items:center;justify-content:center;
+  }
 
-            <!--begin::User Menu Dropdown-->
-            <li class="nav-item dropdown user-menu">
-              <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">
-                <img
-                  src="{{ url_for('static', filename='assets/img/user2-160x160.jpg') }}"
-                  class="user-image rounded-circle shadow"
-                  alt="User Image"
-                />
-                <span class="d-none d-md-inline username">Alexander Pierce</span>
-              </a>
-              <ul class="dropdown-menu dropdown-menu-lg dropdown-menu-end">
-                <!--begin::User Image-->
-                <li class="user-header text-bg-primary" style="display: flex; align-items: center; gap: 15px; padding: 1.5rem;">
-                  <img
-                    src="{{ url_for('static', filename='assets/img/user2-160x160.jpg') }}"
-                    class="user-image rounded-circle shadow"
-                    alt="User Image"
-                    style="width: 60px; height: 60px; object-fit: cover; flex-shrink: 0;"
-                  />
-                  <div style="flex: 1; min-width: 0;">
-                    <p class="username" style="margin-bottom: 0.3rem; font-weight: 600; color: white; word-break: break-word;"></p>
-                    <small class="text-white" id="userRoleBadge" style="opacity: 0.9;">Member since: --</small>
-                  </div>
-                </li>
-                <!--end::User Image-->
-                <!--begin::Menu Body-->
-                <li class="user-body">
-                  <!--begin::Row-->
-                  <!--end::Row-->
-                </li>
-                <!--end::Menu Body-->
-                <!--begin::Menu Footer-->
-                <li class="user-footer">
-                  <a href="#" class="btn btn-outline-secondary">Profile</a>
-                  <a href="#" class="btn btn-outline-danger float-end" onclick = "logout(event)">Sign out</a>
-                </li>
-                <!--end::Menu Footer-->
-              </ul>
-            </li>
-            <!--end::User Menu Dropdown-->
-          </ul>
-          <!--end::End Navbar Links-->
-        </div>
-        <!--end::Container-->
-      </nav>
-      <!--end::Header-->
-      <!--begin::Sidebar-->
-      <aside class="app-sidebar bg-body-secondary shadow" data-bs-theme="dark">
-        <!--begin::Sidebar Brand-->
-        <div class="sidebar-brand">
-          <!--begin::Brand Link-->
-          <a href="/" class="brand-link">
-            <!--begin::Brand Image-->
-            <img
-              src="{{ url_for('static', filename='assets/img/AdminLTELogo.png') }}"
-              alt="AdminLTE Logo"
-              class="brand-image opacity-75 shadow"
-            />
-            <!--end::Brand Image-->
-            <!--begin::Brand Text-->
-            <span class="brand-text fw-light">Ikeja Online</span>
-            <!--end::Brand Text-->
-          </a>
-          <!--end::Brand Link-->
-        </div>
-        <!--end::Sidebar Brand-->
-        <!--begin::Sidebar Wrapper-->
-        <div class="sidebar-wrapper">
-          <nav class="mt-2">
-            <!--begin::Sidebar Menu-->
-            <ul
-              class="nav sidebar-menu flex-column"
-              data-lte-toggle="treeview"
-              role="navigation"
-              aria-label="Main navigation"
-              data-accordion="false"
-              id="navigation"
-            >
-              <li class="nav-item">
-                <a href="#" class="nav-link">
-                  <i class="nav-icon bi bi-speedometer"></i>
-                  <p>
-                    Dashboard
-                    <i class="nav-arrow bi bi-chevron-right"></i>
-                  </p>
-                </a>
-                <ul class="nav nav-treeview">
-                  <li class="nav-item">
-                    <a href="/customer/dashboard/home" class="nav-link">
-                      <i class="nav-icon bi bi-house-door"></i>
-                      <p>Dashboard Home</p>
-                    </a>
-                  </li>
-                  
-                </ul>
-              </li>
-              <li class="nav-item">
-                <a href="#" class="nav-link">
-                  <i class="nav-icon bi bi-bag-check"></i>
-                  <p>
-                    Orders
-                    <i class="nav-arrow bi bi-chevron-right"></i>
-                  </p>
-                </a>
-                <ul class="nav nav-treeview">
-                  <li class="nav-item">
-                    <a href="/customer/dashboard/orders" class="nav-link">
-                      <i class="nav-icon bi bi-list-ul"></i>
-                      <p>All Orders</p>
-                    </a>
-                  </li>
-                  <li class="nav-item">
-                    <a href="/customer/dashboard/order-tracking" class="nav-link">
-                      <i class="nav-icon bi bi-truck"></i>
-                      <p>Track Orders</p>
-                    </a>
-                  </li>
-                  <li class="nav-item">
-                    <a href="/customer/dashboard/order-history" class="nav-link">
-                      <i class="nav-icon bi bi-clock-history"></i>
-                      <p>Order History</p>
-                    </a>
-                  </li>
-                  <li class="nav-item">
-                    <a href="/customer/dashboard/cancel-orders" class="nav-link">
-                      <i class="nav-icon bi bi-x-circle"></i>
-                      <p>Cancel Orders</p>
-                    </a>
-                  </li>
-                  <li class="nav-item">
-                    <a href="/customer/dashboard/returns-refunds" class="nav-link">
-                      <i class="nav-icon bi bi-arrow-counterclockwise"></i>
-                      <p>Returns & Refunds</p>
-                    </a>
-                  </li>
-                </ul>
-              </li>
-              <li class="nav-item">
-                <a href="./generate/theme.html" class="nav-link">
-                  <i class="nav-icon bi bi-palette"></i>
-                  <p>Recently Viewed</p>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a href="#" class="nav-link">
-                  <i class="nav-icon bi bi-box-seam-fill"></i>
-                  <p>
-                    Shopping Activity
-                    <i class="nav-arrow bi bi-chevron-right"></i>
-                  </p>
-                </a>
-                <ul class="nav nav-treeview">
-                  <li class="nav-item">
-                    <a href="/customer/dashboard/browse-products" class="nav-link">
-                      <i class="nav-icon bi bi-shop"></i>
-                      <p>Browse Products</p>
-                    </a>
-                  </li>
-                  <li class="nav-item">
-                    <a href="/customer/dashboard/categories" class="nav-link">
-                      <i class="nav-icon bi bi-circle"></i>
-                      <p>Categories</p>
-                    </a>
-                  </li>
-                  
-                  <li class="nav-item">
-                    <a href="/customer/dashboard/wishlist" class="nav-link">
-                      <i class="nav-icon bi bi-circle"></i>
-                      <p>Wishlist</p>
-                    </a>
-                  </li>
-                  <li class="nav-item">
-                    <a href="/customer/dashboard/save-for-later" class="nav-link">
-                      <i class="nav-icon bi bi-heart-pulse-fill"></i>
-                      <p>Save for Later</p>
-                    </a>
-                  </li>
-                </ul>
-              </li>
-              <li class="nav-item">
-                <a href="#" class="nav-link">
-                  <i class="nav-icon bi bi-tree-fill"></i>
-                  <p>
-                    Payments
-                    <i class="nav-arrow bi bi-chevron-right"></i>
-                  </p>
-                </a>
-                <ul class="nav nav-treeview">
-                  <li class="nav-item">
-                    <a href="/customer/dashboard/transaction-history" class="nav-link">
-                      <i class="nav-icon bi bi-receipt"></i>
-                      <p>Transaction History</p>
-                    </a>
-                  </li>
-                </ul>
-              </li>
-              <li class="nav-item">
-                <a href="#" class="nav-link">
-                  <i class="nav-icon bi bi-pencil-square"></i>
-                  <p>
-                    Address and Delivery
-                    <i class="nav-arrow bi bi-chevron-right"></i>
-                  </p>
-                </a>
-                <ul class="nav nav-treeview">
-                  <li class="nav-item">
-                    <a href="/customer/dashboard/address-book" class="nav-link">
-                      <i class="nav-icon bi bi-circle"></i>
-                      <p>Address Book</p>
-                    </a>
-                  </li>
-                  <li class="nav-item">
-                    <a href="/customer/dashboard/add-address" class="nav-link">
-                      <i class="nav-icon bi bi-circle"></i>
-                      <p>Add New Address</p>
-                    </a>
-                  </li>
-                  <li class="nav-item">
-                    <a href="/customer/dashboard/delivery-preferences" class="nav-link">
-                      <i class="nav-icon bi bi-circle"></i>
-                      <p>Delivery Preferences</p>
-                    </a>
-                  </li>
-                </ul>
-              </li>
-              <li class="nav-item">
-                <a href="#" class="nav-link">
-                  <i class="nav-icon bi bi-table"></i>
-                  <p>
-                    Communication and Support
-                    <i class="nav-arrow bi bi-chevron-right"></i>
-                  </p>
-                </a>
-                <ul class="nav nav-treeview">
-                  <li class="nav-item">
-                    <a href="./tables/simple.html" class="nav-link">
-                      <i class="nav-icon bi bi-circle"></i>
-                      <p>Support Tickets</p>
-                    </a>
-                  </li>
-                  <li class="nav-item">
-                    <a href="./tables/simple.html" class="nav-link">
-                      <i class="nav-icon bi bi-circle"></i>
-                      <p>Notifications</p>
-                    </a>
-                  </li>
-                  <li class="nav-item">
-                    <a href="./tables/simple.html" class="nav-link">
-                      <i class="nav-icon bi bi-circle"></i>
-                      <p>Disputes/Comlaints</p>
-                    </a>
-                  </li>
-                  <li class="nav-item">
-                    <a href="./tables/simple.html" class="nav-link">
-                      <i class="nav-icon bi bi-circle"></i>
-                      <p>Support/Help Centre</p>
-                    </a>
-                  </li>
-                </ul>
-              </li>
+  /* Dropdown */
+  .dropdown{position:relative}
+  .dropdown-menu{
+    position:absolute;right:0;top:calc(100% + 8px);
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius-lg);
+    box-shadow:var(--shadow-lg);
+    min-width:260px;
+    padding:.5rem;
+    z-index:500;
+    display:none;
+  }
+  .dropdown.open .dropdown-menu{display:block}
+  .dd-header{
+    padding:.6rem .75rem .3rem;
+    font-size:.72rem;font-weight:700;
+    text-transform:uppercase;letter-spacing:.08em;
+    color:var(--text3);
+  }
+  .dd-item{
+    display:flex;align-items:center;gap:.65rem;
+    padding:.55rem .75rem;border-radius:8px;
+    font-size:.83rem;color:var(--text);font-weight:500;
+    transition:var(--transition);
+  }
+  .dd-item:hover{background:var(--bg);color:var(--green)}
+  .dd-item i{font-size:.95rem;color:var(--text3);width:1rem;text-align:center;flex-shrink:0}
+  .dd-item:hover i{color:var(--green)}
+  .dd-divider{border:none;border-top:1px solid var(--border);margin:.25rem 0}
 
-              <li class="nav-header">REWARDS & OFFERS(coming soon)</li>
-              <li class="nav-item">
-                <a href="#" class="nav-link">
-                  <i class="nav-icon bi bi-box-arrow-in-right"></i>
-                  <p>
-                    Coupons and Vouchers
-                    <i class="nav-arrow bi bi-chevron-right"></i>
-                  </p>
-                </a>
-                <ul class="nav nav-treeview">
-                  <li class="nav-item">
-                    <a href="#" class="nav-link">
-                      <i class="nav-icon bi bi-box-arrow-in-right"></i>
-                      <p>
-                        Loyalty Points
-                        <i class="nav-arrow bi bi-chevron-right"></i>
-                      </p>
-                    </a>
-                    <ul class="nav nav-treeview">
-                      <li class="nav-item">
-                        <a href="./examples/login.html" class="nav-link">
-                          <i class="nav-icon bi bi-circle"></i>
-                          <p>Redeem Points</p>
-                        </a>
-                      </li>
-                      <li class="nav-item">
-                        <a href="./examples/register.html" class="nav-link">
-                          <i class="nav-icon bi bi-circle"></i>
-                          <p>Redeem Points</p>
-                        </a>
-                      </li>
-                    </ul>
-                  </li>
-                  <li class="nav-item">
-                    <a href="#" class="nav-link">
-                      <i class="nav-icon bi bi-box-arrow-in-right"></i>
-                      <p>
-                        Referral Program
-                        <i class="nav-arrow bi bi-chevron-right"></i>
-                      </p>
-                    </a>
-                    <ul class="nav nav-treeview">
-                      <li class="nav-item">
-                        <a href="./examples/login-v2.html" class="nav-link">
-                          <i class="nav-icon bi bi-circle"></i>
-                          <p>Referral Points</p>
-                        </a>
-                      </li>
-                      <li class="nav-item">
-                        <a href="./examples/register-v2.html" class="nav-link">
-                          <i class="nav-icon bi bi-circle"></i>
-                          <p>Refer a Friend</p>
-                        </a>
-                      </li>
-                    </ul>
-                  </li>
-                  
-                </ul>
-              </li>
+  /* User header in dropdown */
+  .user-dd-top{
+    background:linear-gradient(135deg,var(--green),var(--green-d));
+    border-radius:8px;padding:.9rem 1rem;
+    display:flex;align-items:center;gap:.75rem;margin-bottom:.5rem;
+  }
+  .avatar-circle{
+    width:40px;height:40px;
+    border-radius:50%;
+    border:2px solid rgba(255,255,255,.4);
+    background:rgba(255,255,255,.18);
+    display:flex;align-items:center;justify-content:center;
+    font-size:.85rem;font-weight:700;color:#fff;
+    flex-shrink:0;font-family:'Syne',sans-serif;
+  }
+  .user-dd-name{color:#fff;font-weight:700;font-size:.88rem}
+  .user-dd-since{color:rgba(255,255,255,.7);font-size:.72rem}
 
-              <li class="nav-header">Account Settings</li>
-              <li class="nav-item">
-                <a href="/customer/dashboard/profile-info" class="nav-link">
-                  <i class="nav-icon bi bi-person-circle"></i>
-                  <p>View Profile</p>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a href="/customer/dashboard/account-settings" class="nav-link">
-                  <i class="nav-icon bi bi-pencil-square"></i>
-                  <p>Edit Account</p>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a href="/customer/dashboard/security" class="nav-link">
-                  <i class="nav-icon bi bi-shield-lock"></i>
-                  <p>Security</p>
-                </a>
-              </li>
-              
-              
-            </ul>
-            <!--end::Sidebar Menu-->
-          </nav>
-        </div>
-        <!--end::Sidebar Wrapper-->
-      </aside>
-      <!--end::Sidebar-->
-      <!--begin::App Main-->
-      <main class="app-main">
-        <!--begin::App Content Header-->
-        <div class="app-content-header">
-          <!--begin::Container-->
-          <div class="container-fluid">
-            <!--begin::Row-->
-            <div class="row">
-              <div class="col-sm-6">
-                <h3 class="mb-0">Dashboard</h3>
-              </div>
-              {% block dashboard_current %}{% endblock dashboard_current %}
-            </div>
-            <!--end::Row-->
-          </div>
-          <!--end::Container-->
-        </div>
-        {% block customer_content %}{% endblock customer_content %}
-        <!--end::App Content-->
-      </main>
-      <!--end::App Main-->
-      <!--begin::Footer-->
-      <footer class="app-footer">
-        <!--begin::To the end-->
-        <div class="float-end d-none d-sm-inline">Anything you want</div>
-        <!--end::To the end-->
-        <!--begin::Copyright-->
-        <strong>
-          Copyright &copy; 2014-2026&nbsp;
-          <a href="https://adminlte.io" class="text-decoration-none">AdminLTE.io</a>.
-        </strong>
-        All rights reserved.
-        <!--end::Copyright-->
-      </footer>
-      <!--end::Footer-->
+  /* User pill in topbar */
+  .user-pill{
+    display:flex;align-items:center;gap:.5rem;
+    padding:.3rem .7rem .3rem .3rem;
+    border:1px solid var(--border);
+    border-radius:24px;
+    background:transparent;
+    font-size:.8rem;font-weight:600;color:var(--text);
+    transition:var(--transition);
+    white-space:nowrap;
+  }
+  .user-pill:hover{border-color:var(--green);box-shadow:0 0 0 3px rgba(0,166,81,.08)}
+  .user-pill .avatar-circle{width:28px;height:28px;font-size:.72rem;border:none;background:linear-gradient(135deg,var(--green),var(--green-d))}
+
+  /* ─── MAIN ───────────────────────────────────── */
+  .main{
+    grid-area:main;
+    min-width:0;
+    display:flex;
+    flex-direction:column;
+  }
+
+  /* Page header bar */
+  .page-header{
+    background:var(--surface);
+    border-bottom:1px solid var(--border);
+    padding:.9rem 1.25rem;
+    display:flex;align-items:center;justify-content:space-between;
+    flex-wrap:wrap;gap:.5rem;
+  }
+  .page-title{
+    font-family:'Syne',sans-serif;
+    font-weight:800;font-size:1.2rem;color:var(--text);
+  }
+  .breadcrumb{
+    display:flex;align-items:center;gap:.35rem;
+    font-size:.75rem;color:var(--text3);margin-top:.15rem;
+  }
+  .breadcrumb a{color:var(--green)}
+  .breadcrumb span::before{content:'/';margin-right:.35rem}
+
+  /* Content */
+  .content{padding:1.25rem;flex:1}
+
+  /* ─── FOOTER ─────────────────────────────────── */
+  .footer{
+    grid-area:footer;
+    background:var(--surface);
+    border-top:1px solid var(--border);
+    padding:.85rem 1.25rem;
+    font-size:.75rem;color:var(--text3);
+    display:flex;align-items:center;justify-content:space-between;
+    flex-wrap:wrap;gap:.5rem;
+  }
+  .footer a{color:var(--green)}
+
+  /* ─── CARDS ──────────────────────────────────── */
+  .card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius-lg);
+    box-shadow:var(--shadow);
+  }
+
+  .table-responsive,
+  .table,
+  .ik-table,
+  .ik-table th,
+  .ik-table td {
+    background:transparent;
+  }
+
+  .table {
+    color:var(--text);
+  }
+
+  .table th,
+  .table td {
+    border-color:var(--border);
+  }
+
+  .table-striped tbody tr:nth-of-type(odd) {
+    background:rgba(255,255,255,.03);
+  }
+
+  [data-theme=dark] .table-striped tbody tr:nth-of-type(odd) {
+    background:rgba(255,255,255,.06);
+  }
+
+  .table-hover tbody tr:hover,
+  .ik-table tbody tr:hover {
+    background:rgba(0,0,0,.04);
+  }
+
+  [data-theme=dark] .table-hover tbody tr:hover,
+  [data-theme=dark] .ik-table tbody tr:hover {
+    background:rgba(255,255,255,.06);
+  }
+
+  /* stat-card and quick-action shared styles (copied from vendordashboard) */
+  .ik-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); transition:var(--transition); }
+  .ik-card:hover { box-shadow:var(--shadow-md); transform:translateY(-1px); }
+  .ik-card-body { padding:1.25rem; }
+  .ik-card-hdr { padding:1rem 1.25rem 0; display:flex; align-items:center; justify-content:space-between; }
+  .ik-card-title { font-size:.9rem; font-weight:700; color:var(--text); margin:0; }
+
+  .stat-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); padding:1.25rem; box-shadow:var(--shadow); transition:var(--transition); position:relative; overflow:hidden; }
+  .stat-card::after { content:''; position:absolute; top:-30px; right:-30px; width:100px; height:100px; border-radius:50%; opacity:.06; }
+  .stat-card:hover { box-shadow:var(--shadow-md); transform:translateY(-2px); }
+  .stat-card.green::after  { background:var(--green); }
+  .stat-card.orange::after { background:var(--orange); }
+  .stat-card.gold::after   { background:var(--gold); }
+  .stat-card.blue::after   { background:var(--blue); }
+  .wallet-card {
+    background:linear-gradient(135deg, #0D1B2A 0%, #162233 100%);
+    color:#fff;
+    border:none;
+  }
+  .wallet-card .wallet-card-label,
+  .wallet-card .wallet-card-value,
+  .wallet-card .wallet-card-note {
+    color:#fff !important;
+  }
+  .wallet-card-note { margin-top:.5rem; opacity:.9; }
+  .wallet-card .stat-card::after { opacity:.1; }
+
+  .stat-icon { width:44px; height:44px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; margin-bottom:.875rem; }
+  .stat-icon.green  { background:var(--green-l); color:var(--green); }
+  .stat-icon.orange { background:var(--orange-l); color:var(--orange); }
+  .stat-icon.gold   { background:#FFFBEB; color:var(--gold); }
+  .stat-icon.blue   { background:#EFF6FF; color:var(--blue); }
+  .stat-label { font-size:.72rem; font-weight:600; text-transform:uppercase; letter-spacing:.06em; color:var(--text3); margin-bottom:.2rem; }
+  .stat-value { font-family:'Syne',sans-serif; font-size:1.6rem; font-weight:700; color:var(--text); line-height:1.1; margin-bottom:.35rem; }
+
+  .quick-action { display:flex; flex-direction:column; align-items:center; gap:.5rem; padding:.875rem .5rem; border-radius:8px; background:var(--surface); border:1px solid var(--border); text-decoration:none; transition:var(--transition); cursor:pointer; }
+  .quick-action:hover { border-color:var(--green); background:var(--green-l); transform:translateY(-2px); box-shadow:var(--shadow-md); }
+  .quick-action-icon { width:40px; height:40px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.1rem; }
+  .quick-action-label { font-size:.73rem; font-weight:600; color:var(--text2); text-align:center; line-height:1.2; }
+  .card:hover{box-shadow:var(--shadow-md);transform:translateY(-1px)}
+  .card-body{padding:1.1rem}
+  .card-header,
+  .card-head{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:1rem 1.1rem .6rem;
+    border-bottom:1px solid var(--border);
+    background:transparent;
+  }
+  .card-footer{
+    padding:1rem 1.1rem;
+    border-top:1px solid var(--border);
+    background:transparent;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:.5rem;
+  }
+  .card-title{font-size:.87rem;font-weight:700;color:var(--text)}
+  .view-all{font-size:.78rem;font-weight:600;color:var(--green);display:flex;align-items:center;gap:.25rem}
+
+  .table{
+    color:var(--text);
+    background:transparent;
+  }
+  .table th,
+  .table td{
+    border-color:var(--border);
+  }
+  .table thead th{
+    background:rgba(255,255,255,.04);
+  }
+  [data-theme=dark] .table thead th{
+    background:rgba(255,255,255,.08);
+  }
+  .table-hover tbody tr:hover,
+  .ik-table tbody tr:hover{
+    background:rgba(0,0,0,.04);
+  }
+  [data-theme=dark] .table-hover tbody tr:hover,
+  [data-theme=dark] .ik-table tbody tr:hover{
+    background:rgba(255,255,255,.06);
+  }
+  .table-light{
+    background:rgba(255,255,255,.05);
+  }
+  [data-theme=dark] .table-light{
+    background:rgba(255,255,255,.08);
+  }
+
+  [data-theme=dark] .bg-light{
+    background:rgba(255,255,255,.05) !important;
+    color:var(--text) !important;
+  }
+  [data-theme=dark] .badge.bg-light{
+    background:rgba(255,255,255,.08) !important;
+    color:var(--text) !important;
+  }
+
+  /* Grid helpers */
+  .grid{display:grid;gap:1rem}
+  .g2{grid-template-columns:repeat(2,1fr)}
+  .g4{grid-template-columns:repeat(4,1fr)}
+  .g-auto{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+
+  /* ─── STAT CARDS ─────────────────────────────── */
+  .stat{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius-lg);
+    padding:1.1rem;
+    box-shadow:var(--shadow);
+    transition:var(--transition);
+    position:relative;overflow:hidden;
+  }
+  .stat:hover{box-shadow:var(--shadow-md);transform:translateY(-2px)}
+  .stat::after{
+    content:'';position:absolute;
+    top:-20px;right:-20px;
+    width:90px;height:90px;border-radius:50%;
+    opacity:.07;
+  }
+  .stat.green::after{background:var(--green)}
+  .stat.orange::after{background:var(--orange)}
+  .stat.gold::after{background:var(--gold)}
+  .stat.blue::after{background:var(--blue)}
+
+  .stat-ico{
+    width:40px;height:40px;border-radius:8px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:1.05rem;margin-bottom:.75rem;
+  }
+  .stat-ico.green {background:var(--green-l);color:var(--green)}
+  .stat-ico.orange{background:var(--orange-l);color:var(--orange)}
+  .stat-ico.gold  {background:#FFFBEB;color:var(--gold)}
+  .stat-ico.blue  {background:#EFF6FF;color:var(--blue)}
+  [data-theme=dark] .stat-ico.gold{background:rgba(245,158,11,.12)}
+  [data-theme=dark] .stat-ico.blue{background:rgba(59,130,246,.12)}
+
+  .stat-label{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-bottom:.2rem}
+  .stat-val{font-family:'Syne',sans-serif;font-size:1.55rem;font-weight:800;color:var(--text);line-height:1}
+  .stat-note{font-size:.72rem;font-weight:600;color:var(--text3);margin-top:.4rem;display:flex;align-items:center;gap:.2rem}
+  .stat-note.up{color:var(--green)}
+
+  /* ─── WELCOME BANNER ─────────────────────────── */
+  .welcome{
+    background:linear-gradient(135deg,var(--green) 0%,var(--green-d) 55%,#004f28 100%);
+    border-radius:var(--radius-lg);
+    padding:1.4rem 1.5rem;
+    color:#fff;
+    position:relative;overflow:hidden;
+    margin-bottom:1rem;
+  }
+  .welcome::before,.welcome::after{
+    content:'';position:absolute;border-radius:50%;
+    background:rgba(255,255,255,.07);
+  }
+  .welcome::before{width:160px;height:160px;top:-50px;right:-40px}
+  .welcome::after {width:100px;height:100px;bottom:-30px;right:80px}
+  .welcome-title{font-family:'Syne',sans-serif;font-size:1.25rem;font-weight:800;margin-bottom:.2rem}
+  .welcome-sub{font-size:.82rem;opacity:.82}
+  .welcome-btn{
+    display:inline-flex;align-items:center;gap:.4rem;
+    margin-top:.85rem;
+    padding:.42rem 1.1rem;
+    border-radius:24px;
+    background:rgba(255,255,255,.17);
+    border:1px solid rgba(255,255,255,.3);
+    color:#fff;font-size:.8rem;font-weight:600;
+    transition:var(--transition);
+  }
+  .welcome-btn:hover{background:rgba(255,255,255,.28);color:#fff}
+
+  /* ─── WALLET ─────────────────────────────────── */
+  .wallet{
+    background:linear-gradient(135deg,#0D1B2A 0%,#162233 100%);
+    border-radius:var(--radius-lg);
+    padding:1.2rem;color:#fff;
+    position:relative;overflow:hidden;height:100%;
+  }
+  .wallet::before{
+    content:'';position:absolute;
+    width:110px;height:110px;border-radius:50%;
+    background:rgba(0,166,81,.15);
+    top:-20px;right:-20px;
+  }
+  .wallet-lbl{font-size:.7rem;opacity:.6;font-weight:600;text-transform:uppercase;letter-spacing:.08em}
+  .wallet-bal{font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800;margin:.2rem 0 .6rem}
+  .wallet-btns{display:flex;gap:.6rem}
+  .w-btn{
+    flex:1;padding:.45rem;border-radius:8px;
+    font-size:.75rem;font-weight:600;
+    border:none;transition:var(--transition);cursor:pointer;font-family:inherit;
+  }
+  .w-btn.primary{background:var(--green);color:#fff}
+  .w-btn.ghost{background:rgba(255,255,255,.1);color:rgba(255,255,255,.88);border:1px solid rgba(255,255,255,.2)}
+  .w-btn:hover{opacity:.85}
+
+  /* ─── QUICK ACTIONS ──────────────────────────── */
+  .qa-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:.6rem}
+  .qa{
+    display:flex;flex-direction:column;align-items:center;gap:.35rem;
+    padding:.7rem .4rem;
+    border-radius:10px;
+    background:var(--bg);
+    border:1px solid var(--border);
+    cursor:pointer;transition:var(--transition);
+  }
+  .qa:hover{border-color:var(--green);background:var(--green-l);transform:translateY(-2px);box-shadow:var(--shadow-md)}
+  [data-theme=dark] .qa:hover{background:rgba(0,166,81,.1)}
+  .qa-ico{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1rem}
+  .qa-lbl{font-size:.68rem;font-weight:600;color:var(--text2);text-align:center;line-height:1.2}
+  .qa:hover .qa-lbl{color:var(--green)}
+
+  /* ─── STATUS BADGES ──────────────────────────── */
+  .badge{
+    display:inline-flex;align-items:center;
+    padding:.18rem .6rem;border-radius:20px;
+    font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;
+  }
+  .badge-delivered {background:#D1FAE5;color:#065F46}
+  .badge-shipped   {background:#DBEAFE;color:#1D4ED8}
+  .badge-processing{background:#FEF9C3;color:#92400E}
+  .badge-cancelled {background:#FEE2E2;color:#991B1B}
+  .badge-pending   {background:#F1F5F9;color:#475569}
+  [data-theme=dark] .badge-delivered {background:rgba(5,150,105,.2);color:#34D399}
+  [data-theme=dark] .badge-shipped   {background:rgba(37,99,235,.2);color:#60A5FA}
+  [data-theme=dark] .badge-processing{background:rgba(217,119,6,.2);color:#FCD34D}
+  [data-theme=dark] .badge-cancelled {background:rgba(185,28,28,.2);color:#F87171}
+  [data-theme=dark] .badge-pending   {background:rgba(71,85,105,.2);color:#94A3B8}
+
+  /* ─── TABLE ──────────────────────────────────── */
+  .ik-table{width:100%;min-width:760px;border-collapse:collapse;background:transparent}
+  .ik-table th{
+    font-size:.67rem;font-weight:700;
+    text-transform:uppercase;letter-spacing:.06em;
+    color:var(--text3);
+    padding:.5rem .6rem;
+    border-bottom:1px solid var(--border);
+    white-space:nowrap;
+    text-align:left;
+    background:transparent;
+  }
+  .ik-table td{
+    padding:.75rem .6rem;font-size:.82rem;color:var(--text);
+    border-bottom:1px solid var(--border);vertical-align:middle;
+    background:transparent;
+  }
+  .ik-table tr:last-child td{border-bottom:none}
+  .ik-table tbody tr:hover{background:rgba(0,0,0,.04)}
+  [data-theme=dark] .ik-table tbody tr:hover{background:rgba(255,255,255,.06)}
+  .ik-card .text-muted,
+  .ik-card h6.text-muted{
+    color:var(--text3) !important;
+  }
+
+  /* ─── NOTIF ITEMS ────────────────────────────── */
+  .notif-scroll{max-height:300px;overflow-y:auto}
+  .ni{display:flex;align-items:flex-start;gap:.65rem;padding:.65rem .75rem;border-radius:8px;transition:var(--transition)}
+  .ni:hover{background:var(--bg)}
+  .ni-ico{width:34px;height:34px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.85rem}
+  .ni-ico.g{background:var(--green-l);color:var(--green)}
+  .ni-ico.o{background:var(--orange-l);color:var(--orange)}
+  [data-theme=dark] .ni-ico.g{background:rgba(0,166,81,.15)}
+  [data-theme=dark] .ni-ico.o{background:rgba(249,115,22,.15)}
+  .ni-title{font-size:.8rem;font-weight:600;color:var(--text)}
+  .ni-sub{font-size:.71rem;color:var(--text3);margin-top:.05rem}
+
+  /* ─── OVERLAY (mobile) ───────────────────────── */
+  .overlay{
+    display:none;
+    position:fixed;inset:0;
+    background:rgba(0,0,0,.52);
+    z-index:190;
+    backdrop-filter:blur(2px);
+  }
+  .overlay.show{display:block}
+
+  .dashboard-modal-overlay{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.55);
+    z-index:2100;
+    align-items:center;
+    justify-content:center;
+    padding:1.5rem;
+  }
+  .dashboard-modal-overlay.show{display:flex;}
+  .dashboard-modal-card{
+    width:min(560px,100%);
+    max-height:90vh;
+    overflow-y:auto;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius-lg);
+    box-shadow:var(--shadow-lg);
+  }
+  .dashboard-modal-card-body{
+    padding:1.5rem;
+  }
+  .dashboard-modal-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:1rem;
+    padding:1.5rem 1.5rem 0;
+  }
+  .dashboard-modal-title{
+    font-size:1.15rem;
+    font-weight:700;
+    color:var(--text);
+    margin:0;
+  }
+  .dashboard-modal-close{
+    border:none;
+    background:transparent;
+    font-size:1.5rem;
+    cursor:pointer;
+    color:var(--text2);
+  }
+  .dashboard-modal-close:hover{
+    color:var(--text);
+  }
+  .dashboard-modal-footer{
+    padding:1rem 1.5rem 1.5rem;
+    border-top:1px solid var(--border);
+  }
+
+  /* ─── ANIMATIONS ─────────────────────────────── */
+  @keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+  .fu {animation:fadeUp .38s ease both}
+  .fu1{animation-delay:.05s}
+  .fu2{animation-delay:.10s}
+  .fu3{animation-delay:.15s}
+  .fu4{animation-delay:.20s}
+
+  /* ─── RESPONSIVE ─────────────────────────────── */
+
+  /* Tablet/Desktop collapsed sidebar */
+  @media(min-width:993px){
+    .layout.collapsed{
+      --sidebar-w:0px;
+    }
+    .layout.collapsed .sidebar{width:0;overflow:hidden}
+    .sidebar-mobile-label{display:none}
+  }
+
+  /* Mobile: sidebar slides as overlay */
+  @media(max-width:992px){
+    .layout{
+      grid-template-columns:1fr;
+      grid-template-areas:
+        "topbar"
+        "main"
+        "footer";
+    }
+    .sidebar{
+      position:fixed;
+      left:0;top:0;bottom:0;
+      width:var(--sidebar-w) !important;
+      transform:translateX(-100%);
+      z-index:200;
+    }
+    .sidebar.open{transform:translateX(0)}
+    .topbar-search{display:none}
+    .brand-mobile{display:flex !important}
+  }
+  @media(min-width:993px){
+    .brand-mobile{display:none !important}
+  }
+
+  /* Stat grid responsive */
+  @media(max-width:640px){
+    .g4{grid-template-columns:repeat(2,1fr)}
+  }
+  @media(max-width:400px){
+    .g4{grid-template-columns:repeat(2,1fr)}
+  }
+
+  /* Mid row responsive */
+  .mid-row{display:grid;grid-template-columns:1fr 1.7fr;gap:1rem;margin-bottom:1rem}
+  @media(max-width:760px){.mid-row{grid-template-columns:1fr}}
+
+  /* Bottom row responsive */
+  .bot-row{display:grid;grid-template-columns:1.6fr 1fr;gap:1rem}
+  @media(max-width:800px){.bot-row{grid-template-columns:1fr}}
+
+  /* Hide table cols on small screens */
+  @media(max-width:540px){
+    .hide-sm{display:none}
+  }
+
+  /* Content padding adjust */
+  @media(max-width:480px){
+    .content{padding:.85rem}
+    .welcome{padding:1rem 1.1rem}
+    .welcome-title{font-size:1.05rem}
+  }
+</style>
+</head>
+<body>
+
+<!-- Mobile overlay -->
+<div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+
+<div class="layout" id="layout">
+
+  <!-- ═══════════ SIDEBAR ═══════════ -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">🛒</div>
+      <span class="brand-name">Ikeja<span>.Online</span></span>
     </div>
-    <!--end::App Wrapper-->
-    <!--begin::Script-->
-    <!--begin::Third Party Plugin(ApexCharts)-->
-    <script
-      src="https://cdn.jsdelivr.net/npm/apexcharts@3.37.1/dist/apexcharts.umd.js"
-      integrity="sha256-n3nVKRZVl8e5HCshFLUSL0M2eYmCBJqpKQyUUKWKxvg="
-      crossorigin="anonymous"
-    ></script>
-    <!--end::Third Party Plugin(ApexCharts)-->
-    <!--begin::Third Party Plugin(OverlayScrollbars)-->
-    <script
-      src="https://cdn.jsdelivr.net/npm/overlayscrollbars@2.11.0/browser/overlayscrollbars.browser.es6.min.js"
-      crossorigin="anonymous"
-    ></script>
-    <!--end::Third Party Plugin(OverlayScrollbars)--><!--begin::Required Plugin(popperjs for Bootstrap 5)-->
-    <script
-      src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"
-      crossorigin="anonymous"
-    ></script>
-    <!--end::Required Plugin(popperjs for Bootstrap 5)--><!--begin::Required Plugin(Bootstrap 5)-->
-    <script
-      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.min.js"
-      crossorigin="anonymous"
-    ></script>
-    <!--end::Required Plugin(Bootstrap 5)--><!--begin::Required Plugin(AdminLTE)-->
-    <script src="{{ url_for('static', filename='js/adminlte.min.js') }}"></script>
-    <!--end::Required Plugin(AdminLTE)--><!--begin::OverlayScrollbars Configure-->
-    <script>
-      const SELECTOR_SIDEBAR_WRAPPER = '.sidebar-wrapper';
-      const Default = {
-        scrollbarTheme: 'os-theme-light',
-        scrollbarAutoHide: 'leave',
-        scrollbarClickScroll: true,
-      };
-      document.addEventListener('DOMContentLoaded', function () {
-        const sidebarWrapper = document.querySelector(SELECTOR_SIDEBAR_WRAPPER);
 
-        // Disable OverlayScrollbars on mobile devices to prevent touch interference
-        const isMobile = window.innerWidth <= 992;
+    <div class="sidebar-scroll">
+      <ul id="nav-root">
 
-        if (
-          sidebarWrapper &&
-          OverlayScrollbarsGlobal?.OverlayScrollbars !== undefined &&
-          !isMobile
-        ) {
-          OverlayScrollbarsGlobal.OverlayScrollbars(sidebarWrapper, {
-            scrollbars: {
-              theme: Default.scrollbarTheme,
-              autoHide: Default.scrollbarAutoHide,
-              clickScroll: Default.scrollbarClickScroll,
-            },
-          });
-        }
-      });
-    </script>
-    <!--end::OverlayScrollbars Configure-->
+        <!-- Dashboard -->
+        <li class="nav-item">
+          <a href="#" class="nav-link" onclick="toggleSub(event,this)">
+            <i class="bi bi-speedometer2 nav-icon"></i>
+            <span class="nav-label">Dashboard</span>
+            <i class="bi bi-chevron-right nav-arrow"></i>
+          </a>
+          <ul class="nav-sub">
+            <li><a href="/customer/dashboard/home" class="nav-link"><i class="bi bi-house-door nav-icon"></i><span class="nav-label">Dashboard Home</span></a></li>
+          </ul>
+        </li>
 
-    <!-- OPTIONAL SCRIPTS -->
+        <!-- Orders -->
+        <li class="nav-item">
+          <a href="#" class="nav-link" onclick="toggleSub(event,this)">
+            <i class="bi bi-bag-check nav-icon"></i>
+            <span class="nav-label">Orders</span>
+            <i class="bi bi-chevron-right nav-arrow"></i>
+          </a>
+          <ul class="nav-sub">
+            <li><a href="/customer/dashboard/orders" class="nav-link"><i class="bi bi-list-ul nav-icon"></i><span class="nav-label">All Orders</span></a></li>
+            <li><a href="/customer/dashboard/order-tracking" class="nav-link"><i class="bi bi-truck nav-icon"></i><span class="nav-label">Track Orders</span></a></li>
+            <li><a href="/customer/dashboard/order-history" class="nav-link"><i class="bi bi-clock-history nav-icon"></i><span class="nav-label">Order History</span></a></li>
+            <li><a href="/customer/dashboard/cancel-orders" class="nav-link"><i class="bi bi-x-circle nav-icon"></i><span class="nav-label">Cancel Orders</span></a></li>
+            <li><a href="/customer/dashboard/returns-refunds" class="nav-link"><i class="bi bi-arrow-counterclockwise nav-icon"></i><span class="nav-label">Returns &amp; Refunds</span></a></li>
+          </ul>
+        </li>
 
-    <!-- apexcharts -->
-    <script
-      src="https://cdn.jsdelivr.net/npm/apexcharts@3.37.1/dist/apexcharts.min.js"
-      integrity="sha256-+vh8GkaU7C9/wbSLIcwq82tQ2wTf44aOHA8HlBMwRI8="
-      crossorigin="anonymous"
-    ></script>
+        <!-- Recently Viewed -->
+        <li class="nav-item">
+          <a href="/customer/dashboard/recently-viewed" class="nav-link">
+            <i class="bi bi-eye nav-icon"></i><span class="nav-label">Recently Viewed</span>
+          </a>
+        </li>
 
-    <script>
-      // NOTICE!! DO NOT USE ANY OF THIS JAVASCRIPT
-      // IT'S ALL JUST JUNK FOR DEMO
-      // ++++++++++++++++++++++++++++++++++++++++++
+        <!-- Shopping Activity -->
+        <li class="nav-item">
+          <a href="#" class="nav-link" onclick="toggleSub(event,this)">
+            <i class="bi bi-box-seam nav-icon"></i>
+            <span class="nav-label">Shopping Activity</span>
+            <i class="bi bi-chevron-right nav-arrow"></i>
+          </a>
+          <ul class="nav-sub">
+            <li><a href="/customer/dashboard/browse-products" class="nav-link"><i class="bi bi-shop nav-icon"></i><span class="nav-label">Browse Products</span></a></li>
+            <li><a href="/customer/dashboard/categories" class="nav-link"><i class="bi bi-grid nav-icon"></i><span class="nav-label">Categories</span></a></li>
+            <li><a href="/customer/dashboard/wishlist" class="nav-link"><i class="bi bi-heart nav-icon"></i><span class="nav-label">Wishlist</span></a></li>
+            <li><a href="/customer/dashboard/save-for-later" class="nav-link"><i class="bi bi-bookmark-heart nav-icon"></i><span class="nav-label">Save for Later</span></a></li>
+          </ul>
+        </li>
 
-      /* apexcharts
-       * -------
-       * Here we will create a few charts using apexcharts
-       */
+        <!-- Payments -->
+        <li class="nav-item">
+          <a href="#" class="nav-link" onclick="toggleSub(event,this)">
+            <i class="bi bi-credit-card nav-icon"></i>
+            <span class="nav-label">Payments</span>
+            <i class="bi bi-chevron-right nav-arrow"></i>
+          </a>
+          <ul class="nav-sub">
+            <li><a href="/customer/dashboard/transaction-history" class="nav-link"><i class="bi bi-receipt nav-icon"></i><span class="nav-label">Transaction History</span></a></li>
+          </ul>
+        </li>
 
-      //-----------------------
-      // - MONTHLY SALES CHART -
-      //-----------------------
+        <!-- Address & Delivery -->
+        <li class="nav-item">
+          <a href="#" class="nav-link" onclick="toggleSub(event,this)">
+            <i class="bi bi-geo-alt nav-icon"></i>
+            <span class="nav-label">Address &amp; Delivery</span>
+            <i class="bi bi-chevron-right nav-arrow"></i>
+          </a>
+          <ul class="nav-sub">
+            <li><a href="/customer/dashboard/address-book" class="nav-link"><i class="bi bi-book nav-icon"></i><span class="nav-label">Address Book</span></a></li>
+            <li><a href="/customer/dashboard/add-address" class="nav-link"><i class="bi bi-plus-circle nav-icon"></i><span class="nav-label">Add New Address</span></a></li>
+            <li><a href="/customer/dashboard/delivery-preferences" class="nav-link"><i class="bi bi-truck-front nav-icon"></i><span class="nav-label">Delivery Preferences</span></a></li>
+          </ul>
+        </li>
 
-      const sales_chart_options = {
-        series: [
-          {
-            name: 'Digital Goods',
-            data: [28, 48, 40, 19, 86, 27, 90],
-          },
-          {
-            name: 'Electronics',
-            data: [65, 59, 80, 81, 56, 55, 40],
-          },
-        ],
-        chart: {
-          height: 180,
-          type: 'area',
-          toolbar: {
-            show: false,
-          },
-        },
-        legend: {
-          show: false,
-        },
-        colors: ['#0d6efd', '#20c997'],
-        dataLabels: {
-          enabled: false,
-        },
-        stroke: {
-          curve: 'smooth',
-        },
-        xaxis: {
-          type: 'datetime',
-          categories: [
-            '2023-01-01',
-            '2023-02-01',
-            '2023-03-01',
-            '2023-04-01',
-            '2023-05-01',
-            '2023-06-01',
-            '2023-07-01',
-          ],
-        },
-        tooltip: {
-          x: {
-            format: 'MMMM yyyy',
-          },
-        },
-      };
+        <!-- Support -->
+        <li class="nav-item">
+          <a href="#" class="nav-link" onclick="toggleSub(event,this)">
+            <i class="bi bi-headset nav-icon"></i>
+            <span class="nav-label">Support</span>
+            <i class="bi bi-chevron-right nav-arrow"></i>
+          </a>
+          <ul class="nav-sub">
+            <li><a href="#" class="nav-link"><i class="bi bi-ticket-detailed nav-icon"></i><span class="nav-label">Support Tickets</span></a></li>
+            <li><a href="#" class="nav-link"><i class="bi bi-bell nav-icon"></i><span class="nav-label">Notifications</span></a></li>
+            <li><a href="#" class="nav-link"><i class="bi bi-flag nav-icon"></i><span class="nav-label">Disputes / Complaints</span></a></li>
+            <li><a href="#" class="nav-link"><i class="bi bi-question-circle nav-icon"></i><span class="nav-label">Help Centre</span></a></li>
+          </ul>
+        </li>
 
-      const sales_chart = new ApexCharts(
-        document.querySelector('#sales-chart'),
-        sales_chart_options,
-      );
-      sales_chart.render();
+        <li class="nav-section">Rewards &amp; Offers <span class="nav-badge ms-1">Soon</span></li>
 
-      //---------------------------
-      // - END MONTHLY SALES CHART -
-      //---------------------------
+        <li class="nav-item">
+          <a href="#" class="nav-link" onclick="toggleSub(event,this)">
+            <i class="bi bi-gift nav-icon"></i>
+            <span class="nav-label">Coupons &amp; Vouchers</span>
+            <i class="bi bi-chevron-right nav-arrow"></i>
+          </a>
+          <ul class="nav-sub">
+            <li><a href="#" class="nav-link"><i class="bi bi-trophy nav-icon"></i><span class="nav-label">Loyalty Points</span></a></li>
+            <li><a href="#" class="nav-link"><i class="bi bi-people nav-icon"></i><span class="nav-label">Refer a Friend</span></a></li>
+          </ul>
+        </li>
 
-      //-------------
-      // - PIE CHART -
-      //-------------
+        <li class="nav-section">Account Settings</li>
 
-      const pie_chart_options = {
-        series: [700, 500, 400, 600, 300, 100],
-        chart: {
-          type: 'donut',
-        },
-        labels: ['Chrome', 'Edge', 'FireFox', 'Safari', 'Opera', 'IE'],
-        dataLabels: {
-          enabled: false,
-        },
-        colors: ['#0d6efd', '#20c997', '#ffc107', '#d63384', '#6f42c1', '#adb5bd'],
-      };
+        <li class="nav-item"><a href="/customer/dashboard/profile-info" class="nav-link"><i class="bi bi-person-circle nav-icon"></i><span class="nav-label">View Profile</span></a></li>
+        <li class="nav-item"><a href="/customer/dashboard/account-settings" class="nav-link"><i class="bi bi-pencil-square nav-icon"></i><span class="nav-label">Edit Account</span></a></li>
+        <li class="nav-item"><a href="/customer/dashboard/security" class="nav-link"><i class="bi bi-shield-lock nav-icon"></i><span class="nav-label">Security</span></a></li>
 
-      const pie_chart = new ApexCharts(document.querySelector('#pie-chart'), pie_chart_options);
-      pie_chart.render();
+      </ul>
+    </div>
+  </aside>
 
-      //-----------------
-      // - END PIE CHART -
-      //-----------------
-    </script>
-    <!--end::Script-->
-    <script>
-      // Load user info from JWT and API
-      async function loadUserInfo() {
-        const token = localStorage.getItem('access_token');
-        if (!token) return;
+  <!-- ═══════════ TOPBAR ═══════════ -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <!-- Toggle btn -->
+      <button class="icon-btn" onclick="toggleSidebar()" aria-label="Toggle sidebar">
+        <i class="bi bi-list" style="font-size:1.3rem"></i>
+      </button>
+      <!-- Mobile brand -->
+      <a href="/" class="brand-mobile" style="font-family:'Syne',sans-serif;font-weight:800;font-size:1rem;color:var(--green);display:none;">
+        Ikeja<span style="color:var(--orange)">.</span>Online
+      </a>
+      <!-- Desktop nav links -->
+      <a href="/" class="nav-link d-lg-inline-flex" style="font-size:.82rem;font-weight:600;color:var(--text2);padding:.3rem .6rem;border-radius:7px;display:none;transition:var(--transition)" onmouseover="this.style.color='var(--green)'" onmouseout="this.style.color='var(--text2)'">Home</a>
+      <a href="/contact" class="nav-link d-lg-inline-flex" style="font-size:.82rem;font-weight:600;color:var(--text2);padding:.3rem .6rem;border-radius:7px;display:none;transition:var(--transition)" onmouseover="this.style.color='var(--green)'" onmouseout="this.style.color='var(--text2)'">Contact</a>
+    </div>
 
-        try {
-          // Decode JWT for basic info
-          const base64Url = token.split('.')[1];
-          const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-          const jsonPayload = decodeURIComponent(atob(base64).split('').map((c) => {
-            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-          }).join(''));
+    <div class="topbar-right">
+      <!-- Search -->
+      <div class="topbar-search">
+        <i class="bi bi-search" style="font-size:.82rem;flex-shrink:0"></i>
+        <input type="text" placeholder="Search orders, products…"/>
+      </div>
 
-          const userData = JSON.parse(jsonPayload);
+      <!-- Theme toggle -->
+      <button class="theme-btn" id="themeBtn" onclick="toggleTheme()" title="Toggle dark mode">
+        <i class="bi bi-moon-fill" id="themeIco"></i>
+      </button>
 
-          // Update username with first and last name
-          const firstName = userData.first_name || userData.name?.split(' ')[0] || localStorage.getItem('user_first_name') || 'User';
-          const lastName = userData.last_name || userData.name?.split(' ').slice(1).join(' ') || localStorage.getItem('user_last_name') || '';
-          const fullName = firstName + (lastName ? ' ' + lastName : '');
-          const userName = document.querySelectorAll('.username');
-          userName.forEach(el => {
-            el.textContent = fullName;
-          });
+      <!-- Notifications -->
+      <div class="dropdown notif-wrap" id="ddNotif">
+        <button class="icon-btn" onclick="toggleDD('ddNotif')" aria-label="Notifications">
+          <i class="bi bi-bell"></i>
+          <span class="notif-dot" id="notifCount" style="display:none">0</span>
+        </button>
+        <div class="dropdown-menu" style="min-width:290px;">
+          <div class="dd-header" style="display:flex;justify-content:space-between;align-items:center;padding:.75rem .75rem .3rem">
+            <span style="font-size:.85rem;font-weight:700;color:var(--text)">Notifications</span>
+            <span id="notifHeader" style="font-size:.72rem;color:var(--text3)"></span>
+          </div>
+          <hr class="dd-divider">
+          <div class="notif-scroll" id="notifList">
+            <div class="ni"><div class="ni-ico o"><i class="bi bi-hourglass-split"></i></div><div><div class="ni-title">Loading…</div></div></div>
+          </div>
+          <hr class="dd-divider">
+          <div style="padding:.25rem .5rem">
+            <a href="#" class="dd-item" style="color:var(--orange);justify-content:center" onclick="clearNotifs(event)">
+              <i class="bi bi-trash3" style="color:var(--orange)!important"></i> Clear all
+            </a>
+          </div>
+        </div>
+      </div>
 
-          // Update role and registration date
-          const userRole = userData.role ? userData.role.charAt(0).toUpperCase() + userData.role.slice(1) : 'Customer';
-          const roleBadge = document.getElementById('userRoleBadge');
-          if (roleBadge) {
-            const joinedDate = new Date(userData.iat * 1000).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-            roleBadge.textContent = `${userRole} • Member since: ${joinedDate}`;
-          }
+      <!-- User -->
+      <div class="dropdown" id="ddUser">
+        <button class="user-pill" onclick="toggleDD('ddUser')">
+          <div class="avatar-circle" id="topAvatar" style="background:linear-gradient(135deg,var(--green),var(--green-d))">JD</div>
+          <span id="topName" class="d-none d-md-block">Joshua</span>
+          <i class="bi bi-chevron-down" style="font-size:.62rem;color:var(--text3)" id="topChevron"></i>
+        </button>
+        <div class="dropdown-menu" style="min-width:230px">
+          <div class="user-dd-top">
+            <div class="avatar-circle" id="ddAvatar">JD</div>
+            <div>
+              <div class="user-dd-name username">Joshua</div>
+              <div class="user-dd-since" id="sinceLabel">Member since —</div>
+            </div>
+          </div>
+          <a href="/customer/dashboard/profile-info" class="dd-item"><i class="bi bi-person-circle"></i>View Profile</a>
+          <a href="/customer/dashboard/account-settings" class="dd-item"><i class="bi bi-gear"></i>Account Settings</a>
+          <a href="/customer/dashboard/security" class="dd-item"><i class="bi bi-shield-lock"></i>Security</a>
+          <hr class="dd-divider">
+          <a href="#" class="dd-item" style="color:#EF4444" onclick="logout(event)"><i class="bi bi-box-arrow-right" style="color:#EF4444!important"></i>Sign Out</a>
+        </div>
+      </div>
+    </div>
+  </header>
 
-          // Fetch full profile data including profile image
-          try {
-            console.log('[loadUserInfo] Fetching profile data...');
-            const profileResponse = await fetch('/api/customer/profile', {
-              headers: {
-                'Authorization': 'Bearer ' + token
-              }
-            });
+  <!-- ═══════════ MAIN ═══════════ -->
+  <main class="main">
 
-            console.log('[loadUserInfo] Profile response status:', profileResponse.status);
-            
-            if (profileResponse.ok) {
-              const profileData = await profileResponse.json();
-              console.log('[loadUserInfo] Profile data received:', profileData);
-              console.log('[loadUserInfo] Profile image object:', profileData.profile_image);
-              
-              if (profileData.success) {
-                // Update profile images in navbar
-                const profileImages = document.querySelectorAll('.user-image');
-                console.log('[loadUserInfo] Found', profileImages.length, 'profile images to update');
-                
-                if (profileData.profile_image && profileData.profile_image.url) {
-                  console.log('[loadUserInfo] Setting profile image URL:', profileData.profile_image.url);
-                  profileImages.forEach((img, idx) => {
-                    console.log('[loadUserInfo] Updating navbar image', idx);
-                    img.src = profileData.profile_image.url;
-                    img.onerror = function() {
-                      console.log('[loadUserInfo] Image failed to load, using default');
-                      this.src = '{{ url_for("static", filename="assets/img/user2-160x160.jpg") }}';
-                    };
-                  });
-                } else {
-                  console.log('[loadUserInfo] No profile image data, using default');
-                  const defaultImageUrl = '{{ url_for("static", filename="assets/img/user2-160x160.jpg") }}';
-                  console.log('[loadUserInfo] Default image URL:', defaultImageUrl);
-                  // Use default image if no profile image
-                  profileImages.forEach((img, idx) => {
-                    console.log('[loadUserInfo] Setting default image for navbar index', idx);
-                    console.log('[loadUserInfo] Image classes:', img.className);
-                    console.log('[loadUserInfo] Image before:', img.src.substring(0, 50));
-                    img.src = defaultImageUrl;
-                    console.log('[loadUserInfo] Image after:', img.src.substring(0, 50));
-                    console.log('[loadUserInfo] Image visible (offsetHeight > 0)?', img.offsetHeight > 0);
-                    console.log('[loadUserInfo] Display style:', window.getComputedStyle(img).display);
-                    console.log('[loadUserInfo] Parent element:', img.parentElement.tagName, img.parentElement.className);
-                  });
-                }
-              } else {
-                console.log('[loadUserInfo] API success was false');
-              }
-            } else {
-              console.log('[loadUserInfo] Profile response not ok:', profileResponse.status);
-              const errorText = await profileResponse.text();
-              console.log('[loadUserInfo] Error response:', errorText);
-            }
-          } catch (profileError) {
-            console.error('[loadUserInfo] Error loading profile data:', profileError);
-            // Continue with JWT data only
-          }
-        } catch (error) {
-          console.error('Error decoding user data:', error);
-        }
-      }
-      
-      // Notification system
-      let systemNotifications = [];
-      const MAX_NOTIFICATIONS = 10;
-      
-      function addNotificationToSystem(title, message, type = 'update', timestamp = new Date()) {
-        const notification = {
-          id: Date.now(),
-          title: title,
-          message: message,
-          type: type,
-          timestamp: timestamp
-        };
-        
-        systemNotifications.unshift(notification);
-        if (systemNotifications.length > MAX_NOTIFICATIONS) {
-          systemNotifications.pop();
-        }
-        
-        updateNotificationDisplay();
-      }
-      
-      function updateNotificationDisplay() {
-        const countBadge = document.getElementById('notifCount');
-        const header = document.getElementById('notifHeader');
-        const list = document.getElementById('notifList');
-        
-        if (systemNotifications.length > 0) {
-          countBadge.textContent = Math.min(systemNotifications.length, 99);
-          header.textContent = systemNotifications.length + ' Notification' + (systemNotifications.length !== 1 ? 's' : '');
-          
-          list.innerHTML = systemNotifications.map(notif => {
-            const timeAgo = getTimeAgo(notif.timestamp);
-            const icon = notif.type === 'shipped' ? 'bi-truck' : 
-                         notif.type === 'delivered' ? 'bi-box2-open' :
-                         notif.type === 'cancelled' ? 'bi-x-circle' : 'bi-bell';
-            
-            return `
-              <a href=\"#\" class=\"dropdown-item\">
-                <i class=\"bi ${icon} me-2\"></i> ${notif.title}
-                <span class=\"float-end text-secondary fs-7\">${timeAgo}</span>
+    <!-- Page header -->
+    <div class="page-header">
+      <div>
+        <div class="page-title">Dashboard</div>
+        <div class="breadcrumb">
+          <a href="/">Home</a>
+          <span>Customer Dashboard</span>
+        </div>
+      </div>
+      {% block dashboard_current %}{% endblock dashboard_current %}
+    </div>
+
+    <div class="content">
+      {% block customer_content %}
+
+      <!-- Welcome Banner -->
+      <div class="welcome fu">
+        <div class="welcome-title">Welcome back, <span class="username">Shopper</span> 👋</div>
+        <div class="welcome-sub">Here's what's happening with your account today.</div>
+        <a href="/customer/dashboard/browse-products" class="welcome-btn">
+          <i class="bi bi-bag-plus-fill"></i> Continue Shopping
+        </a>
+      </div>
+
+      <!-- Stats -->
+      <div class="grid g4" style="margin-bottom:1rem">
+        <div class="stat green fu fu1">
+          <div class="stat-ico green"><i class="bi bi-bag-check-fill"></i></div>
+          <div class="stat-label">Total Orders</div>
+          <div class="stat-val" id="sTotalOrders">—</div>
+          <div class="stat-note up"><i class="bi bi-arrow-up-short"></i>This month</div>
+        </div>
+        <div class="stat orange fu fu2">
+          <div class="stat-ico orange"><i class="bi bi-truck"></i></div>
+          <div class="stat-label">In Transit</div>
+          <div class="stat-val" id="sInTransit">—</div>
+          <div class="stat-note"><i class="bi bi-dot"></i>Active</div>
+        </div>
+        <div class="stat gold fu fu3">
+          <div class="stat-ico gold"><i class="bi bi-heart-fill"></i></div>
+          <div class="stat-label">Wishlist</div>
+          <div class="stat-val" id="sWishlist">—</div>
+          <div class="stat-note"><i class="bi bi-dot"></i>Saved</div>
+        </div>
+        <div class="stat blue fu fu4">
+          <div class="stat-ico blue"><i class="bi bi-wallet2"></i></div>
+          <div class="stat-label">Wallet</div>
+          <div class="stat-val" id="sWallet">₦0</div>
+          <div class="stat-note up"><i class="bi bi-dot"></i>Available</div>
+        </div>
+      </div>
+
+      <!-- Mid row: Wallet + Quick Actions -->
+      <div class="mid-row">
+        <div class="wallet">
+          <div class="wallet-lbl">Wallet Balance</div>
+          <div class="wallet-bal" id="walletBig">₦0.00</div>
+          <div style="font-size:.72rem;opacity:.5;margin-bottom:.9rem">Available to spend</div>
+          <div class="wallet-btns">
+            <button class="w-btn primary"><i class="bi bi-plus-lg"></i> Fund Wallet</button>
+            <button class="w-btn ghost"><i class="bi bi-clock-history"></i> History</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><span class="card-title">Quick Actions</span></div>
+          <div class="card-body" style="padding-top:.5rem">
+            <div class="qa-grid">
+              <a href="/customer/dashboard/orders" class="qa">
+                <div class="qa-ico" style="background:var(--green-l);color:var(--green)"><i class="bi bi-bag-check"></i></div>
+                <span class="qa-lbl">My Orders</span>
               </a>
-              <div class=\"dropdown-divider\"></div>
-            `;
-          }).join('');
-        } else {
-          countBadge.textContent = '0';
-          header.textContent = '0 Notifications';
-          list.innerHTML = '<a href=\"#\" class=\"dropdown-item text-secondary\"><i class=\"bi bi-inbox me-2\"></i>No new notifications</a>';
-        }
+              <a href="/customer/dashboard/order-tracking" class="qa">
+                <div class="qa-ico" style="background:var(--orange-l);color:var(--orange)"><i class="bi bi-truck"></i></div>
+                <span class="qa-lbl">Track</span>
+              </a>
+              <a href="/customer/dashboard/wishlist" class="qa">
+                <div class="qa-ico" style="background:#FFF0F0;color:#EF4444"><i class="bi bi-heart"></i></div>
+                <span class="qa-lbl">Wishlist</span>
+              </a>
+              <a href="/customer/dashboard/transaction-history" class="qa">
+                <div class="qa-ico" style="background:#EFF6FF;color:var(--blue)"><i class="bi bi-receipt"></i></div>
+                <span class="qa-lbl">Payments</span>
+              </a>
+              <a href="/customer/dashboard/returns-refunds" class="qa">
+                <div class="qa-ico" style="background:#FFFBEB;color:var(--gold)"><i class="bi bi-arrow-counterclockwise"></i></div>
+                <span class="qa-lbl">Returns</span>
+              </a>
+              <a href="/customer/dashboard/profile-info" class="qa">
+                <div class="qa-ico" style="background:#F5F3FF;color:#7C3AED"><i class="bi bi-person-circle"></i></div>
+                <span class="qa-lbl">Profile</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom row: Orders table + Chart -->
+      <div class="bot-row">
+        <div class="card">
+          <div class="card-head">
+            <span class="card-title">Recent Orders</span>
+            <a href="/customer/dashboard/orders" class="view-all">View all <i class="bi bi-arrow-right"></i></a>
+          </div>
+          <div class="card-body" style="padding-top:.4rem;overflow-x:auto">
+            <table class="ik-table">
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th class="hide-sm">Order ID</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="recentOrdersBody">
+                <tr><td colspan="4" style="text-align:center;padding:2rem;color:var(--text3)">Loading orders…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><span class="card-title">Spending Overview</span></div>
+          <div class="card-body" style="padding-top:.4rem">
+            <div id="spendChart"></div>
+          </div>
+        </div>
+      </div>
+
+      {% endblock customer_content %}
+    </div>
+  </main>
+
+  <!-- ═══════════ FOOTER ═══════════ -->
+  <footer class="footer">
+    <span>Copyright &copy; 2026 <a href="/">Ikeja Online</a>. All rights reserved.</span>
+    <span>Customer Portal v2.0</span>
+  </footer>
+
+</div><!-- /.layout -->
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+<script>
+/* ── SIDEBAR ─────────────────────────────────── */
+const layout   = document.getElementById('layout');
+const sidebar  = document.getElementById('sidebar');
+const overlay  = document.getElementById('overlay');
+const isMobile = () => window.innerWidth <= 992;
+
+function toggleSidebar(){
+  if(isMobile()){
+    sidebar.classList.toggle('open');
+    overlay.classList.toggle('show');
+  } else {
+    layout.classList.toggle('collapsed');
+  }
+}
+function closeSidebar(){
+  sidebar.classList.remove('open');
+  overlay.classList.remove('show');
+}
+window.addEventListener('resize',()=>{
+  if(!isMobile()){ sidebar.classList.remove('open'); overlay.classList.remove('show'); }
+});
+
+/* ── SUBMENU ─────────────────────────────────── */
+function toggleSub(e, link){
+  const href = link.getAttribute('href');
+  if(href && href !== '#') return;
+  e.preventDefault();
+  const item = link.closest('.nav-item');
+  const open = item.classList.contains('open');
+  document.querySelectorAll('#nav-root > .nav-item.open').forEach(i=>{ if(i!==item) i.classList.remove('open'); });
+  item.classList.toggle('open', !open);
+}
+
+/* Active link */
+(function(){
+  const p = location.pathname;
+  document.querySelectorAll('.sidebar .nav-link').forEach(a=>{
+    const h = a.getAttribute('href');
+    if(h && h!=='#' && p.startsWith(h.split('?')[0])){
+      a.classList.add('active');
+      const parent = a.closest('.nav-sub')?.closest('.nav-item');
+      if(parent) parent.classList.add('open');
+    }
+  });
+})();
+
+/* ── DROPDOWNS ───────────────────────────────── */
+function toggleDD(id){
+  const dd = document.getElementById(id);
+  const wasOpen = dd.classList.contains('open');
+  document.querySelectorAll('.dropdown.open').forEach(d=>d.classList.remove('open'));
+  if(!wasOpen) dd.classList.add('open');
+}
+document.addEventListener('click',e=>{
+  if(!e.target.closest('.dropdown')) document.querySelectorAll('.dropdown.open').forEach(d=>d.classList.remove('open'));
+});
+
+/* ── THEME ───────────────────────────────────── */
+const themeIco = document.getElementById('themeIco');
+function applyTheme(t){
+  document.documentElement.setAttribute('data-theme',t);
+  localStorage.setItem('ik_theme',t);
+  themeIco.className = t==='dark' ? 'bi bi-sun-fill' : 'bi bi-moon-fill';
+  if(window._chart) window._chart.updateOptions({theme:{mode:t}});
+}
+function toggleTheme(){
+  applyTheme(document.documentElement.getAttribute('data-theme')==='dark' ? 'light' : 'dark');
+}
+applyTheme(localStorage.getItem('ik_theme')||'light');
+
+/* ── CHART ───────────────────────────────────── */
+function initChart(){
+  const dark = document.documentElement.getAttribute('data-theme')==='dark';
+  const opts = {
+    series:[{name:'Spending (₦)',data:[12000,45000,28000,67000,34000,89000,52000]}],
+    chart:{height:185,type:'area',toolbar:{show:false},background:'transparent',fontFamily:'Plus Jakarta Sans,sans-serif'},
+    theme:{mode:dark?'dark':'light'},
+    colors:['#00A651'],
+    fill:{type:'gradient',gradient:{shadeIntensity:1,opacityFrom:.38,opacityTo:.03}},
+    stroke:{curve:'smooth',width:2},
+    dataLabels:{enabled:false},
+    xaxis:{type:'datetime',categories:['2024-11-01','2024-12-01','2025-01-01','2025-02-01','2025-03-01','2025-04-01','2025-05-01'],labels:{style:{fontSize:'10px'}}},
+    yaxis:{labels:{formatter:v=>'₦'+(v/1000).toFixed(0)+'k',style:{fontSize:'10px'}}},
+    tooltip:{y:{formatter:v=>'₦'+v.toLocaleString('en-NG')}},
+    grid:{borderColor:dark?'#1A3048':'#E2E8F0',strokeDashArray:4}
+  };
+  window._chart = new ApexCharts(document.getElementById('spendChart'), opts);
+  window._chart.render();
+}
+
+/* ── USER INFO ───────────────────────────────── */
+async function loadUser(){
+  const token = localStorage.getItem('access_token');
+  if(!token) return;
+  try{
+    const res = await fetch('/api/user/profile',{headers:{'Authorization':'Bearer '+token}});
+    if(!res.ok) return;
+    const d = await res.json();
+    const u = d.user||d;
+    const fn = u.first_name||localStorage.getItem('user_first_name')||'';
+    const ln = u.last_name ||localStorage.getItem('user_last_name') ||'';
+    const full = [fn,ln].filter(Boolean).join(' ')||'Shopper';
+    const init = [fn[0],ln[0]].filter(Boolean).join('').toUpperCase()||'S';
+    document.querySelectorAll('.username').forEach(el=>el.textContent=full);
+    document.querySelectorAll('#topAvatar,#ddAvatar').forEach(el=>el.textContent=init);
+    const since = u.created_at ? new Date(u.created_at).toLocaleDateString('en-NG',{year:'numeric',month:'short'}) : '—';
+    const sl = document.getElementById('sinceLabel');
+    if(sl) sl.textContent='Member since '+since;
+    if(document.getElementById('topName')) document.getElementById('topName').textContent=fn||full;
+    if(u.wallet_balance!==undefined){
+      const f='₦'+parseFloat(u.wallet_balance).toLocaleString('en-NG',{minimumFractionDigits:2});
+      ['sWallet','walletBig'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent=f; });
+    }
+  }catch(e){ console.warn('loadUser:',e); }
+}
+
+/* ── NOTIFICATIONS ───────────────────────────── */
+let notifs = [];
+const icons = {update:'bi-arrow-repeat',shipped:'bi-truck',delivered:'bi-check-circle',cancelled:'bi-x-circle',warning:'bi-exclamation-circle',info:'bi-info-circle'};
+
+function renderNotifs(){
+  const list = document.getElementById('notifList');
+  const badge = document.getElementById('notifCount');
+  const hdr = document.getElementById('notifHeader');
+  const n = notifs.length;
+  if(badge){ badge.textContent=n; badge.style.display=n>0?'flex':'none'; }
+  if(hdr) hdr.textContent = n ? n+' new':'';
+  if(!list) return;
+  if(!n){ list.innerHTML='<div class="ni" style="justify-content:center;color:var(--text3);font-size:.8rem">No notifications</div>'; return; }
+  list.innerHTML = notifs.slice(0,8).map(n=>`
+    <div class="ni">
+      <div class="ni-ico ${['delivered','update','info'].includes(n.type)?'g':'o'}"><i class="bi ${icons[n.type]||'bi-bell'}"></i></div>
+      <div><div class="ni-title">${n.title}</div><div class="ni-sub">${n.msg||''}</div></div>
+    </div>`).join('');
+}
+
+function clearNotifs(e){ e.preventDefault(); notifs=[]; renderNotifs(); }
+
+async function loadNotifs(){
+  const token = localStorage.getItem('access_token');
+  if(!token) return;
+  notifs=[];
+  const [oR,wR] = await Promise.allSettled([
+    fetch('/api/orders',{headers:{'Authorization':'Bearer '+token}}),
+    fetch('/api/customer/wallet-transactions',{headers:{'Authorization':'Bearer '+token}})
+  ]);
+
+  if(oR.status==='fulfilled'&&oR.value.ok){
+    const d = await oR.value.json().catch(()=>{});
+    if(d?.success&&Array.isArray(d.orders)){
+      const sMap={Processing:'update',Shipped:'shipped',Delivered:'delivered',Cancelled:'cancelled',Pending:'update'};
+      d.orders.slice(0,5).forEach(o=>notifs.push({title:`Order #${o.id} — ${o.status}`,msg:`Status: ${o.status}`,type:sMap[o.status]||'update',date:o.created_at?new Date(o.created_at):new Date()}));
+
+      const el=document.getElementById('sTotalOrders'); if(el) el.textContent=d.orders.length;
+      const si=document.getElementById('sInTransit');
+      if(si) si.textContent=d.orders.filter(o=>['Shipped','Processing'].includes(o.status)).length;
+
+      const tbody=document.getElementById('recentOrdersBody');
+      if(tbody){
+        tbody.innerHTML=d.orders.slice(0,5).map(o=>`
+          <tr>
+            <td><div style="display:flex;align-items:center;gap:.6rem">
+              <div style="width:36px;height:36px;border-radius:8px;background:var(--bg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0">📦</div>
+              <div>
+                <div style="font-weight:600;font-size:.8rem">${o.product_name||'Order Item'}</div>
+                <div style="font-size:.7rem;color:var(--text3)">${o.created_at?new Date(o.created_at).toLocaleDateString('en-NG'):'—'}</div>
+              </div>
+            </div></td>
+            <td class="hide-sm" style="color:var(--text3);font-size:.78rem">#${o.id}</td>
+            <td style="font-weight:700;font-size:.83rem">₦${parseFloat(o.total||0).toLocaleString('en-NG')}</td>
+            <td><span class="badge badge-${(o.status||'pending').toLowerCase()}">${o.status||'—'}</span></td>
+          </tr>`).join('')||'<tr><td colspan="4" style="text-align:center;padding:2rem;color:var(--text3)">No orders yet</td></tr>';
       }
-      
-      function formatCurrency(amount) {
-        return '₦' + Number(amount || 0).toLocaleString('en-US', {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2
-        });
-      }
+    }
+  }
 
-      function getTimeAgo(date) {
-        const seconds = Math.floor((new Date() - date) / 1000);
-        let interval = seconds / 31536000;
-        if (interval > 1) return Math.floor(interval) + 'y ago';
-        interval = seconds / 2592000;
-        if (interval > 1) return Math.floor(interval) + 'mo ago';
-        interval = seconds / 86400;
-        if (interval > 1) return Math.floor(interval) + 'd ago';
-        interval = seconds / 3600;
-        if (interval > 1) return Math.floor(interval) + 'h ago';
-        interval = seconds / 60;
-        if (interval > 1) return Math.floor(interval) + 'm ago';
-        return Math.floor(seconds) + 's ago';
-      }
-      
-      function clearNotifications141(event) {
-        event.preventDefault();
-        systemNotifications = [];
-        updateNotificationDisplay();
-      }
-
-      function addWalletTransactionNotifications(transactions) {
-        transactions.slice(0, 5).forEach(transaction => {
-          const amountText = formatCurrency(transaction.amount || 0);
-          let title = '';
-          let message = transaction.description || 'Wallet transaction';
-          let type = 'update';
-
-          if (transaction.transaction_type === 'credit') {
-            title = `Deposit ${amountText} ${transaction.status === 'completed' ? 'completed' : transaction.status === 'pending' ? 'pending' : ''}`.trim();
-            message = transaction.description || `Your wallet has been credited with ${amountText}`;
-            type = transaction.status === 'completed' ? 'success' : transaction.status === 'pending' ? 'warning' : 'info';
-          } else if (transaction.transaction_type === 'debit') {
-            title = `Debit ${amountText} ${transaction.status === 'completed' ? 'posted' : transaction.status === 'pending' ? 'pending' : ''}`.trim();
-            message = transaction.description || `Your wallet has been debited by ${amountText}`;
-            type = transaction.status === 'completed' ? 'cancelled' : transaction.status === 'pending' ? 'warning' : 'info';
-          } else {
-            title = `Wallet ${transaction.transaction_type || 'Update'} ${amountText}`;
-          }
-
-          addNotificationToSystem(title, message, type, transaction.created_at ? new Date(transaction.created_at) : new Date());
-        });
-      }
-
-      async function loadNotifications() {
-        try {
-          const token = localStorage.getItem('access_token');
-          if (!token) return;
-
-          systemNotifications = [];
-
-          const [ordersResult, walletResult] = await Promise.allSettled([
-            fetch('/api/orders', {
-              headers: {
-                'Authorization': 'Bearer ' + token
-              }
-            }),
-            fetch('/api/customer/wallet-transactions', {
-              headers: {
-                'Authorization': 'Bearer ' + token
-              }
-            })
-          ]);
-
-          if (ordersResult.status === 'fulfilled' && ordersResult.value.ok) {
-            try {
-              const data = await ordersResult.value.json();
-              if (data.success && Array.isArray(data.orders)) {
-                data.orders.slice(0, 5).forEach(order => {
-                  const statusMap = {
-                    'Processing': 'update',
-                    'Shipped': 'shipped',
-                    'Delivered': 'delivered',
-                    'Cancelled': 'cancelled',
-                    'Pending': 'update'
-                  };
-                  addNotificationToSystem(
-                    `Order #${order.id} - ${order.status}`,
-                    `Your order status is ${order.status}`,
-                    statusMap[order.status] || 'update',
-                    order.created_at ? new Date(order.created_at) : new Date()
-                  );
-                });
-              }
-            } catch (err) {
-              console.error('Error parsing order notifications:', err);
-            }
-          }
-
-          if (walletResult.status === 'fulfilled' && walletResult.value.ok) {
-            try {
-              const data = await walletResult.value.json();
-              if (data.success && Array.isArray(data.transactions)) {
-                addWalletTransactionNotifications(data.transactions);
-              }
-            } catch (err) {
-              console.error('Error parsing wallet transaction notifications:', err);
-            }
-          }
-
-          if (systemNotifications.length === 0) {
-            updateNotificationDisplay();
-          }
-        } catch (error) {
-          console.error('Error loading notifications:', error);
-          updateNotificationDisplay();
-        }
-      }
-      
-      // Highlight active nav item based on current URL
-      function highlightActiveNavItem() {
-        const currentPath = window.location.pathname;
-        document.querySelectorAll('.nav-link').forEach(link => {
-          link.classList.remove('active');
-        });
-        
-        // Find and highlight the active link
-        document.querySelectorAll('.nav-link').forEach(link => {
-          const href = link.getAttribute('href');
-          if (href && href !== '#' && (currentPath === href || currentPath.startsWith(href.split('?')[0]))) {
-            link.classList.add('active');
-            
-            // Also highlight all parent dropdown menus for active submenu pages
-            let parentItem = link.closest('.nav-item');
-            while (parentItem) {
-              const parentLink = parentItem.querySelector(':scope > .nav-link[href="#"], :scope > .nav-link[data-lte-toggle="treeview"]');
-              if (parentLink) {
-                parentLink.classList.add('active');
-              }
-              parentItem.classList.add('menu-open');
-              parentItem = parentItem.parentElement?.closest('.nav-item');
-            }
-          }
-        });
-      }
-
-      // Handle all dropdown toggles manually
-      function setupDropdowns() {
-        const currentPath = window.location.pathname;
-        const root = document.getElementById('navigation');
-        if (!root) return;
-
-        // Initialize dropdowns based on current path
-        const dropdownLinks = root.querySelectorAll('.nav-item > a.nav-link[href="#"], .nav-item > a.nav-link[data-lte-toggle="treeview"]');
-        dropdownLinks.forEach(link => {
-          const navItem = link.closest('.nav-item');
-          const treeview = navItem?.querySelector(':scope > .nav-treeview');
-          if (!treeview) return;
-
-          const submenuLinks = treeview.querySelectorAll('a.nav-link');
-          const isCurrentDropdown = Array.from(submenuLinks).some(subLink => {
-            const href = subLink.getAttribute('href');
-            return href && href !== '#' && (currentPath === href || currentPath.startsWith(href.split('?')[0]));
-          });
-
-          if (isCurrentDropdown) {
-            navItem.classList.add('menu-open');
-          } else {
-            navItem.classList.remove('menu-open');
-          }
-        });
-
-        // Use event delegation so dropdowns respond anytime
-        root.addEventListener('click', function(e) {
-          const link = e.target.closest('a.nav-link');
-          if (!link) return;
-
-          const href = link.getAttribute('href');
-          const isDropdownTrigger = href === '#' || link.hasAttribute('data-lte-toggle');
-          if (!isDropdownTrigger) return;
-
-          const item = link.closest('.nav-item');
-          if (!item) return;
-
-          const treeview = item.querySelector(':scope > .nav-treeview');
-          if (!treeview) return;
-
-          e.preventDefault();
-          const open = item.classList.contains('menu-open');
-
-          document.querySelectorAll('#navigation .nav-item.menu-open').forEach(other => {
-            if (other !== item) {
-              other.classList.remove('menu-open');
-            }
-          });
-
-          if (open) {
-            item.classList.remove('menu-open');
-          } else {
-            item.classList.add('menu-open');
-          }
-        });
-      }
-      
-      // Logout function
-      function logout(event) {
-        event.preventDefault();
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('user_role');
-        localStorage.removeItem('user_first_name');
-        localStorage.removeItem('user_last_name');
-        window.location.href = '/new_home';
-      }
-      
-      window.addEventListener('load', async () => {
-        console.log('[init] Page loaded, starting initialization');;
-        try {
-          await loadUserInfo();
-          console.log('[init] loadUserInfo completed');
-        } catch (e) {
-          console.error('[init] loadUserInfo error:', e);
-        }
-        
-        loadNotifications();
-        highlightActiveNavItem();
-        setupDropdowns();
-        // Refresh notifications every 30 seconds
-        setInterval(loadNotifications, 30000);
+  if(wR.status==='fulfilled'&&wR.value.ok){
+    const d = await wR.value.json().catch(()=>{});
+    if(d?.success&&Array.isArray(d.transactions)){
+      d.transactions.slice(0,3).forEach(t=>{
+        const amt='₦'+parseFloat(t.amount||0).toLocaleString('en-NG');
+        notifs.push({title:`Wallet ${t.transaction_type||'Update'} ${amt}`,msg:t.description||'',type:t.transaction_type==='credit'?'info':'warning',date:t.created_at?new Date(t.created_at):new Date()});
       });
-      
-      // Ensure only logged-in customers can access this dashboard
-      (function () {
-        const token = localStorage.getItem('access_token');
-        const role = localStorage.getItem('user_role');
-        if (!token || role !== 'customer') {
-          localStorage.removeItem('access_token');
-          localStorage.removeItem('user_role');
-          window.location.href = '/new_home';
-        }
-      })();
-    </script>
-  </body>
-  <!--end::Body-->
+    }
+  }
+
+  notifs.sort((a,b)=>new Date(b.date)-new Date(a.date));
+  renderNotifs();
+}
+
+/* ── LOGOUT ──────────────────────────────────── */
+function logout(e){
+  e.preventDefault();
+  ['access_token','user_role','user_first_name','user_last_name'].forEach(k=>localStorage.removeItem(k));
+  window.location.href='/new_home';
+}
+
+/* ── GUARD ───────────────────────────────────── */
+(function(){
+  const token=localStorage.getItem('access_token');
+  const role=localStorage.getItem('user_role');
+  if(!token||role!=='customer'){ localStorage.removeItem('access_token'); localStorage.removeItem('user_role'); window.location.href='/new_home'; }
+})();
+
+/* ── BOOT ────────────────────────────────────── */
+document.addEventListener('DOMContentLoaded',async()=>{
+  initChart();
+  await loadUser().catch(console.warn);
+  loadNotifs();
+  setInterval(loadNotifs,30000);
+  // Show desktop nav links
+  document.querySelectorAll('.d-lg-inline-flex').forEach(el=>{ if(window.innerWidth>=993) el.style.display='inline-flex'; });
+});
+window.addEventListener('resize',()=>{
+  document.querySelectorAll('.d-lg-inline-flex').forEach(el=>{
+    el.style.display = window.innerWidth>=993 ? 'inline-flex' : 'none';
+  });
+});
+</script>
+</body>
 </html>

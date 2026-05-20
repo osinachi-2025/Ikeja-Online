@@ -11,280 +11,210 @@
 
 {% block vendor_content %}
 <div class="app-content">
-          <!--begin::Container-->
-          <div class="container-fluid">
-            <!--begin::Row-->
-            <div class="row">
-              <!--begin::Col-->
-              <div class="col-lg-3 col-6">
-                <!--begin::Small Box Widget 1-->
-                <div class="small-box text-bg-primary">
-                  <div class="inner">
-                    <h3 id="totalOrders">0</h3>
+  <div class="container-fluid">
+    <div class="row g-3 mb-4">
+      <div class="col-lg-3 col-6">
+        <div class="stat-card green">
+          <div class="stat-icon green"><i class="bi bi-bag-check-fill"></i></div>
+          <div class="stat-label">Total Orders</div>
+          <div class="stat-value" id="totalOrders">0</div>
+        </div>
+      </div>
+      <div class="col-lg-3 col-6">
+        <div class="stat-card orange">
+          <div class="stat-icon orange"><i class="bi bi-box-seam"></i></div>
+          <div class="stat-label">Total Products</div>
+          <div class="stat-value" id="totalProducts">0</div>
+        </div>
+      </div>
+      <div class="col-lg-3 col-6">
+        <div class="stat-card gold">
+          <div class="stat-icon gold"><i class="bi bi-currency-dollar"></i></div>
+          <div class="stat-label">Total Revenue</div>
+          <div class="stat-value" id="totalRevenue">₦0.00</div>
+        </div>
+      </div>
+      <div class="col-lg-3 col-6">
+        <div class="stat-card blue">
+          <div class="stat-icon blue"><i class="bi bi-star-fill"></i></div>
+          <div class="stat-label">Rating</div>
+          <div class="stat-value" id="vendorRating">0</div>
+        </div>
+      </div>
+    </div>
 
-                    <p>Total Orders</p>
-                  </div>
-                  <svg
-                    class="small-box-icon"
-                    fill="currentColor"
-                    viewBox="0 0 24 24"
-                    xmlns="http://www.w3.org/2000/svg"
-                    aria-hidden="true"
-                  >
-                    <path
-                      d="M2.25 2.25a.75.75 0 000 1.5h1.386c.17 0 .318.114.362.278l2.558 9.592a3.752 3.752 0 00-2.806 3.63c0 .414.336.75.75.75h15.75a.75.75 0 000-1.5H5.378A2.25 2.25 0 017.5 15h11.218a.75.75 0 00.674-.421 60.358 60.358 0 002.96-7.228.75.75 0 00-.525-.965A60.864 60.864 0 005.68 4.509l-.232-.867A1.875 1.875 0 003.636 2.25H2.25zM3.75 20.25a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zm12.75 0a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0z"
-                    ></path>
-                  </svg>
-                  <a
-                    href="#"
-                    class="small-box-footer link-light link-underline-opacity-0 link-underline-opacity-50-hover"
-                  >
-                    More info <i class="bi bi-link-45deg"></i>
-                  </a>
-                </div>
-                <!--end::Small Box Widget 1-->
-              </div>
-              <!--end::Col-->
-              <div class="col-lg-3 col-6">
-                <!--begin::Small Box Widget 2-->
-                <div class="small-box text-bg-success">
-                  <div class="inner">
-                    <h3 id="totalProducts">0</h3>
-
-                    <p>Total Products</p>
-                  </div>
-                  <svg
-                    class="small-box-icon"
-                    fill="currentColor"
-                    viewBox="0 0 24 24"
-                    xmlns="http://www.w3.org/2000/svg"
-                    aria-hidden="true"
-                  >
-                    <path
-                      d="M18.375 2.25c-1.035 0-1.875.84-1.875 1.875v15.75c0 1.035.84 1.875 1.875 1.875h.75c1.035 0 1.875-.84 1.875-1.875V4.125c0-1.036-.84-1.875-1.875-1.875h-.75zM9.75 8.625c0-1.036.84-1.875 1.875-1.875h.75c1.036 0 1.875.84 1.875 1.875v11.25c0 1.035-.84 1.875-1.875 1.875h-.75a1.875 1.875 0 01-1.875-1.875V8.625zM3 13.125c0-1.036.84-1.875 1.875-1.875h.75c1.036 0 1.875.84 1.875 1.875v6.75c0 1.035-.84 1.875-1.875 1.875h-.75A1.875 1.875 0 013 19.875v-6.75z"
-                    ></path>
-                  </svg>
-                  <a
-                    href="/vendor/products"
-                    class="small-box-footer link-light link-underline-opacity-0 link-underline-opacity-50-hover"
-                  >
-                    More info <i class="bi bi-link-45deg"></i>
-                  </a>
-                </div>
-                <!--end::Small Box Widget 2-->
-              </div>
-              <!--end::Col-->
-              <div class="col-lg-3 col-6">
-                <!--begin::Small Box Widget 3-->
-                <div class="small-box text-bg-warning">
-                  <div class="inner">
-                    <h3 id="totalRevenue">₦0.00</h3>
-
-                    <p>Total Sales/Revenue</p>
-                  </div>
-                  <svg
-                    class="small-box-icon"
-                    fill="currentColor"
-                    viewBox="0 0 24 24"
-                    xmlns="http://www.w3.org/2000/svg"
-                    aria-hidden="true"
-                  >
-                    <path
-                      d="M6.25 6.375a4.125 4.125 0 118.25 0 4.125 4.125 0 01-8.25 0zM3.25 19.125a7.125 7.125 0 0114.25 0v.003l-.001.119a.75.75 0 01-.363.63 13.067 13.067 0 01-6.761 1.873c-2.472 0-4.786-.684-6.76-1.873a.75.75 0 01-.364-.63l-.001-.122zM19.75 7.5a.75.75 0 00-1.5 0v2.25H16a.75.75 0 000 1.5h2.25v2.25a.75.75 0 001.5 0v-2.25H22a.75.75 0 000-1.5h-2.25V7.5z"
-                    ></path>
-                  </svg>
-                  <a
-                    href="#"
-                    class="small-box-footer link-dark link-underline-opacity-0 link-underline-opacity-50-hover"
-                  >
-                    More info <i class="bi bi-link-45deg"></i>
-                  </a>
-                </div>
-                <!--end::Small Box Widget 3-->
-              </div>
-              <!--end::Col-->
-              <div class="col-lg-3 col-6">
-                <!--begin::Small Box Widget 4-->
-                <div class="small-box text-bg-danger">
-                  <div class="inner">
-                    <h3 id="vendorRating">0</h3>
-
-                    <p>Rating</p>
-                  </div>
-                  <svg
-                    class="small-box-icon"
-                    fill="currentColor"
-                    viewBox="0 0 24 24"
-                    xmlns="http://www.w3.org/2000/svg"
-                    aria-hidden="true"
-                  >
-                    <path
-                      clip-rule="evenodd"
-                      fill-rule="evenodd"
-                      d="M2.25 13.5a8.25 8.25 0 018.25-8.25.75.75 0 01.75.75v6.75H18a.75.75 0 01.75.75 8.25 8.25 0 01-16.5 0z"
-                    ></path>
-                    <path
-                      clip-rule="evenodd"
-                      fill-rule="evenodd"
-                      d="M12.75 3a.75.75 0 01.75-.75 8.25 8.25 0 018.25 8.25.75.75 0 01-.75.75h-7.5a.75.75 0 01-.75-.75V3z"
-                    ></path>
-                  </svg>
-                  <a
-                    href="#"
-                    class="small-box-footer link-light link-underline-opacity-0 link-underline-opacity-50-hover"
-                  >
-                    More info <i class="bi bi-link-45deg"></i>
-                  </a>
-                </div>
-                <!--end::Small Box Widget 4-->
-              </div>
-              <!--end::Col-->
-            </div>
-            <!--end::Row-->
-            <!--begin::Row-->
-            <div class="row">
-              <!-- Start col -->
-              <div class="col-lg-7 connectedSortable">
-                <div class="card mb-4">
-                  <div class="card-header">
-                    <h3 class="card-title">Sales Value</h3>
-                  </div>
-
-                  <div class="card-body">
-                    <div id="revenue-chart"></div>
-                  </div>
-                </div>
-                <!-- /.card -->
-
-                <!-- DIRECT CHAT -->
-                
-                <!-- /.direct-chat -->
-              </div>
-              <!-- /.Start col -->
-
-              <!-- Start col -->
-              <div class="content-section">
-                <h2>Quick Actions</h2>
-                <div class="info-box d-flex flex-row gap-3 align-items-center">
-                    <a href="/add-product" class="btn btn-primary" style="width: fit-content; padding: 0 0.6rem; display: flex; align-items: center; height: 40px; gap: 0.5rem;">
-                        <i class="fas fa-plus"></i>
-                        Add Product
-                    </a>
-                    <a href="/my-products" class="btn btn-secondary" style="width: fit-content; padding: 0 0.6rem; display: flex; align-items: center; height: 40px; gap: 0.5rem;">
-                        <i class="fas fa-box"></i>
-                        View My Products
-                    </a>
-                </div>
-            </div>
-            <div class="content-section" style="margin-top: 2rem;" id="wallet-section">
-                <h2><i class="fas fa-wallet"></i> Wallet Management</h2>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
-                    <div style="background: #177D4E; color: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);">
-                        <p style="font-size: 0.9rem; opacity: 0.9; margin-bottom: 0.5rem;">Available Balance</p>
-                        <h3 style="font-size: 2.5rem; margin: 0; font-weight: 800;">₦<span id="availableBalance">0.00</span></h3>
-                        <p style="font-size: 0.85rem; opacity: 0.8; margin-top: 0.5rem;">Total Earned: ₦<span id="totalEarned">0.00</span></p>
-                    </div>
-
-                    <div style="display: flex; flex-direction: column; gap: 1rem;">
-                        <button class="btn btn-primary" onclick="openDepositModal()" style="flex: 1; justify-content: center;">
-                            <i class="fas fa-plus-circle"></i>
-                            Deposit Funds
-                        </button>
-                        <button class="btn btn-primary" onclick="openWithdrawalModal()" style="flex: 1; justify-content: center;">
-                            <i class="fas fa-arrow-right"></i>
-                            Request Withdrawal
-                        </button>
-                    </div>
-                </div>
-
-                <h3 style="margin-top: 2rem; margin-bottom: 1rem;">Recent Transactions</h3>
-                <div style="overflow-x: auto;">
-                    <table style="width: 100%; border-collapse: collapse;">
-                        <thead>
-                            <tr style="background: #f5f5f5;">
-                                <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #e0e0e0;">Date</th>
-                                <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #e0e0e0;">Type</th>
-                                <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #e0e0e0;">Amount</th>
-                                <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #e0e0e0;">Description</th>
-                                <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #e0e0e0;">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody id="transactionsList">
-                            <tr>
-                                <td colspan="5" style="padding: 2rem; text-align: center; color: #999;">Loading transactions...</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Deposit Modal -->
-            <div id="depositModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center;">
-                <div style="background: white; padding: 2rem; border-radius: 12px; max-width: 500px; width: 90%;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                        <h2>Deposit Funds to Wallet</h2>
-                        <button onclick="closeDepositModal()" style="border: none; background: none; font-size: 1.5rem; cursor: pointer;">✕</button>
-                    </div>
-
-                    <form onsubmit="processDeposit(event)">
-                        <div style="margin-bottom: 1.5rem;">
-                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Deposit Amount (₦)</label>
-                            <input type="number" id="depositAmount" step="0.01" min="1" placeholder="Enter amount" style="width: 100%; padding: 0.75rem; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 1rem;" required>
-                        </div>
-
-                        <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">
-                            <i class="fas fa-credit-card"></i>
-                            Proceed to Payment
-                        </button>
-                    </form>
-                </div>
-            </div>
-
-            <!-- Withdrawal Modal -->
-            <div id="withdrawalModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center;">
-                <div style="background: white; padding: 2rem; border-radius: 12px; max-width: 500px; width: 90%; max-height: 90vh; overflow-y: auto;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                        <h2>Request Withdrawal</h2>
-                        <button onclick="closeWithdrawalModal()" style="border: none; background: none; font-size: 1.5rem; cursor: pointer;">✕</button>
-                    </div>
-
-                    <form onsubmit="processWithdrawal(event)">
-                        <div style="margin-bottom: 1.5rem;">
-                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Withdrawal Amount (₦)</label>
-                            <input type="number" id="withdrawalAmount" step="0.01" min="1" placeholder="Enter amount" style="width: 100%; padding: 0.75rem; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 1rem;" required>
-                            <small style="color: #999;">Max: ₦<span id="maxWithdrawal">0.00</span></small>
-                        </div>
-
-                        <div style="margin-bottom: 1.5rem;">
-                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Bank Name</label>
-                            <input type="text" id="bankName" placeholder="e.g., First Bank, GTBank" style="width: 100%; padding: 0.75rem; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 1rem;" required>
-                        </div>
-
-                        <div style="margin-bottom: 1.5rem;">
-                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Account Number</label>
-                            <input type="text" id="accountNumber" placeholder="10-digit account number" style="width: 100%; padding: 0.75rem; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 1rem;" required>
-                        </div>
-
-                        <div style="margin-bottom: 1.5rem;">
-                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Account Name</label>
-                            <input type="text" id="accountName" placeholder="Full account name" style="width: 100%; padding: 0.75rem; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 1rem;" required>
-                        </div>
-
-                        <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">
-                            <i class="fas fa-arrow-right"></i>
-                            Submit Withdrawal Request
-                        </button>
-                    </form>
-                </div>
-            </div>
-              <!-- /.Start col -->
-            </div>
-            <!-- /.row (main row) -->
+    <div class="row g-3 mb-4">
+      <div class="col-lg-7">
+        <div class="ik-card">
+          <div class="ik-card-hdr d-flex align-items-center justify-content-between gap-2">
+            <span class="ik-card-title">Sales Value</span>
+            <a href="#" class="view-all">View report <i class="bi bi-arrow-right"></i></a>
           </div>
-          <!--end::Container-->
+          <div class="ik-card-body">
+            <div id="revenue-chart" style="min-height:280px;"></div>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-5">
+        <div class="ik-card">
+          <div class="ik-card-hdr">
+            <span class="ik-card-title">Quick Actions</span>
+          </div>
+          <div class="ik-card-body">
+            <div class="row g-2">
+              <div class="col-4 col-sm-2">
+                <a href="/vendor/orders" class="quick-action">
+                  <div class="quick-action-icon" style="background:var(--ik-green-light);color:var(--ik-green);"><i class="bi bi-clipboard-check"></i></div>
+                  <span class="quick-action-label">All Orders</span>
+                </a>
+              </div>
+              <div class="col-4 col-sm-2">
+                <a href="/vendor/products" class="quick-action">
+                  <div class="quick-action-icon" style="background:var(--ik-orange-light);color:var(--ik-orange);"><i class="bi bi-box-seam"></i></div>
+                  <span class="quick-action-label">Products</span>
+                </a>
+              </div>
+              <div class="col-4 col-sm-2">
+                <a href="/vendor/earnings-summary" class="quick-action">
+                  <div class="quick-action-icon" style="background:#FFFBEB;color:var(--ik-gold);"><i class="bi bi-wallet2"></i></div>
+                  <span class="quick-action-label">Earnings</span>
+                </a>
+              </div>
+              <div class="col-4 col-sm-2">
+                <a href="/vendor/transactions" class="quick-action">
+                  <div class="quick-action-icon" style="background:#EFF6FF;color:#3B82F6;"><i class="bi bi-receipt"></i></div>
+                  <span class="quick-action-label">Transactions</span>
+                </a>
+              </div>
+              <div class="col-4 col-sm-2">
+                <a href="/vendor/shipping-status" class="quick-action">
+                  <div class="quick-action-icon" style="background:#FEF9C3;color:#D97706;"><i class="bi bi-truck-front"></i></div>
+                  <span class="quick-action-label">Shipping</span>
+                </a>
+              </div>
+              <div class="col-4 col-sm-2">
+                <a href="/vendor/store-profile" class="quick-action">
+                  <div class="quick-action-icon" style="background:#F5F3FF;color:#7C3AED;"><i class="bi bi-shop"></i></div>
+                  <span class="quick-action-label">Store</span>
+                </a>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <script>
+        <div class="ik-card mt-4">
+          <div class="ik-card-hdr d-flex align-items-center justify-content-between gap-2">
+            <span class="ik-card-title">Wallet Management</span>
+            <div class="d-flex gap-2">
+              <button class="btn btn-primary btn-sm" onclick="openDepositModal()"><i class="fas fa-plus-circle me-1"></i> Deposit</button>
+              <button class="btn btn-secondary btn-sm" onclick="openWithdrawalModal()"><i class="fas fa-arrow-right me-1"></i> Withdraw</button>
+            </div>
+          </div>
+          <div class="ik-card-body">
+            <div class="row g-3 align-items-center">
+              <div class="col-md-7">
+                <div style="background: #1E3A8A; color: #fff; padding: 1.5rem; border-radius: 1rem; box-shadow: 0 22px 36px rgba(30, 58, 138, 0.12);">
+                  <div style="opacity:.85; font-size:.9rem; margin-bottom:.5rem;">Available Balance</div>
+                  <div style="font-size:2rem; font-weight:700;">₦<span id="availableBalance">0.00</span></div>
+                  <div style="color:rgba(255,255,255,.85); margin-top:.75rem;">Total Earned: ₦<span id="totalEarned">0.00</span></div>
+                </div>
+              </div>
+              <div class="col-md-5">
+                <div class="d-grid gap-2">
+                  <button class="btn btn-outline-primary" onclick="openDepositModal()">Deposit Funds</button>
+                  <button class="btn btn-outline-secondary" onclick="openWithdrawalModal()">Request Withdrawal</button>
+                </div>
+              </div>
+            </div>
+            <div class="mt-4">
+              <h3 class="mb-3">Recent Transactions</h3>
+              <div class="table-responsive">
+                <table class="table table-bordered table-striped">
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Type</th>
+                      <th>Amount</th>
+                      <th>Description</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody id="transactionsList">
+                    <tr>
+                      <td colspan="5" class="text-center py-5">Loading transactions...</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Deposit Modal -->
+<div id="depositModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center;">
+  <div class="ik-card" style="max-width:540px; width:90%; margin:auto;">
+    <div class="ik-card-hdr d-flex align-items-center justify-content-between">
+      <h3 class="ik-card-title">Deposit Funds to Wallet</h3>
+      <button onclick="closeDepositModal()" class="btn btn-ghost btn-sm" style="font-size:1.25rem; line-height:1;">✕</button>
+    </div>
+    <div class="ik-card-body">
+      <form onsubmit="processDeposit(event)">
+        <div style="margin-bottom: 1rem;">
+          <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Deposit Amount (₦)</label>
+          <input type="number" id="depositAmount" step="0.01" min="1" placeholder="Enter amount" class="form-control" required>
+        </div>
+
+        <div class="d-grid">
+          <button type="submit" class="btn btn-primary">Proceed to Payment</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Withdrawal Modal -->
+<div id="withdrawalModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center;">
+  <div class="ik-card" style="max-width:640px; width:92%; margin:auto; max-height:90vh; overflow:auto;">
+    <div class="ik-card-hdr d-flex align-items-center justify-content-between">
+      <h3 class="ik-card-title">Request Withdrawal</h3>
+      <button onclick="closeWithdrawalModal()" class="btn btn-ghost btn-sm" style="font-size:1.25rem; line-height:1;">✕</button>
+    </div>
+    <div class="ik-card-body">
+      <form onsubmit="processWithdrawal(event)">
+        <div class="mb-3">
+          <label class="form-label">Withdrawal Amount (₦)</label>
+          <input type="number" id="withdrawalAmount" step="0.01" min="1" class="form-control" required>
+          <small class="form-text text-muted">Max: ₦<span id="maxWithdrawal">0.00</span></small>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Bank Name</label>
+          <input type="text" id="bankName" class="form-control" placeholder="e.g., First Bank, GTBank" required>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Account Number</label>
+          <input type="text" id="accountNumber" class="form-control" placeholder="10-digit account number" required>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Account Name</label>
+          <input type="text" id="accountName" class="form-control" placeholder="Full account name" required>
+        </div>
+
+        <div class="d-grid">
+          <button type="submit" class="btn btn-primary">Submit Withdrawal Request</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
             // Modal functions
         function openDepositModal() {
             document.getElementById('depositModal').style.display = 'flex';
@@ -296,16 +226,37 @@
         }
         
         function openWithdrawalModal() {
-            document.getElementById('withdrawalModal').style.display = 'flex';
+          const modal = document.getElementById('withdrawalModal');
+          if (modal) modal.style.display = 'flex';
         }
-        
+
         function closeWithdrawalModal() {
-            document.getElementById('withdrawalModal').style.display = 'none';
-            document.getElementById('withdrawalAmount').value = '';
-            document.getElementById('bankName').value = '';
-            document.getElementById('accountNumber').value = '';
-            document.getElementById('accountName').value = '';
+          const modal = document.getElementById('withdrawalModal');
+          if (modal) modal.style.display = 'none';
+          const amount = document.getElementById('withdrawalAmount'); if (amount) amount.value = '';
+          const bank = document.getElementById('bankName'); if (bank) bank.value = '';
+          const acct = document.getElementById('accountNumber'); if (acct) acct.value = '';
+          const name = document.getElementById('accountName'); if (name) name.value = '';
         }
+
+        // Close modal when clicking on overlay and handle Escape key
+        (function setupModalHandlers(){
+          document.addEventListener('click', function(e){
+            const modal = document.getElementById('withdrawalModal');
+            if (!modal) return;
+            if (modal.style.display !== 'flex') return;
+            if (e.target === modal) closeWithdrawalModal();
+          });
+
+          document.addEventListener('keydown', function(e){
+            if (e.key === 'Escape') {
+              const modal = document.getElementById('withdrawalModal');
+              if (modal && modal.style.display === 'flex') closeWithdrawalModal();
+              const dmodal = document.getElementById('depositModal');
+              if (dmodal && dmodal.style.display === 'flex') closeDepositModal();
+            }
+          });
+        })();
 
         document.addEventListener('DOMContentLoaded', async function loadVendorStats() {
           try {

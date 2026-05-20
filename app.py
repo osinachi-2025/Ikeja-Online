@@ -1067,7 +1067,7 @@ def save_vendor_logo_to_db(file, vendor):
 @app.route('/')
 
 def home():
-    return render_template('home/new_home.html')
+    return render_template('home/includes/ikeja-online-home.html')
 
 @app.route('/all-products')
 def all_products():
@@ -1399,7 +1399,7 @@ def confirm_action(token):
 
 @app.route('/new_home')
 def new_home():
-    return render_template('home/new_home.html')
+    return redirect(url_for('home'))
 
 @app.route('/register', methods=['POST', 'GET'])
 def register():
@@ -1410,6 +1410,7 @@ def register():
         first_name = (data.get('firstname') or data.get('firstname', '')).strip()
         last_name = (data.get('lastname') or data.get('lastname', '')).strip()
         email = (data.get('email') or data.get('email', '')).strip().lower()
+        phone = (data.get('phone') or data.get('phone', '')).strip()
         password = data.get('password', '')
         confirm_password = data.get('confirm_password', '')
         store_name = (data.get('store') or data.get('store', '')).strip()
@@ -1480,12 +1481,16 @@ def register():
                 vendor = Vendors(
                     user_id=new_user.id,
                     store_name=store_name if store_name else None,
-                    store_slug=store_slug
+                    store_slug=store_slug,
+                    phone=phone if phone else None
                 )
                 db.session.add(vendor)
                 
             elif role == 'customer':
-                customer = Customers(user_id=new_user.id)
+                customer = Customers(
+                    user_id=new_user.id,
+                    phone=phone if phone else None
+                )
                 db.session.add(customer)
             
             db.session.commit()
@@ -5107,7 +5112,7 @@ def view_all_categories():
 @app.route('/product/<int:product_id>')
 def view_product_details(product_id):
     # Guest-accessible product details page
-    return render_template('product_details.html')
+    return render_template('home/includes/ikeja-online-product.html', product_id=product_id)
 
 
 @app.route('/api/product-details/<int:product_id>', methods=['GET'])
@@ -5143,6 +5148,13 @@ def get_product_details(product_id):
             for review in product.reviews
         ]
         
+        vendor_display_name = store_name
+        if product.vendor:
+            if product.vendor.store_name:
+                vendor_display_name = product.vendor.store_name
+            elif product.vendor.user:
+                vendor_display_name = f"{product.vendor.user.first_name} {product.vendor.user.last_name}"
+
         product_dict = {
             'id': product.id,
             'name': product.name,
@@ -5154,7 +5166,25 @@ def get_product_details(product_id):
             'category_name': product.category.name if product.category else 'Uncategorized',
             'category_id': product.category_id,
             'store_name': store_name,
+            'vendor_name': vendor_display_name,
+            'processor': product.processor,
+            'ram': product.ram,
+            'storage': product.storage,
+            'display': product.display,
+            'battery': product.battery,
+            'chip': product.chip,
+            'product_type': product.product_type,
+            'charging': product.charging,
+            'weight': product.weight,
+            'connectivity': product.connectivity,
             'image': image_url,
+            'images': [
+                {
+                    'id': img.id,
+                    'url': f'/api/product-image/{img.id}',
+                    'is_primary': img.is_primary
+                } for img in product.images
+            ],
             'created_at': product.created_at.isoformat(),
             'avg_rating': avg_rating,
             'review_count': review_count,
@@ -5850,6 +5880,40 @@ def get_categories():
         return jsonify({'success': False, 'error': 'Server Error', 'message': f'Failed to fetch categories: {str(e)}'}), 500
 
 
+@app.route('/api/vendors', methods=['GET'])
+def get_vendors():
+    try:
+        vendors = Vendors.query.all()
+        
+        if not vendors:
+            print("Warning: No vendors found in database")
+        
+        vendors_data = []
+        for vendor in vendors:
+            # Count only active products with stock > 0
+            active_product_count = Products.query.filter_by(
+                vendor_id=vendor.id,
+                status='active'
+            ).filter(Products.stock_quantity > 0).count()
+            
+            vendor_dict = {
+                'id': vendor.id,
+                'store_name': vendor.store_name or f"{vendor.user.first_name} {vendor.user.last_name}'s Store",
+                'store_description': vendor.store_description,
+                'phone': vendor.phone,
+                'address': vendor.address,
+                'logo_url': vendor.logo_url,
+                'product_count': active_product_count,
+                'created_at': vendor.created_at.isoformat() if vendor.created_at else None
+            }
+            vendors_data.append(vendor_dict)
+        
+        return jsonify({'success': True, 'vendors': vendors_data}), 200
+    except Exception as e:
+        print(f"Error fetching vendors: {str(e)}")
+        return jsonify({'success': False, 'error': 'Server Error', 'message': f'Failed to fetch vendors: {str(e)}'}), 500
+
+
 @app.route('/api/init-categories', methods=['POST'])
 def init_categories_endpoint():
     """Manually initialize or reset categories - for debugging"""
@@ -6114,6 +6178,12 @@ def forbidden(e):
 
 
 # ========== WISHLIST ROUTES ==========
+
+@app.route('/wishlist')
+def wishlist_page():
+    """Render wishlist page"""
+    # Client-side will check for token in localStorage
+    return render_template('home/includes/ikeja-online-wishlist.html')
 
 @app.route('/api/wishlist/add', methods=['POST'])
 @jwt_required()

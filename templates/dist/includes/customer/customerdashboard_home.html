@@ -116,114 +116,98 @@
     <div class="app-content">
           <!--begin::Container-->
           <div class="container-fluid">
-            <!-- Info boxes -->
-            <div class="row">
-              <div class="col-12 col-sm-6 col-md-3">
-                <div class="info-box">
-                  <span class="info-box-icon text-bg-primary shadow-sm">
-                    <i class="bi bi-gear-fill"></i>
-                  </span>
-
-                  <div class="info-box-content">
-                    <span class="info-box-text">Total Orders</span>
-                    <span class="order-box-number">
-                      10
-                    </span>
-                  </div>
-                  <!-- /.info-box-content -->
+            <!-- Stat cards -->
+            <div class="row g-3 mb-4">
+              <div class="col-6 col-md-3">
+                <div class="stat-card green">
+                  <div class="stat-icon green"><i class="bi bi-bag-check-fill"></i></div>
+                  <div class="stat-label">Total Orders</div>
+                  <div class="stat-value order-box-number">0</div>
                 </div>
-                <!-- /.info-box -->
               </div>
-              <!-- /.col -->
-              <div class="col-12 col-sm-6 col-md-3">
-                <div class="info-box">
-                  <span class="info-box-icon text-bg-danger shadow-sm">
-                    <i class="bi bi-hand-thumbs-up-fill"></i>
-                  </span>
-
-                  <div class="info-box-content">
-                    <span class="info-box-text">Wishlist Items</span>
-                    <span class="wishlist-box-number">41,410</span>
-                  </div>
-                  <!-- /.info-box-content -->
+              <div class="col-6 col-md-3">
+                <div class="stat-card blue">
+                  <div class="stat-icon blue"><i class="bi bi-heart-fill"></i></div>
+                  <div class="stat-label">Wishlist Items</div>
+                  <div class="stat-value wishlist-box-number">0</div>
                 </div>
-                <!-- /.info-box -->
               </div>
-              <!-- /.col -->
-
-              <!-- fix for small devices only -->
-              <!-- <div class="clearfix hidden-md-up"></div> -->
-
-              <div class="col-12 col-sm-6 col-md-3">
-                <div class="info-box">
-                  <span class="info-box-icon text-bg-success shadow-sm">
-                    <i class="bi bi-cart-fill"></i>
-                  </span>
-
-                  <div class="info-box-content">
-                    <span class="info-box-text">Total Spent</span>
-                    <span class="spent-box">760</span>
-                  </div>
-                  <!-- /.info-box-content -->
+              <div class="col-6 col-md-3">
+                <div class="stat-card orange">
+                  <div class="stat-icon orange"><i class="bi bi-cart-fill"></i></div>
+                  <div class="stat-label">Total Spent</div>
+                  <div class="stat-value spent-box">₦0.00</div>
                 </div>
-                <!-- /.info-box -->
               </div>
-              <!-- /.col -->
-              <div class="col-12 col-sm-6 col-md-3">
-                <div class="info-box">
-                  <span class="info-box-icon text-bg-warning shadow-sm">
-                    <i class="bi bi-people-fill"></i>
-                  </span>
-
-                  <div class="info-box-content">
-                    <span class="info-box-text">Reviews Left</span>
-                    <span class="info-box-number">0</span>
-                  </div>
-                  <!-- /.info-box-content -->
+              <div class="col-6 col-md-3">
+                <div class="stat-card gold">
+                  <div class="stat-icon gold"><i class="bi bi-star-fill"></i></div>
+                  <div class="stat-label">Reviews Left</div>
+                  <div class="stat-value">0</div>
                 </div>
-                <!-- /.info-box -->
               </div>
-              <!-- /.col -->
             </div>
-            <!-- /.row -->   
+            <!-- /.row -->
 
-            <!--begin::Row-->
-            <div class="row">
-              <!-- Start col -->
-              <div class="col-md-8">
-                <!--begin::Row-->
-                <div class="row g-4 mb-4">
-                  <div class="col-md-6">
-                    <!-- DIRECT CHAT -->
-                    
-                    <!-- /.direct-chat -->
+            <div class="row g-4 mb-4">
+              <div class="col-12">
+                <div class="ik-card">
+                  <div class="ik-card-hdr d-flex align-items-center justify-content-between">
+                    <span class="ik-card-title">Quick Actions</span>
                   </div>
-                  <!-- /.col -->
-
-                  
-                  <!-- /.col -->
-                </div>
-                <!--end::Row-->
-
-                <!--begin::Latest Order Widget-->
-                <div class="card">
-                  <div class="card-header">
-                    <h3 class="card-title">Latest Orders</h3>
-
-                    <div class="card-tools">
-                      <button type="button" class="btn btn-tool" data-lte-toggle="card-collapse">
-                        <i data-lte-icon="expand" class="bi bi-plus-lg"></i>
-                        <i data-lte-icon="collapse" class="bi bi-dash-lg"></i>
-                      </button>
-                      <button type="button" class="btn btn-tool" data-lte-toggle="card-remove">
-                        <i class="bi bi-x-lg"></i>
-                      </button>
+                  <div class="ik-card-body">
+                    <div class="row g-3">
+                      <div class="col-6 col-sm-4 col-md-2">
+                        <a href="/customer/dashboard/orders" class="quick-action">
+                          <div class="quick-action-icon" style="background:var(--green-l);color:var(--green)"><i class="bi bi-bag-check"></i></div>
+                          <div class="quick-action-label">My Orders</div>
+                        </a>
+                      </div>
+                      <div class="col-6 col-sm-4 col-md-2">
+                        <a href="/customer/dashboard/wishlist" class="quick-action">
+                          <div class="quick-action-icon" style="background:#FFF0F0;color:#EF4444"><i class="bi bi-heart-fill"></i></div>
+                          <div class="quick-action-label">Wishlist</div>
+                        </a>
+                      </div>
+                      <div class="col-6 col-sm-4 col-md-2">
+                        <a href="/customer/dashboard/browse-products" class="quick-action">
+                          <div class="quick-action-icon" style="background:var(--orange-l);color:var(--orange)"><i class="bi bi-shop"></i></div>
+                          <div class="quick-action-label">Browse</div>
+                        </a>
+                      </div>
+                      <div class="col-6 col-sm-4 col-md-2">
+                        <a href="/customer/dashboard/transaction-history" class="quick-action">
+                          <div class="quick-action-icon" style="background:#EFF6FF;color:var(--blue)"><i class="bi bi-receipt"></i></div>
+                          <div class="quick-action-label">Transactions</div>
+                        </a>
+                      </div>
+                      <div class="col-6 col-sm-4 col-md-2">
+                        <a href="/customer/dashboard/order-tracking" class="quick-action">
+                          <div class="quick-action-icon" style="background:var(--green-l);color:var(--green)"><i class="bi bi-truck"></i></div>
+                          <div class="quick-action-label">Track Order</div>
+                        </a>
+                      </div>
+                      <div class="col-6 col-sm-4 col-md-2">
+                        <a href="/customer/dashboard/profile-info" class="quick-action">
+                          <div class="quick-action-icon" style="background:#F5F3FF;color:#7C3AED"><i class="bi bi-person-circle"></i></div>
+                          <div class="quick-action-label">Profile</div>
+                        </a>
+                      </div>
                     </div>
                   </div>
-                  <!-- /.card-header -->
-                  <div class="card-body p-0">
+                </div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-8">
+                <div class="ik-card">
+                  <div class="ik-card-hdr">
+                    <span class="ik-card-title">Latest Orders</span>
+                  </div>
+                  <div class="ik-card-body p-0">
                     <div class="table-responsive">
-                      <table class="table m-0">
+                      <table class="table ik-table">
                         <thead>
                           <tr>
                             <th>Order ID</th>
@@ -235,234 +219,168 @@
                         <tbody>
                           <tr>
                             <td>
-                              <a
-                                href="/my-orders/OR9842"
-                                class="link-primary link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover"
-                                >OR9842</a
-                              >
+                              <a href="/my-orders/OR9842" class="link-primary link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover">OR9842</a>
                             </td>
                             <td>Call of Duty IV</td>
-                            <td>
-                              <span class="badge text-bg-success"> Shipped </span>
-                            </td>
-                            <td class="fw-bold text-dark">
-                              ₦45,999
-                            </td>
+                            <td><span class="badge badge-success">Shipped</span></td>
+                            <td class="fw-bold text-dark">₦45,999</td>
                           </tr>
                           <tr>
                             <td>
-                              <a
-                                href="/my-orders/OR1848"
-                                class="link-primary link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover"
-                                >OR1848</a
-                              >
+                              <a href="/my-orders/OR1848" class="link-primary link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover">OR1848</a>
                             </td>
                             <td>Samsung Smart TV</td>
-                            <td>
-                              <span class="badge text-bg-warning">Pending</span>
-                            </td>
-                            <td class="fw-bold text-dark">
-                              ₦389,900
-                            </td>
+                            <td><span class="badge badge-warning">Pending</span></td>
+                            <td class="fw-bold text-dark">₦389,900</td>
                           </tr>
                           <tr>
                             <td>
-                              <a
-                                href="/my-orders/OR7429"
-                                class="link-primary link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover"
-                                >OR7429</a
-                              >
+                              <a href="/my-orders/OR7429" class="link-primary link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover">OR7429</a>
                             </td>
                             <td>iPhone 6 Plus</td>
-                            <td>
-                              <span class="badge text-bg-danger"> Delivered </span>
-                            </td>
-                            <td class="fw-bold text-dark" style="filter: none; text-shadow: none; opacity: 1; font-weight: 700 !important;">
-                              ₦99,999
-                            </td>
+                            <td><span class="badge badge-danger">Delivered</span></td>
+                            <td class="fw-bold text-dark">₦99,999</td>
                           </tr>
                           <tr>
                             <td>
-                              <a
-                                href="/my-orders/OR7429"
-                                class="link-primary link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover"
-                                >OR7429</a
-                              >
+                              <a href="/my-orders/OR7429" class="link-primary link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover">OR7429</a>
                             </td>
                             <td>Samsung Smart TV</td>
-                            <td>
-                              <span class="badge text-bg-info">Processing</span>
-                            </td>
-                            <td class="fw-bold text-dark" style="filter: none; text-shadow: none; opacity: 1; font-weight: 700 !important;">
-                              ₦389,900
-                            </td>
+                            <td><span class="badge badge-info">Processing</span></td>
+                            <td class="fw-bold text-dark">₦389,900</td>
                           </tr>
                           <tr>
                             <td>
-                              <a
-                                href="/my-orders/OR1848"
-                                class="link-primary link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover"
-                                >OR1848</a
-                              >
+                              <a href="/my-orders/OR1848" class="link-primary link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover">OR1848</a>
                             </td>
                             <td>Samsung Smart TV</td>
-                            <td>
-                              <span class="badge text-bg-warning">Pending</span>
-                            </td>
-                            <td class="fw-bold text-dark">
-                              ₦389,900
-                            </td>
+                            <td><span class="badge badge-warning">Pending</span></td>
+                            <td class="fw-bold text-dark">₦389,900</td>
                           </tr>
                           <tr>
                             <td>
-                              <a
-                                href="/my-orders/OR7429"
-                                class="link-primary link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover"
-                                >OR7429</a
-                              >
+                              <a href="/my-orders/OR7429" class="link-primary link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover">OR7429</a>
                             </td>
                             <td>iPhone 6 Plus</td>
-                            <td>
-                              <span class="badge text-bg-danger"> Delivered </span>
-                            </td>
-                            <td class="fw-bold text-dark" style="filter: none; text-shadow: none; opacity: 1; font-weight: 700 !important;">
-                              ₦99,999
-                            </td>
+                            <td><span class="badge badge-danger">Delivered</span></td>
+                            <td class="fw-bold text-dark">₦99,999</td>
                           </tr>
                           <tr>
                             <td>
-                              <a
-                                href="/my-orders/OR9842"
-                                class="link-primary link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover"
-                                >OR9842</a
-                              >
+                              <a href="/my-orders/OR9842" class="link-primary link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover">OR9842</a>
                             </td>
                             <td>Call of Duty IV</td>
-                            <td>
-                              <span class="badge text-bg-success">Shipped</span>
-                            </td>
-                            <td class="fw-bold text-dark" style="filter: none; text-shadow: none; opacity: 1; font-weight: 700 !important;">
-                              ₦45,999
-                            </td>
+                            <td><span class="badge badge-success">Shipped</span></td>
+                            <td class="fw-bold text-dark">₦45,999</td>
                           </tr>
                         </tbody>
                       </table>
                     </div>
-                    <!-- /.table-responsive -->
                   </div>
-                  <!-- /.card-body -->
-                  <div class="card-footer clearfix">
-                    <a href="javascript:void(0)" class="btn btn-sm btn-primary float-start">
-                      Place New Order
-                    </a>
-                    <a href="javascript:void(0)" class="btn btn-sm btn-secondary float-end">
-                      View All Orders
-                    </a>
+                  <div class="d-flex justify-content-between align-items-center pt-3 border-top mt-0">
+                    <a href="javascript:void(0)" class="btn btn-sm btn-primary">Place New Order</a>
+                    <a href="javascript:void(0)" class="btn btn-sm btn-secondary">View All Orders</a>
                   </div>
-                  <!-- /.card-footer -->
                 </div>
-                <!-- /.card -->
               </div>
-              <!-- /.col -->
-              <div class="content-section" style="margin-top: 2rem;" id="wallet-section">
-                <h2><i class="fas fa-wallet"></i> Wallet Management</h2>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
-                    <div style="background: #177D4E; color: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);">
-                        <p style="font-size: 0.9rem; opacity: 0.9; margin-bottom: 0.5rem;">Available Balance</p>
-                        <h3 style="font-size: 2.5rem; margin: 0; font-weight: 800;">₦<span id="availableBalance">0.00</span></h3>
-                        <p style="font-size: 0.85rem; opacity: 0.8; margin-top: 0.5rem;">Total Earned: ₦<span id="totalEarned">0.00</span></p>
+              <div class="col-md-4">
+                <div class="ik-card mt-4 mt-md-0">
+                  <div class="ik-card-hdr d-flex align-items-center justify-content-between">
+                    <span class="ik-card-title">Wallet Management</span>
+                    <div class="d-flex gap-2">
+                      <button class="btn btn-primary btn-sm" onclick="openDepositModal()">Deposit</button>
+                      <button class="btn btn-secondary btn-sm" onclick="openWithdrawalModal()">Withdraw</button>
                     </div>
-
-                    <div style="display: flex; flex-direction: column; gap: 1rem;">
-                        <button class="btn btn-primary" onclick="openDepositModal()" style="flex: 1; justify-content: center;">
-                            <i class="fas fa-plus-circle"></i>
-                            Deposit Funds
-                        </button>
-                        <button class="btn btn-primary" onclick="openWithdrawalModal()" style="flex: 1; justify-content: center;">
-                            <i class="fas fa-arrow-right"></i>
-                            Request Withdrawal
-                        </button>
+                  </div>
+                  <div class="ik-card-body">
+                    <div class="stat-card blue wallet-card" style="padding:1rem;">
+                      <div class="stat-label wallet-card-label">Available Balance</div>
+                      <div class="stat-value wallet-card-value">₦<span id="availableBalance">0.00</span></div>
+                      <div class="wallet-card-note">Total Earned: ₦<span id="totalEarned">0.00</span></div>
                     </div>
-                </div>
-
-                <h3 style="margin-top: 2rem; margin-bottom: 1rem;">Recent Transactions</h3>
-                <div style="overflow-x: auto;">
-                    <table style="width: 100%; border-collapse: collapse;">
-                        <thead>
-                            <tr style="background: #f5f5f5;">
-                                <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #e0e0e0;">Date</th>
-                                <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #e0e0e0;">Type</th>
-                                <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #e0e0e0;">Amount</th>
-                                <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #e0e0e0;">Description</th>
-                                <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #e0e0e0;">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody id="transactionsList">
+                    <div class="mt-4">
+                      <h5 class="mb-3">Recent Transactions</h5>
+                      <div class="table-responsive">
+                        <table class="table ik-table table-bordered table-striped">
+                          <thead>
                             <tr>
-                                <td colspan="5" style="padding: 2rem; text-align: center; color: #999;">Loading transactions...</td>
+                              <th>Date</th>
+                              <th>Type</th>
+                              <th>Amount</th>
+                              <th>Description</th>
+                              <th>Status</th>
                             </tr>
-                        </tbody>
-                    </table>
+                          </thead>
+                          <tbody id="transactionsList">
+                            <tr>
+                              <td colspan="5" class="text-center py-4 text-muted">Loading transactions...</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-            </div>
+              </div>
 
             <!-- Deposit Modal -->
-            <div id="depositModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center;">
-                <div style="background: white; padding: 2rem; border-radius: 12px; max-width: 500px; width: 90%;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                        <h2>Deposit Funds to Wallet</h2>
-                        <button onclick="closeDepositModal()" style="border: none; background: none; font-size: 1.5rem; cursor: pointer;">✕</button>
+            <div id="depositModal" class="dashboard-modal-overlay">
+                <div class="dashboard-modal-card">
+                    <div class="dashboard-modal-header">
+                        <h2 class="dashboard-modal-title">Deposit Funds to Wallet</h2>
+                        <button onclick="closeDepositModal()" class="dashboard-modal-close">✕</button>
                     </div>
-
-                    <form onsubmit="processDeposit(event)">
-                        <div style="margin-bottom: 1.5rem;">
-                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Deposit Amount (₦)</label>
-                            <input type="number" id="depositAmount" step="0.01" min="1" placeholder="Enter amount" style="width: 100%; padding: 0.75rem; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 1rem;" required>
-                        </div>
-
-                        <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">
-                            <i class="fas fa-credit-card"></i>
-                            Proceed to Payment
-                        </button>
-                    </form>
+                    <div class="dashboard-modal-card-body">
+                        <form onsubmit="processDeposit(event)">
+                            <div class="mb-4">
+                                <label class="form-label">Deposit Amount (₦)</label>
+                                <input type="number" id="depositAmount" step="0.01" min="1" placeholder="Enter amount" class="form-control" required>
+                            </div>
+                            <div class="dashboard-modal-footer">
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="fas fa-credit-card me-2"></i>
+                                    Proceed to Payment
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </div>
 
             <!-- Withdrawal Modal -->
-            <div id="withdrawalModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center;">
-                <div style="background: white; padding: 2rem; border-radius: 12px; max-width: 500px; width: 90%; max-height: 90vh; overflow-y: auto;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                        <h2>Request Withdrawal</h2>
-                        <button onclick="closeWithdrawalModal()" style="border: none; background: none; font-size: 1.5rem; cursor: pointer;">✕</button>
+            <div id="withdrawalModal" class="dashboard-modal-overlay">
+                <div class="dashboard-modal-card">
+                    <div class="dashboard-modal-header">
+                        <h2 class="dashboard-modal-title">Request Withdrawal</h2>
+                        <button onclick="closeWithdrawalModal()" class="dashboard-modal-close">✕</button>
                     </div>
-
-                    <form onsubmit="processWithdrawal(event)">
-                        <div style="margin-bottom: 1.5rem;">
-                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Withdrawal Amount (₦)</label>
-                            <input type="number" id="withdrawalAmount" step="0.01" min="1" placeholder="Enter amount" style="width: 100%; padding: 0.75rem; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 1rem;" required>
-                            <small style="color: #999;">Max: ₦<span id="maxWithdrawal">0.00</span></small>
-                        </div>
-
-                        <div style="margin-bottom: 1.5rem;">
-                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Bank Name</label>
-                            <input type="text" id="bankName" placeholder="e.g., First Bank, GTBank" style="width: 100%; padding: 0.75rem; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 1rem;" required>
-                        </div>
-
-                        <div style="margin-bottom: 1.5rem;">
-                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Account Number</label>
-                            <input type="text" id="accountNumber" placeholder="10-digit account number" style="width: 100%; padding: 0.75rem; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 1rem;" required>
-                        </div>
-
-                        <div style="margin-bottom: 1.5rem;">
-                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Account Name</label>
-                            <input type="text" id="accountName" placeholder="Full account name" style="width: 100%; padding: 0.75rem; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 1rem;" required>
-                        </div>
-
-                        <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">
-                            <i class="fas fa-arrow-right"></i>
-                            Submit Withdrawal Request
-                        </button>
-                    </form>
+                    <div class="dashboard-modal-card-body">
+                        <form onsubmit="processWithdrawal(event)">
+                            <div class="mb-4">
+                                <label class="form-label">Withdrawal Amount (₦)</label>
+                                <input type="number" id="withdrawalAmount" step="0.01" min="1" placeholder="Enter amount" class="form-control" required>
+                                <small class="text-muted">Max: ₦<span id="maxWithdrawal">0.00</span></small>
+                            </div>
+                            <div class="mb-4">
+                                <label class="form-label">Bank Name</label>
+                                <input type="text" id="bankName" placeholder="e.g., First Bank, GTBank" class="form-control" required>
+                            </div>
+                            <div class="mb-4">
+                                <label class="form-label">Account Number</label>
+                                <input type="text" id="accountNumber" placeholder="10-digit account number" class="form-control" required>
+                            </div>
+                            <div class="mb-4">
+                                <label class="form-label">Account Name</label>
+                                <input type="text" id="accountName" placeholder="Full account name" class="form-control" required>
+                            </div>
+                            <div class="dashboard-modal-footer">
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="fas fa-arrow-right me-2"></i>
+                                    Submit Withdrawal Request
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </div>
               
@@ -561,7 +479,7 @@
                         }
                         
                         const data = await response.json();
-                        const tbody = document.querySelector('.table tbody');
+                        const tbody = document.querySelector('.ik-table tbody');
                         
                         if (data.success && data.orders && data.orders.length > 0) {
                             tbody.innerHTML = data.orders.slice(0, 8).map(order => {
@@ -601,7 +519,7 @@
                         }
                     } catch (error) {
                         console.error('Error loading orders:', error);
-                        const tbody = document.querySelector('.table tbody');
+                        const tbody = document.querySelector('.ik-table tbody');
                         if (tbody) {
                             tbody.innerHTML = '<tr><td colspan="4" class="text-center text-danger">Error loading orders</td></tr>';
                         }
@@ -873,6 +791,16 @@
                     if (withdrawalModal && event.target === withdrawalModal) {
                         closeWithdrawalModal();
                     }
+                });
+
+                // Close modals on Escape
+                document.addEventListener('keydown', function(e) {
+                  const dmodal = document.getElementById('depositModal');
+                  const wmodal = document.getElementById('withdrawalModal');
+                  if (e.key === 'Escape') {
+                    if (dmodal && dmodal.style.display === 'flex') closeDepositModal();
+                    if (wmodal && wmodal.style.display === 'flex') closeWithdrawalModal();
+                  }
                 });
         </script>
 {% endblock customer_content %}

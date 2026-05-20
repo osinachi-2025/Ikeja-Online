@@ -14,12 +14,12 @@
   <div class="container-fluid">
     <div class="row mb-4">
       <div class="col-12">
-        <div class="card">
-          <div class="card-header d-flex justify-content-between align-items-center">
-            <h3 class="card-title mb-0">Browse Products</h3>
+        <div class="ik-card">
+          <div class="ik-card-hdr d-flex justify-content-between align-items-center">
+            <h3 class="ik-card-title mb-0">Browse Products</h3>
             <span id="productCount" class="badge bg-primary">0 products</span>
           </div>
-          <div class="card-body">
+          <div class="ik-card-body">
             <div id="productAlert" class="alert d-none" role="alert"></div>
             <div class="row g-3 mb-4">
               <div class="col-12 col-md-4">
@@ -151,17 +151,17 @@
       const ratingText = reviewCount ? `${avgRating} ★ (${reviewCount})` : 'No ratings yet';
       return `
         <div class="col">
-          <div class="card h-100 shadow-sm position-relative">
+          <div class="ik-card h-100 shadow-sm position-relative">
             <button type="button" class="btn btn-link position-absolute top-0 end-0 m-2 p-1" 
               style="font-size: 1.5rem; color: #ddd; z-index: 10;" 
               onclick="addToWishlist(${product.id}, this)" 
               title="Add to wishlist">
               ♡
             </button>
-            <img src="${product.image || '/static/assets/img/product-placeholder.jpg'}" class="card-img-top" alt="${product.name}">
-            <div class="card-body d-flex flex-column">
-              <h5 class="card-title">${product.name}</h5>
-              <p class="card-text text-truncate">${product.description || 'No description available.'}</p>
+            <img src="${product.image || '/static/assets/img/product-placeholder.jpg'}" class="ik-card-img-top" alt="${product.name}">
+            <div class="ik-card-body d-flex flex-column">
+              <h5 class="ik-card-title">${product.name}</h5>
+              <p class="ik-card-text text-truncate">${product.description || 'No description available.'}</p>
               <p class="mb-2 text-muted small">${product.store_name || 'Unknown vendor'}</p>
               <div class="mb-2">
                 <small class="text-warning">${ratingText}</small>

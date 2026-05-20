@@ -14,11 +14,11 @@
   <div class="container-fluid">
     <div class="row mb-4">
       <div class="col-12">
-        <div class="card">
-          <div class="card-header">
-            <h3 class="card-title mb-0">Returns & Refunds</h3>
+        <div class="ik-card">
+          <div class="ik-card-hdr">
+            <h3 class="ik-card-title mb-0">Returns & Refunds</h3>
           </div>
-          <div class="card-body">
+          <div class="ik-card-body">
             <ul class="nav nav-tabs mb-4" id="refundTabs">
               <li class="nav-item">
                 <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#returnRequests">Return Requests</button>
@@ -45,7 +45,7 @@
                 <div id="refundStatusAlert" class="alert alert-danger d-none" role="alert"></div>
                 
                 <div class="table-responsive">
-                  <table class="table table-hover">
+                  <table class="table ik-table table-hover">
                     <thead class="table-light">
                       <tr>
                         <th>Product</th>
@@ -69,7 +69,7 @@
                 <div id="historyAlert" class="alert alert-danger d-none" role="alert"></div>
                 
                 <div class="table-responsive">
-                  <table class="table table-hover">
+                  <table class="table ik-table table-hover">
                     <thead class="table-light">
                       <tr>
                         <th>Product</th>
@@ -134,11 +134,11 @@
       returnContainer.innerHTML = orders.map(order => {
         return `
           <div class="col-lg-6">
-            <div class="card shadow-sm border-0">
-              <div class="card-header bg-light">
-                <h5 class="card-title mb-0">Order #${order.id}</h5>
+            <div class="ik-card shadow-sm border-0">
+              <div class="ik-card-hdr bg-light">
+                <h5 class="ik-card-title mb-0">Order #${order.id}</h5>
               </div>
-              <div class="card-body">
+              <div class="ik-card-body">
                 <p class="text-muted small mb-3">${new Date(order.created_at).toLocaleDateString()}</p>
                 <p class="mb-2"><strong>Amount:</strong> ₦${Number(order.total_amount).toLocaleString()}</p>
                 <p class="mb-3"><strong>Items:</strong> ${order.items_count || 'N/A'}</p>

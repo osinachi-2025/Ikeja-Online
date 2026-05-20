@@ -1,0 +1,621 @@
+/*
+ * ikeja-home.css
+ * Enhancement layer for Ikeja.Online marketplace home page.
+ * Adds on top of the existing inline styles — zero selectors are
+ * overridden destructively; all changes extend or refine originals.
+ * Link AFTER the existing <style> block in base.html:
+ *   <link rel="stylesheet" href="/static/css/ikeja-home.css">
+ * ─────────────────────────────────────────────────────────────── */
+
+
+/* ══════════════════════════════════════════════
+   1. GLOBAL POLISH — smoothing & micro-details
+══════════════════════════════════════════════ */
+
+*, *::before, *::after {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+:root {
+  /* Extra tokens layered on top of existing ones */
+  --shadow-card:  0 2px 8px rgba(28,25,22,.06), 0 0 0 1px rgba(28,25,22,.04);
+  --shadow-hover: 0 8px 28px rgba(28,25,22,.12), 0 0 0 1px rgba(28,25,22,.06);
+  --shadow-hd:    0 1px 0 var(--line), 0 2px 16px rgba(28,25,22,.04);
+  --transition:   cubic-bezier(.4, 0, .2, 1);
+  --orange-vivid: #c94808;
+}
+
+
+/* ══════════════════════════════════════════════
+   2. HEADER — elevation & logo refinement
+══════════════════════════════════════════════ */
+
+.hd {
+  box-shadow: var(--shadow-hd);
+  /* Softens the hard bottom-border into a shadow */
+  border-bottom-color: transparent;
+  gap: 12px;
+}
+
+/* Logo: tighter tracking, subtle hover lift */
+.logo {
+  letter-spacing: -.4px;
+  transition: opacity .15s var(--transition);
+}
+.logo:hover { opacity: .78; }
+.logo .dot {
+  /* Tiny pulse on page load */
+  display: inline-block;
+  animation: dot-pop .5s .3s var(--transition) both;
+}
+@keyframes dot-pop {
+  from { transform: scale(0); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+
+/* Search bar — rounded pill, stronger focus ring */
+.hd-search input {
+  border-radius: 100px;
+  padding-left: 38px;
+  transition: border-color .18s, box-shadow .18s, background .18s;
+}
+.hd-search input:focus {
+  box-shadow: 0 0 0 3px rgba(212,80,10,.14);
+}
+
+/* Cart button — pill shape to match search */
+.hd-cart {
+  border-radius: 100px;
+  padding: 0 14px;
+  width: auto;
+  gap: 6px;
+  font-family: 'Lato', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: .2px;
+  transition: background .15s, transform .1s;
+}
+.hd-cart::after {
+  content: 'Cart';
+}
+.hd-cart:active { transform: scale(.96); }
+
+/* Icon buttons — consistent hover ring */
+.hd-icon-btn,
+.hd-wish-btn {
+  transition: border-color .15s, color .15s, background .15s, box-shadow .15s;
+}
+.hd-icon-btn:hover,
+.hd-wish-btn:hover {
+  box-shadow: 0 0 0 3px rgba(212,80,10,.12);
+}
+
+
+/* ══════════════════════════════════════════════
+   3. SIDEBAR — stickier feel & active indicator
+══════════════════════════════════════════════ */
+
+.sidebar {
+  border-right-color: var(--line);
+}
+
+/* Category items — smoother active transition */
+.cat-li {
+  border-radius: 0 8px 8px 0;
+  transition: background .14s, border-left-color .14s, color .14s;
+  margin-right: 8px;
+}
+.cat-li:hover {
+  background: var(--cream2);
+  border-left-color: var(--line);
+}
+.cat-li.on {
+  /* Slightly deeper orange bg on active item */
+  background: #fdeee4;
+}
+
+/* Brand checkboxes — larger hit area */
+.brand-row {
+  padding: 4px 2px;
+  border-radius: 6px;
+  transition: background .12s;
+}
+.brand-row:hover { background: var(--cream2); }
+
+/* Price inputs — shared focus glow */
+.price-in:focus {
+  box-shadow: 0 0 0 3px rgba(212,80,10,.12);
+}
+
+/* Apply button — orange fill on hover */
+.apply-btn:hover {
+  box-shadow: 0 2px 10px rgba(212,80,10,.22);
+  transform: translateY(-1px);
+}
+.apply-btn:active { transform: translateY(0); }
+
+/* "More categories" toggle */
+.vm-btn {
+  transition: border-color .15s, color .15s, background .15s;
+}
+
+
+/* ══════════════════════════════════════════════
+   4. HERO BANNER — richer depth & animations
+══════════════════════════════════════════════ */
+
+.hero {
+  /* Warmer dark with a subtle orange undertone */
+  background: linear-gradient(135deg, #1a1714 0%, #221a13 60%, #2a1a0e 100%);
+  border-radius: 16px;
+  box-shadow: 0 4px 32px rgba(28,25,22,.18);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Animated spotlight sweep */
+.hero::after {
+  content: '';
+  position: absolute;
+  top: -60%;
+  right: -20%;
+  width: 55%;
+  height: 200%;
+  background: radial-gradient(ellipse at center, rgba(212,80,10,.18) 0%, transparent 65%);
+  pointer-events: none;
+  animation: hero-glow 7s ease-in-out infinite alternate;
+}
+@keyframes hero-glow {
+  from { opacity: .6; transform: translateX(0) scale(1); }
+  to   { opacity: 1;  transform: translateX(-6%) scale(1.1); }
+}
+
+/* Hero tag — sharper pill */
+.hero-tag {
+  background: rgba(212,80,10,.18);
+  border: 1px solid rgba(212,80,10,.35);
+  padding: 4px 12px;
+  border-radius: 100px;
+  letter-spacing: 1.8px;
+}
+
+/* Hero h1 — staggered fade-in */
+.hero h1 {
+  animation: fade-up .55s .1s var(--transition) both;
+}
+.hero p {
+  animation: fade-up .55s .22s var(--transition) both;
+}
+.hero-btns {
+  animation: fade-up .55s .34s var(--transition) both;
+}
+.hero-stats {
+  animation: fade-up .55s .46s var(--transition) both;
+}
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Primary hero button */
+.btn-hp {
+  border-radius: 100px;
+  padding: 11px 22px;
+  letter-spacing: .3px;
+  box-shadow: 0 2px 12px rgba(212,80,10,.35);
+  transition: background .15s, box-shadow .15s, transform .1s;
+}
+.btn-hp:hover {
+  background: var(--orange-vivid);
+  box-shadow: 0 4px 20px rgba(212,80,10,.45);
+  transform: translateY(-1px);
+}
+.btn-hp:active { transform: translateY(0); box-shadow: none; }
+
+/* Ghost hero button */
+.btn-hg {
+  border-radius: 100px;
+  padding: 11px 22px;
+  transition: color .15s, border-color .15s, background .15s, transform .1s;
+}
+.btn-hg:hover { transform: translateY(-1px); }
+.btn-hg:active { transform: translateY(0); }
+
+/* Stat cards */
+.h-stat {
+  border-radius: 10px;
+  transition: background .2s, border-color .2s;
+}
+.h-stat:hover {
+  background: rgba(255,255,255,.11);
+  border-color: rgba(255,255,255,.2);
+}
+.h-stat .sv {
+  line-height: 1;
+  margin-bottom: 2px;
+}
+
+
+/* ══════════════════════════════════════════════
+   5. SECTION BAR — cleaner typography
+══════════════════════════════════════════════ */
+
+.sec-bar {
+  padding-bottom: 14px;
+  gap: 10px;
+}
+.sec-bar h2 {
+  letter-spacing: -.4px;
+}
+.sec-crumb {
+  font-weight: 700;
+  font-size: 14px;
+}
+.sec-count {
+  opacity: .75;
+}
+
+/* Sort select — remove default arrow, add custom */
+.sort-sel {
+  transition: border-color .15s, box-shadow .15s;
+  border-radius: 8px;
+  padding: 7px 32px 7px 12px;
+}
+.sort-sel:focus {
+  border-color: var(--orange);
+  box-shadow: 0 0 0 3px rgba(212,80,10,.12);
+  outline: none;
+}
+
+
+/* ══════════════════════════════════════════════
+   6. FILTER CHIPS — mobile bar refinement
+══════════════════════════════════════════════ */
+
+.fchip {
+  border-radius: 100px;
+  padding: 7px 15px;
+  font-size: 12.5px;
+  letter-spacing: .2px;
+  transition: background .14s, border-color .14s, color .14s, transform .1s, box-shadow .14s;
+}
+.fchip:hover {
+  border-color: var(--orange);
+  color: var(--orange);
+  box-shadow: 0 0 0 2px rgba(212,80,10,.1);
+}
+.fchip.on {
+  box-shadow: 0 2px 8px rgba(212,80,10,.28);
+}
+.fchip:active { transform: scale(.94); }
+
+
+/* ══════════════════════════════════════════════
+   7. PRODUCT CARDS — elevated & more tactile
+══════════════════════════════════════════════ */
+
+.pcard {
+  border-radius: 12px;
+  box-shadow: var(--shadow-card);
+  border-color: transparent;
+  transition: box-shadow .2s var(--transition), transform .2s var(--transition), border-color .2s;
+}
+@media (hover: hover) {
+  .pcard:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-hover);
+    border-color: rgba(212,80,10,.15);
+  }
+}
+
+/* Image area — tighter crop, fade-in on load */
+.pcard-img {
+  border-radius: 12px 12px 0 0;
+  overflow: hidden;
+  background: var(--cream);
+}
+.pcard-img img {
+  transition: transform .35s var(--transition), opacity .25s;
+  opacity: 0;
+  animation: img-fade-in .4s .05s forwards;
+}
+@keyframes img-fade-in {
+  to { opacity: 1; }
+}
+@media (hover: hover) {
+  .pcard:hover .pcard-img img {
+    transform: scale(1.04);
+  }
+}
+
+/* Tags */
+.pcard-tag {
+  border-radius: 5px;
+  letter-spacing: .8px;
+  font-size: 9px;
+}
+
+/* Wish button — glass effect */
+.pcard-wish {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.88);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: 1px solid rgba(255,255,255,.6);
+  transition: background .14s, transform .14s, border-color .14s;
+}
+.pcard-wish:hover {
+  background: white;
+  transform: scale(1.12);
+}
+.pcard-wish.wished {
+  background: rgba(254,242,242,.92);
+  border-color: rgba(185,28,28,.3);
+}
+
+/* Brand label */
+.pcard-brand {
+  letter-spacing: 1.8px;
+  opacity: .65;
+}
+
+/* Product name */
+.pcard-name {
+  letter-spacing: -.1px;
+  line-height: 1.38;
+}
+
+/* Stars */
+.pcard-stars {
+  color: #c87941;
+  letter-spacing: .8px;
+}
+
+/* Footer price area */
+.pcard-foot {
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+  margin-top: 2px;
+}
+.pcard-now {
+  letter-spacing: -.3px;
+  font-variant-numeric: tabular-nums;
+}
+.pcard-was {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Add button — pill, shadow on hover */
+.pcard-add {
+  border-radius: 8px;
+  width: 30px;
+  height: 30px;
+  transition: background .13s, transform .1s, box-shadow .13s;
+  box-shadow: 0 1px 6px rgba(212,80,10,.25);
+}
+.pcard-add:hover {
+  background: var(--orange-vivid);
+  box-shadow: 0 3px 12px rgba(212,80,10,.4);
+  transform: scale(1.08);
+}
+.pcard-add:active {
+  transform: scale(.95);
+  box-shadow: none;
+}
+
+
+/* ══════════════════════════════════════════════
+   8. BOTTOM NAV — frosted glass bar
+══════════════════════════════════════════════ */
+
+.bottom-nav {
+  background: rgba(255,254,251,.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-top-color: rgba(228,223,215,.6);
+}
+
+.bn-item {
+  transition: color .14s, background .14s;
+  gap: 4px;
+}
+.bn-item i {
+  transition: color .14s, transform .14s;
+}
+.bn-item.on i {
+  transform: scale(1.12);
+}
+.bn-item:active i {
+  transform: scale(.88);
+}
+
+
+/* ══════════════════════════════════════════════
+   9. MOBILE DRAWER — smooth & layered
+══════════════════════════════════════════════ */
+
+.drawer {
+  box-shadow: 4px 0 32px rgba(28,25,22,.18);
+}
+.drawer-head {
+  box-shadow: 0 1px 0 var(--line);
+}
+.drawer-close {
+  transition: background .14s, border-color .14s, color .14s;
+}
+.drawer-close:hover {
+  background: #fef2f2;
+  border-color: #b91c1c;
+  color: #b91c1c;
+}
+
+
+/* ══════════════════════════════════════════════
+   10. AUTH MODAL — refined card & inputs
+══════════════════════════════════════════════ */
+
+.auth-card {
+  border-radius: 18px;
+  box-shadow: 0 32px 80px rgba(28,25,22,.22), 0 0 0 1px rgba(28,25,22,.06);
+}
+
+.auth-field input {
+  transition: border-color .18s, background .18s, box-shadow .18s;
+}
+.auth-field input:focus {
+  box-shadow: 0 0 0 3px rgba(212,80,10,.14);
+}
+
+.auth-submit {
+  border-radius: 10px;
+  letter-spacing: .3px;
+  transition: background .15s, transform .1s, box-shadow .15s;
+  box-shadow: 0 2px 12px rgba(212,80,10,.3);
+}
+.auth-submit:hover {
+  box-shadow: 0 4px 20px rgba(212,80,10,.42);
+  transform: translateY(-1px);
+}
+.auth-submit:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+.auth-social {
+  border-radius: 10px;
+  transition: border-color .15s, background .15s, transform .1s;
+}
+.auth-social:hover { transform: translateY(-1px); }
+.auth-social:active { transform: translateY(0); }
+
+.auth-tab {
+  transition: background .16s, color .16s, box-shadow .16s;
+}
+.auth-tab.on {
+  box-shadow: 0 1px 6px rgba(28,25,22,.1);
+}
+
+.profile-action-btn {
+  border-radius: 10px;
+  transition: border-color .15s, color .15s, background .15s, transform .1s;
+}
+.profile-action-btn:hover { transform: translateX(2px); }
+
+.profile-logout {
+  border-radius: 10px;
+  transition: border-color .15s, color .15s, background .15s;
+}
+
+.profile-avatar {
+  box-shadow: 0 0 0 4px rgba(212,80,10,.12);
+}
+
+
+/* ══════════════════════════════════════════════
+   11. TOAST — refined pill
+══════════════════════════════════════════════ */
+
+.toast {
+  border-radius: 100px;
+  padding: 10px 20px;
+  font-size: 13.5px;
+  font-weight: 700;
+  letter-spacing: .2px;
+  box-shadow: 0 4px 24px rgba(28,25,22,.28), 0 0 0 1px rgba(255,255,255,.06);
+}
+.t-i {
+  color: #6ee7b7;
+  font-size: 13px;
+}
+
+
+/* ══════════════════════════════════════════════
+   12. EMPTY STATE — "no results" block
+══════════════════════════════════════════════ */
+
+.no-res {
+  padding: 64px 20px;
+}
+.no-res i {
+  font-size: 48px;
+  opacity: .18;
+  margin-bottom: 16px;
+  display: block;
+  animation: float 3s ease-in-out infinite;
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-8px); }
+}
+.no-res h3 {
+  letter-spacing: -.2px;
+  margin-bottom: 6px;
+}
+.no-res p { opacity: .75; }
+
+
+/* ══════════════════════════════════════════════
+   13. CATEGORY EXTRAS
+══════════════════════════════════════════════ */
+
+/* Cat count pills */
+.cat-li .num {
+  border-radius: 100px;
+  font-variant-numeric: tabular-nums;
+  transition: background .14s, color .14s;
+}
+
+/* View-more button */
+.vm-btn {
+  border-radius: 8px;
+  margin-top: 6px;
+}
+.vm-btn:hover {
+  box-shadow: 0 0 0 2px rgba(212,80,10,.12);
+}
+
+
+/* ══════════════════════════════════════════════
+   14. SCROLL BAR — global subtle styling
+══════════════════════════════════════════════ */
+
+::-webkit-scrollbar        { width: 5px; height: 5px; }
+::-webkit-scrollbar-track  { background: transparent; }
+::-webkit-scrollbar-thumb  { background: var(--line); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: var(--ink-4); }
+
+
+/* ══════════════════════════════════════════════
+   15. RESPONSIVE TWEAKS
+══════════════════════════════════════════════ */
+
+@media (max-width: 899px) {
+  /* Slightly tighter mobile header */
+  .hd { gap: 8px; padding: 0 12px;}
+  /* Remove "Cart" text label on very small screens */
+  .hd-cart::after { display: none; }
+  .hd-cart { width: 40px; padding: 0; border-radius: 9px; justify-content: center; }
+}
+
+@media (max-width: 480px) {
+  .hero { border-radius: 12px; }
+  .pcard { border-radius: 10px; }
+  .pcard-img { border-radius: 10px 10px 0 0; }
+  .btn-hp, .btn-hg { padding: 10px 16px; font-size: 12.5px; }
+  .h-stat { border-radius: 8px; }
+}
+
+@media (min-width: 900px) {
+  /* Desktop: restore "Cart" text label */
+  .hd-cart::after { display: inline; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    transition-duration: .01ms !important;
+  }
+}

@@ -4,7 +4,7 @@ class WishlistManager {
         this.wishlistKey = 'ikeja_wishlist';
         this.wishlist = [];
         this.isLoading = false;
-        this.init();
+        this.ready = this.init();
     }
 
     async init() {
@@ -277,6 +277,27 @@ class WishlistManager {
 
 // Initialize wishlist manager globally
 window.wishlistManager = new WishlistManager();
+
+window.toggleWishlist = async function(product) {
+    if (window.wishlistManager) {
+        return await window.wishlistManager.toggleWishlist(product);
+    }
+    return false;
+};
+
+window.addToWishlist = window.toggleWishlist;
+window.removeFromWishlist = async function(productId) {
+    if (window.wishlistManager) {
+        return await window.wishlistManager.removeItem(productId);
+    }
+    return false;
+};
+
+window.refreshWishlistCount = function() {
+    if (window.wishlistManager) {
+        window.wishlistManager.updateUI();
+    }
+};
 
 // Update UI on page load
 document.addEventListener('DOMContentLoaded', () => {

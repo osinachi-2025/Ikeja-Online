@@ -1,0 +1,58 @@
+{% extends "home/ikeja-online.html" %}
+
+{% block title %}Home | Ikeja Online{% endblock title %}
+
+{% block Content %}
+    <main>
+
+    <!-- FILTER CHIPS -->
+    <div class="filter-bar show" id="fbar">
+      <div class="fchip on" onclick="chipCat('all',this)"><i class="fa-solid fa-house"></i>All</div>
+      <div class="fchip" onclick="chipCat('laptops',this)"><i class="fa-solid fa-laptop"></i>Laptops</div>
+      <div class="fchip" onclick="chipCat('desktops',this)"><i class="fa-solid fa-laptop"></i>Desktops</div>
+      <div class="fchip" onclick="chipCat('phones',this)"><i class="fa-solid fa-mobile-screen"></i>Phones</div>
+      <div class="fchip" onclick="chipCat('keyboards',this)"><i class="fa-solid fa-mobile-screen"></i>Keyboards</div>
+      <div class="fchip" onclick="chipCat('tablets',this)"><i class="fa-solid fa-tablet-screen-button"></i>Tablets</div>
+      <div class="fchip" onclick="chipCat('audio',this)"><i class="fa-solid fa-headphones"></i>Audio</div>
+      <div class="fchip" onclick="chipCat('tvs',this)"><i class="fa-solid fa-tv"></i>TVs</div>
+      <div class="fchip" onclick="chipCat('cameras',this)"><i class="fa-solid fa-camera"></i>Cameras</div>
+      
+    </div>
+
+    <!-- HERO -->
+    <div class="hero" id="hero-banner">
+      <div class="hero-inner">
+        <span class="hero-tag">Weekend Flash Sale</span>
+        <h1>The Tech You Want, <em>Priced to Move</em></h1>
+        <p>Top brands, real deals. Delivered anywhere in Nigeria.</p>
+        <div class="hero-btns">
+          <button class="btn-hp" onclick="chipCat('laptops',null)">Shop Laptops</button>
+          <button class="btn-hg" onclick="chipCat('phones',null)">View Phones</button>
+        </div>
+        <div class="hero-stats">
+          <div class="h-stat"><div class="sv"><em>40</em>%</div><div class="sl">Up to off</div></div>
+          <div class="h-stat"><div class="sv"><em>21</em>+</div><div class="sl">Products</div></div>
+          <div class="h-stat"><div class="sv"><em>24h</em></div><div class="sl">Delivery</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION BAR -->
+    <div class="sec-bar">
+      <h2 id="sec-h2">All Products</h2>
+      <span class="sec-crumb" id="sec-crumb" style="display:none;"></span>
+      <span class="sec-count" id="sec-count">21 items</span>
+      <div class="sort-wrap">
+        <select class="sort-sel" id="sort-sel" onchange="doSort()">
+          <option value="default">Featured</option>
+          <option value="price-asc">Price ↑</option>
+          <option value="price-desc">Price ↓</option>
+          <option value="rating">Top rated</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="pgrid" id="pgrid"></div>
+
+  </main>
+{% endblock Content %}

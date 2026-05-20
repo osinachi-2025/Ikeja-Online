@@ -1,0 +1,560 @@
+{% extends "home/ikeja-online.html" %}
+
+{% block Content %}
+<main style="padding-bottom: calc(var(--bnh) + 16px);">
+
+  <!-- MOBILE FILTER BAR -->
+  <div class="filter-bar show" id="fbar">
+    <div class="fchip on" onclick="chipCat('all',this)">
+      <i class="fa-solid fa-heart"></i>All Saved
+    </div>
+  </div>
+
+  <!-- WISHLIST HEADER -->
+  <div id="wish-header" class="wh-bar">
+    <div class="wh-left">
+      <div class="wh-eyebrow">Your collection</div>
+      <h1 class="wh-title">
+        Saved Items
+        <span class="wh-count-pill" id="wh-count-pill">0</span>
+      </h1>
+    </div>
+    <div class="wh-actions">
+      <button class="wh-btn wh-share" onclick="shareWishlist()">
+        <i class="fa-solid fa-arrow-up-from-bracket"></i>
+        <span>Share</span>
+      </button>
+      <button class="wh-btn wh-clear" onclick="clearWishlist()">
+        <i class="fa-solid fa-trash-can"></i>
+        <span>Clear all</span>
+      </button>
+      <div class="wh-sort-wrap">
+        <i class="fa-solid fa-arrow-up-arrow-down wh-sort-ico"></i>
+        <select class="wh-sort" id="sort-sel" onchange="wishSortAndRender()">
+          <option value="default">Recently saved</option>
+          <option value="price-asc">Price: Low → High</option>
+          <option value="price-desc">Price: High → Low</option>
+          <option value="rating">Top rated</option>
+        </select>
+        <i class="fa-solid fa-chevron-down wh-sort-chev"></i>
+      </div>
+    </div>
+  </div>
+
+  <!-- PRODUCT GRID -->
+  <div class="pgrid" id="pgrid" style="display:none;"></div>
+
+  <!-- EMPTY STATE -->
+  <div id="wish-empty" style="display:none;">
+    <div class="we-wrap">
+      <div class="we-pulse">
+        <i class="fa-regular fa-heart we-icon"></i>
+      </div>
+      <h2 class="we-title">Nothing saved yet</h2>
+      <p class="we-sub">
+        Tap the <i class="fa-regular fa-heart" style="color:#b91c1c;"></i> on any product<br>to save it here for later.
+      </p>
+      <a href="/" class="we-cta">
+        <i class="fa-solid fa-arrow-left"></i>
+        Browse products
+      </a>
+    </div>
+  </div>
+
+  <!-- SKELETON LOADER -->
+  <div id="wish-loading">
+    <div class="wl-grid">
+      <div class="wl-skel"></div>
+      <div class="wl-skel"></div>
+      <div class="wl-skel wl-skel-d1"></div>
+      <div class="wl-skel wl-skel-d2"></div>
+    </div>
+  </div>
+
+</main>
+
+<style>
+  /* ── WISHLIST HEADER ── */
+  .wh-bar {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 32px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--line);
+    flex-wrap: wrap;
+    transition: opacity .2s;
+  }
+  .wh-eyebrow {
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--orange);
+    margin-bottom: 8px;
+  }
+  .wh-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(24px, 4.5vw, 34px);
+    font-weight: 800;
+    color: var(--ink);
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    letter-spacing: -.5px;
+  }
+  .wh-count-pill {
+    font-family: 'Lato', sans-serif;
+    font-size: 12px;
+    font-weight: 900;
+    background: var(--ink);
+    color: #fff;
+    padding: 5px 12px;
+    border-radius: 100px;
+    letter-spacing: .5px;
+    vertical-align: middle;
+    display: inline-flex;
+    align-items: center;
+    line-height: 1;
+    transition: background .2s;
+  }
+  .wh-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .wh-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-family: 'Lato', sans-serif;
+    font-size: 12.5px;
+    font-weight: 700;
+    padding: 9px 15px;
+    border-radius: 8px;
+    border: 1.5px solid var(--line);
+    cursor: pointer;
+    transition: border-color .15s, color .15s, background .15s, transform .12s;
+    white-space: nowrap;
+    background: var(--white);
+    color: var(--ink-3);
+  }
+  .wh-btn i { font-size: 12px; }
+  .wh-btn:active { transform: scale(.97); }
+  .wh-share:hover {
+    border-color: var(--orange);
+    color: var(--orange);
+    background: var(--orange-bg);
+  }
+  .wh-clear:hover {
+    border-color: #b91c1c;
+    color: #b91c1c;
+    background: #fef2f2;
+  }
+  .wh-sort-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  .wh-sort-ico {
+    position: absolute;
+    left: 11px;
+    font-size: 11px;
+    color: var(--ink-4);
+    pointer-events: none;
+    z-index: 1;
+  }
+  .wh-sort {
+    font-family: 'Lato', sans-serif;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--ink-2);
+    background: var(--white);
+    border: 1.5px solid var(--line);
+    border-radius: 8px;
+    padding: 9px 34px 9px 30px;
+    -webkit-appearance: none;
+    appearance: none;
+    cursor: pointer;
+    outline: none;
+    transition: border-color .15s;
+  }
+  .wh-sort:hover,
+  .wh-sort:focus { border-color: var(--orange); }
+  .wh-sort-chev {
+    position: absolute;
+    right: 10px;
+    font-size: 9px;
+    color: var(--ink-4);
+    pointer-events: none;
+  }
+
+  /* ── CARD TWEAKS FOR WISHLIST ── */
+  #pgrid .pcard-wish {
+    opacity: 1 !important;
+    background: rgba(255,255,255,.92);
+    border-color: rgba(185,28,28,.25);
+    backdrop-filter: blur(4px);
+    transition: background .13s, transform .13s, border-color .13s;
+  }
+  #pgrid .pcard-wish i { color: #b91c1c; }
+  #pgrid .pcard-wish:hover {
+    background: #fef2f2;
+    border-color: #b91c1c;
+    transform: scale(1.1);
+  }
+
+  /* ── EMPTY STATE ── */
+  .we-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 80px 24px 96px;
+  }
+  .we-pulse {
+    width: 84px;
+    height: 84px;
+    border-radius: 50%;
+    background: #fef2f2;
+    border: 2px dashed #fca5a5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 24px;
+    animation: we-breathe 2.8s ease-in-out infinite;
+  }
+  @keyframes we-breathe {
+    0%, 100% { transform: scale(1); border-color: #fca5a5; }
+    50% { transform: scale(1.06); border-color: #b91c1c; }
+  }
+  .we-icon {
+    font-size: 30px;
+    color: #b91c1c;
+    opacity: .65;
+  }
+  .we-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 10px;
+    letter-spacing: -.3px;
+  }
+  .we-sub {
+    font-family: 'Source Serif 4', serif;
+    font-style: italic;
+    font-size: 14.5px;
+    color: var(--ink-3);
+    line-height: 1.75;
+    margin-bottom: 30px;
+  }
+  .we-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    font-family: 'Lato', sans-serif;
+    font-weight: 700;
+    font-size: 13.5px;
+    background: var(--ink);
+    color: #fff;
+    text-decoration: none;
+    padding: 13px 26px;
+    border-radius: 9px;
+    letter-spacing: .2px;
+    transition: background .15s, transform .15s;
+  }
+  .we-cta:hover {
+    background: var(--orange);
+    transform: translateY(-2px);
+  }
+  .we-cta:active { transform: translateY(0); }
+  .we-cta i { font-size: 12px; }
+
+  /* ── SKELETON LOADER ── */
+  .wl-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  @media (min-width: 768px) { .wl-grid { grid-template-columns: repeat(3, 1fr); gap: 16px; } }
+  .wl-skel {
+    border-radius: 10px;
+    overflow: hidden;
+    aspect-ratio: .72;
+    background: var(--cream2);
+    position: relative;
+  }
+  .wl-skel::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      105deg,
+      transparent 30%,
+      rgba(255,255,255,.55) 50%,
+      transparent 70%
+    );
+    background-size: 200% 100%;
+    animation: skel-sweep 1.5s ease-in-out infinite;
+  }
+  .wl-skel-d1::after { animation-delay: .18s; }
+  .wl-skel-d2::after { animation-delay: .36s; }
+  @keyframes skel-sweep {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  /* ── CARD REMOVE ANIMATION ── */
+  .pcard.removing {
+    opacity: 0;
+    transform: scale(.88) translateY(6px);
+    transition: opacity .22s ease, transform .22s ease;
+    pointer-events: none;
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 640px) {
+    .wh-bar { flex-direction: column; align-items: flex-start; gap: 16px; }
+    .wh-actions { width: 100%; }
+    .wh-sort-wrap { flex: 1; }
+    .wh-sort { width: 100%; }
+    .wh-btn span { display: none; }
+    .wh-btn { padding: 9px 12px; }
+  }
+  @media (max-width: 360px) {
+    .wh-actions { flex-wrap: wrap; }
+  }
+</style>
+
+<script src="/static/js/wishlist-system.js" defer></script>
+<script>
+(function () {
+
+  function getWishIds() {
+    try {
+      if (window.wishlistManager && wishlistManager.getWishlistItems) {
+        return (wishlistManager.getWishlistItems() || []).map(item => item.id);
+      }
+      return JSON.parse(localStorage.getItem('ikeja_wish') || '[]');
+    } catch { return []; }
+  }
+  function saveWish(l) { try { if (window.wishlistManager) return; localStorage.setItem('ikeja_wish', JSON.stringify(l)); } catch {} }
+
+  const CAT_ICONS = {
+    laptops:'fa-laptop', desktops:'fa-desktop', monitors:'fa-display', keyboards:'fa-keyboard', mouse:'fa-mouse', components_gpu_cpu_ram:'fa-microchip', phones:'fa-mobile-screen', smart_watches:'fa-clock', fitness_trackers:'fa-heart-pulse', tools_hardware:'fa-wrench',headphones:'fa-headphones', audio_equipment:'fa-headphones', cameras:'fa-camera', drones:'fa-drone', printers_scanners: 'fa-printer', networking_equipment:'fa-network-wired', software_games:'fa-gamepad', office_electronics: 'fa-building', wearable_technology: 'fa-watch', smart_home_devices: 'fa-home', virtual_reality_vr: 'fa-vr-headset', augmented_reality_ar: 'fa-vr-headset', automotive_electronics:'fa-car', gaming_consoles: 'fa-gamepad', streaming_devices: 'fa-stream', power_bank_chargers: 'fa-battery-three-quarters', tablets:'fa-tablet-screen-button', audio:'fa-headphones', tvs:'fa-tv', cameras:'fa-camera', accessories:'fa-computer-mouse', gaming:'fa-gamepad', wearables:'fa-clock'
+  };
+  /* Use parent's helpers if available, fallback to local CAT_ICONS */
+  const getNormalizeSlug = () => (typeof normalizeSlug === 'function') ? normalizeSlug : (v) => (v||'').toString().trim().toLowerCase().replace(/[_\s]+/g,'-').replace(/[^a-z0-9-]/g,'');
+  const getIconLookup = () => (typeof CAT_ICON_LOOKUP !== 'undefined') ? CAT_ICON_LOOKUP : Object.fromEntries(Object.entries(CAT_ICONS).map(([key, icon]) => [getNormalizeSlug()(key), icon]));
+
+  function fmt(n) { return n.toLocaleString('en-NG'); }
+  function strs(r) {
+    const f = Math.floor(r);
+    return '★'.repeat(f) + (r - f >= .5 ? '½' : '') + '☆'.repeat(5 - f - (r - f >= .5 ? 1 : 0));
+  }
+
+  function setCount(n) {
+    const pill = document.getElementById('wh-count-pill');
+    if (pill) {
+      pill.textContent = n;
+      pill.style.background = n > 0 ? 'var(--ink)' : 'var(--ink-4)';
+    }
+  }
+
+  function showState(state) {
+    document.getElementById('pgrid').style.display        = state === 'grid'    ? '' : 'none';
+    document.getElementById('wish-empty').style.display   = state === 'empty'   ? '' : 'none';
+    document.getElementById('wish-loading').style.display = state === 'loading' ? '' : 'none';
+    const hdr = document.getElementById('wish-header');
+    if (hdr) hdr.style.opacity = state === 'loading' ? '.4' : '1';
+    const show = state === 'grid';
+    ['wh-clear', 'wh-share', 'wh-sort-wrap'].forEach(cls => {
+      const el = document.querySelector('.' + cls);
+      if (el) el.style.display = show ? '' : 'none';
+    });
+  }
+
+  window.shareWishlist = function () {
+    const url = window.location.href;
+    if (navigator.share) {
+      navigator.share({ title: 'My Ikeja.Online Wishlist', url });
+    } else if (navigator.clipboard) {
+      navigator.clipboard.writeText(url).then(() => showToast('Link copied', 'check'));
+    } else {
+      showToast('Copy the URL from your address bar', 'envelope');
+    }
+  };
+
+  window.clearWishlist = function () {
+    if (!confirm('Remove all saved items?')) return;
+    if (window.wishlistManager && wishlistManager.clearWishlist) {
+      wishlistManager.clearWishlist().then(ok => {
+        if (ok) {
+          refreshWishCount();
+          setCount(0);
+          showState('empty');
+          showToast('Wishlist cleared', 'trash-can');
+        }
+      });
+      return;
+    }
+    saveWish([]);
+    refreshWishCount();
+    setCount(0);
+    showState('empty');
+    showToast('Wishlist cleared', 'trash-can');
+  };
+
+  window.removeFromWish = function (id, btn) {
+    if (window.wishlistManager && wishlistManager.removeItem) {
+      wishlistManager.removeItem(id).then(() => {
+        refreshWishCount();
+        const card = btn ? btn.closest('.pcard') : document.querySelector('[data-wid="' + id + '"]');
+        if (card) {
+          card.classList.add('removing');
+          setTimeout(() => {
+            card.remove();
+            const n = document.querySelectorAll('#pgrid .pcard').length;
+            setCount(n);
+            if (!n) showState('empty');
+          }, 230);
+        }
+        showToast('Removed from wishlist', 'heart-crack');
+      });
+      return;
+    }
+    saveWish(getWishIds().filter(i => i !== id));
+    refreshWishCount();
+    const card = btn ? btn.closest('.pcard') : document.querySelector('[data-wid="' + id + '"]');
+    if (card) {
+      card.classList.add('removing');
+      setTimeout(() => {
+        card.remove();
+        const n = document.querySelectorAll('#pgrid .pcard').length;
+        setCount(n);
+        if (!n) showState('empty');
+      }, 230);
+    }
+    showToast('Removed from wishlist', 'heart-crack');
+  };
+
+  function paintWish(items) {
+    if (!items.length) { showState('empty'); setCount(0); return; }
+    showState('grid');
+    setCount(items.length);
+    const normalizer = getNormalizeSlug();
+    const iconLookup = getIconLookup();
+    document.getElementById('pgrid').innerHTML = items.map(p => {
+      const normalizedCat = normalizer(p.cat);
+      const ico = iconLookup[normalizedCat] || 'fa-microchip';
+      const img = p.image
+        ? `<img src="${p.image}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover;">`
+        : `<i class="fa-solid ${ico} pcard-fa"></i>`;
+      return `<a class="pcard" href="/product/${p.id}" data-wid="${p.id}">
+        <div class="pcard-img">
+          ${img}
+          <div class="pcard-wish wished"
+               onclick="event.preventDefault();event.stopPropagation();removeFromWish(${p.id},this)"
+               title="Remove from wishlist">
+            <i class="fa-solid fa-heart"></i>
+          </div>
+        </div>
+        <div class="pcard-body">
+          <div class="pcard-brand">${p.brand}</div>
+          <div class="pcard-name">${p.name}</div>
+          <div class="pcard-meta">
+            <span class="pcard-stars">${strs(p.rating)}</span>
+            <span class="pcard-rc">(${p.reviews})</span>
+          </div>
+          <div class="pcard-foot">
+            <div>
+              ${p.was ? `<div class="pcard-was">₦${fmt(p.was)}</div>` : ''}
+              <div class="pcard-now">₦${fmt(p.price)}</div>
+            </div>
+            <button class="pcard-add"
+              onclick="event.preventDefault();event.stopPropagation();addCart(${p.id})"
+              title="Add to cart">
+              <i class="fa-solid fa-plus"></i>
+            </button>
+          </div>
+        </div>
+      </a>`;
+    }).join('');
+  }
+
+  let _allProducts = [];
+
+  function getSorted() {
+    if (window.wishlistManager && wishlistManager.getWishlistItems) {
+      let items = wishlistManager.getWishlistItems() || [];
+      const s = (document.getElementById('sort-sel') || {}).value || 'default';
+      if (s === 'price-asc')  items.sort((a, b) => a.price - b.price);
+      if (s === 'price-desc') items.sort((a, b) => b.price - a.price);
+      if (s === 'rating')     items.sort((a, b) => b.rating - a.rating);
+      return items;
+    }
+    const ids  = getWishIds();
+    let items  = ids.map(id => _allProducts.find(p => p.id === id)).filter(Boolean);
+    const s    = (document.getElementById('sort-sel') || {}).value || 'default';
+    if (s === 'price-asc')  items.sort((a, b) => a.price - b.price);
+    if (s === 'price-desc') items.sort((a, b) => b.price - a.price);
+    if (s === 'rating')     items.sort((a, b) => b.rating - a.rating);
+    return items;
+  }
+
+  window.wishSortAndRender = function () { paintWish(getSorted()); };
+
+  function renderWishlist(products) {
+    _allProducts = products;
+    if (window.wishlistManager && wishlistManager.getWishlistItems) {
+      paintWish(wishlistManager.getWishlistItems() || []);
+    } else {
+      paintWish(getSorted());
+    }
+  }
+
+  function waitForProducts(cb, n) {
+    n = n || 0;
+    if (typeof P !== 'undefined' && P.length > 0) { cb(P); return; }
+    if (n < 50) setTimeout(() => waitForProducts(cb, n + 1), 150);
+    else { showState('empty'); setCount(0); }
+  }
+
+  document.addEventListener('DOMContentLoaded', async function () {
+    // Restrict access to customer users only
+    const role = localStorage.getItem('user_role');
+    const token = localStorage.getItem('access_token');
+    if(!token || role!=='customer'){
+      if(typeof redirectToHomeAuth === 'function') redirectToHomeAuth('login');
+      else if(typeof openAuth === 'function'){ openAuth(); if(typeof switchTab==='function') switchTab('login'); }
+      else window.location.href = '/login';
+      return;
+    }
+
+    if (window.wishlistManager && window.wishlistManager.ready) {
+      await window.wishlistManager.ready;
+    }
+
+    showState('loading');
+
+    /* Hide the base sec-count bar — we use our own header pill */
+    const secBar = document.querySelector('.sec-bar');
+    if (secBar) secBar.style.display = 'none';
+
+    /* Intercept base paint so sidebar navigation doesn't replace the wishlist grid */
+    const _origPaint = window.paint;
+    window.paint = function (list) {
+      _allProducts = list;
+      paintWish(getSorted());
+    };
+
+    waitForProducts(renderWishlist);
+  });
+
+}());
+</script>
+{% endblock Content %}

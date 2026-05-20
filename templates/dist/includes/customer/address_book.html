@@ -14,12 +14,12 @@
   <div class="container-fluid">
     <div class="row mb-4">
       <div class="col-12">
-        <div class="card">
-          <div class="card-header d-flex justify-content-between align-items-center">
-            <h3 class="card-title mb-0">Address Book</h3>
+        <div class="ik-card">
+          <div class="ik-card-hdr d-flex justify-content-between align-items-center">
+            <h3 class="ik-card-title mb-0">Address Book</h3>
             <a href="/customer/dashboard/add-address" class="btn btn-sm btn-primary">+ Add New Address</a>
           </div>
-          <div class="card-body">
+          <div class="ik-card-body">
             <div id="addressAlert" class="alert alert-danger d-none" role="alert"></div>
             
             <div id="addressContainer" class="row g-4"></div>
@@ -60,22 +60,22 @@
 
       addressContainer.innerHTML = addresses.map(address => `
         <div class="col-lg-6">
-          <div class="card shadow-sm border-0 h-100">
-            <div class="card-body">
+          <div class="ik-card shadow-sm border-0 h-100">
+            <div class="ik-card-body">
               <div class="d-flex justify-content-between align-items-start mb-3">
-                <h5 class="card-title mb-0">${address.label || 'Address'}</h5>
+                <h5 class="ik-card-title mb-0">${address.label || 'Address'}</h5>
                 <div class="btn-group btn-group-sm">
                   <button class="btn btn-outline-primary" onclick="editAddress(${address.id})">Edit</button>
                   <button class="btn btn-outline-danger" onclick="deleteAddress(${address.id})">Delete</button>
                 </div>
               </div>
               
-              <p class="card-text mb-2">${address.address_line1}</p>
-              ${address.address_line2 ? `<p class="card-text mb-2">${address.address_line2}</p>` : ''}
-              <p class="card-text mb-2">${address.city}, ${address.state} ${address.postal_code}</p>
-              <p class="card-text text-muted small">${address.country || 'Nigeria'}</p>
+              <p class="ik-card-text mb-2">${address.address_line1}</p>
+              ${address.address_line2 ? `<p class="ik-card-text mb-2">${address.address_line2}</p>` : ''}
+              <p class="ik-card-text mb-2">${address.city}, ${address.state} ${address.postal_code}</p>
+              <p class="ik-card-text text-muted small">${address.country || 'Nigeria'}</p>
               
-              <p class="card-text mb-2 pt-2">
+              <p class="ik-card-text mb-2 pt-2">
                 <span class="badge bg-info">Phone: ${address.phone || 'N/A'}</span>
               </p>
               

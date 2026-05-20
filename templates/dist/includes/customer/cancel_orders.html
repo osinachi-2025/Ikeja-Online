@@ -14,17 +14,17 @@
   <div class="container-fluid">
     <div class="row mb-4">
       <div class="col-12">
-        <div class="card">
-          <div class="card-header d-flex justify-content-between align-items-center">
-            <h3 class="card-title mb-0">Cancel Orders</h3>
+        <div class="ik-card">
+          <div class="ik-card-hdr d-flex justify-content-between align-items-center">
+            <h3 class="ik-card-title mb-0">Cancel Orders</h3>
             <span id="cancelCount" class="badge bg-warning">0 pending</span>
           </div>
-          <div class="card-body">
+          <div class="ik-card-body">
             <div id="cancelAlert" class="alert alert-danger d-none" role="alert"></div>
             <div id="successAlert" class="alert alert-success d-none" role="alert"></div>
             
             <div class="table-responsive">
-              <table class="table table-hover mb-0" id="cancelTable">
+              <table class="table ik-table table-hover mb-0" id="cancelTable">
                 <thead class="table-light">
                   <tr>
                     <th>Order #</th>
@@ -98,7 +98,7 @@
             <td>${orderDate}</td>
             <td><strong>₦${Number(order.total_amount).toLocaleString()}</strong></td>
             <td><span class="badge ${statusClass}">${order.status || 'Pending'}</span></td>
-            <td><span class="badge bg-light text-dark">${order.items_count || 'N/A'}</span></td>
+            <td><span class="badge bg-light">${order.items_count || 'N/A'}</span></td>
             <td>
               <button class="btn btn-sm btn-danger" onclick="requestCancelOrder(${order.id})">
                 Request Cancel

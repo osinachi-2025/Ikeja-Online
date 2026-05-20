@@ -14,17 +14,17 @@
   <div class="container-fluid">
     <div class="row mb-4">
       <div class="col-12">
-        <div class="card">
-          <div class="card-header d-flex justify-content-between align-items-center">
-            <h3 class="card-title mb-0">My Orders</h3>
+        <div class="ik-card">
+          <div class="ik-card-hdr d-flex justify-content-between align-items-center">
+            <h3 class="ik-card-title mb-0">My Orders</h3>
             <span id="orderCount" class="badge bg-info">0 orders</span>
           </div>
-          <div class="card-body">
+          <div class="ik-card-body">
             <div id="orderAlert" class="alert alert-danger d-none" role="alert"></div>
             
             <!-- Orders Table -->
             <div class="table-responsive">
-              <table class="table table-hover mb-0" id="ordersTable">
+              <table class="table ik-table table-hover mb-0" id="ordersTable">
                 <thead class="table-light">
                   <tr>
                     <th>Order #</th>
@@ -35,9 +35,9 @@
                     <th>Action</th>
                   </tr>
                 </thead>
-                <tbody id="ordersBody">
+                <tbody id="allOrdersBody">
                   <tr>
-                    <td colspan="7" class="text-center py-5">Loading orders...</td>
+                    <td colspan="6" class="text-center py-5">Loading orders...</td>
                   </tr>
                 </tbody>
               </table>
@@ -72,7 +72,7 @@
   let totalPages = 1;
 
   async function loadOrders() {
-    const ordersBody = document.getElementById('ordersBody');
+    const ordersBody = document.getElementById('allOrdersBody');
     const orderCount = document.getElementById('orderCount');
     const orderAlert = document.getElementById('orderAlert');
 
@@ -122,7 +122,7 @@
   }
 
   function displayOrders() {
-    const ordersBody = document.getElementById('ordersBody');
+    const ordersBody = document.getElementById('allOrdersBody');
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
     const pageOrders = allOrders.slice(startIndex, endIndex);
@@ -151,7 +151,7 @@
           <td><strong>#${order.id}</strong></td>
           <td>${orderDate}</td>
           <td><strong>₦${Number(order.total_amount).toLocaleString()}</strong></td>
-          <td class="text-center"><span class="badge bg-light text-dark">${order.items_count ?? order.items?.length ?? 'N/A'}</span></td>
+          <td class="text-center"><span class="badge bg-light">${order.items_count ?? order.items?.length ?? 'N/A'}</span></td>
           <td><span class="badge ${paymentBadgeClass}">${order.payment_status || 'Pending'}</span></td>
           <td>
             <a href="/customer/my-orders/${order.id}" class="btn btn-sm btn-outline-primary">View</a>
