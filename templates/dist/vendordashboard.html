@@ -745,6 +745,47 @@
     .table-responsive {
       background: transparent;
     }
+    .table-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      transition: var(--ease);
+      padding: 1rem;
+      margin-top: 1rem;
+    }
+    .table-card:hover { box-shadow: var(--shadow-md); }
+    .table-card-body { padding: 0; }
+    .ik-table {
+      width: 100%;
+      min-width: 0;
+      border-collapse: separate;
+      border-spacing: 0;
+      background: transparent;
+    }
+    .ik-table th {
+      font-size: .72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--text-primary);
+      padding: .85rem .95rem;
+      border-bottom: 1px solid var(--border-color);
+      white-space: nowrap;
+      text-align: left;
+      background: var(--bg-body);
+    }
+    .ik-table td {
+      padding: .85rem .95rem;
+      font-size: .88rem;
+      color: var(--text-secondary);
+      border-bottom: 1px solid var(--border-color);
+      vertical-align: middle;
+      background: var(--bg-card);
+    }
+    .ik-table tr:last-child td { border-bottom: none; }
+    .ik-table tbody tr:hover { background: rgba(0,166,81,.06); }
+    [data-theme="dark"] .ik-table tbody tr:hover { background: rgba(255,255,255,.08); }
     .breadcrumb {
       background: transparent;
       padding: 0;

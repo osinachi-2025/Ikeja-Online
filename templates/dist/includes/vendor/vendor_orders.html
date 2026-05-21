@@ -20,33 +20,37 @@
               <h3 class="ik-card-title">All Orders</h3>
               <p class="text-muted mb-0">Browse and filter your vendor orders in one place.</p>
             </div>
-            <div class="btn-group" role="group" aria-label="Order filters">
-              <button type="button" class="btn btn-outline-primary" id="filter-all">All</button>
-              <button type="button" class="btn btn-outline-primary" id="filter-pending">Pending</button>
-              <button type="button" class="btn btn-outline-primary" id="filter-completed">Completed</button>
-              <button type="button" class="btn btn-outline-primary" id="filter-cancelled">Cancelled</button>
+            <div class="btn-group btn-group-sm flex-wrap gap-2" role="group" aria-label="Order filters">
+              <button type="button" class="btn btn-outline-primary btn-sm" id="filter-all">All</button>
+              <button type="button" class="btn btn-outline-primary btn-sm" id="filter-pending">Pending</button>
+              <button type="button" class="btn btn-outline-primary btn-sm" id="filter-completed">Completed</button>
+              <button type="button" class="btn btn-outline-primary btn-sm" id="filter-cancelled">Cancelled</button>
             </div>
           </div>
           <div class="ik-card-body">
-            <div class="table-responsive">
-              <table class="table table-hover table-bordered">
-                <thead class="table-light">
-                  <tr>
-                    <th scope="col">Order #</th>
-                    <th scope="col">Customer</th>
-                    <th scope="col">Amount</th>
-                    <th scope="col">Status</th>
-                    <th scope="col">Payment</th>
-                    <th scope="col">Created</th>
-                    <th scope="col">Actions</th>
-                  </tr>
-                </thead>
-                <tbody id="ordersTableBody">
-                  <tr>
-                    <td colspan="7" class="text-center py-5">Loading orders...</td>
-                  </tr>
-                </tbody>
-              </table>
+            <div class="table-card">
+              <div class="table-card-body">
+                <div class="table-responsive">
+                  <table class="table ik-table table-hover table-bordered">
+                    <thead class="table-light">
+                      <tr>
+                        <th scope="col">Order #</th>
+                        <th scope="col">Customer</th>
+                        <th scope="col">Amount</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Payment</th>
+                        <th scope="col">Created</th>
+                        <th scope="col">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody id="ordersTableBody">
+                      <tr>
+                        <td colspan="7" class="text-center py-5">Loading orders...</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
             <div class="mt-3" id="ordersEmptyState" style="display: none;">
               <div class="alert alert-secondary text-center mb-0">
