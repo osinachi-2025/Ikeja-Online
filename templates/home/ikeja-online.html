@@ -266,7 +266,7 @@
   .quantity-controls button{width:24px;height:24px;border-radius:4px;border:1px solid var(--line);background:white;color:var(--ink-3);cursor:pointer;font-size:12px;font-weight:700;transition:all .15s;}
   .quantity-controls button:hover{background:var(--orange);border-color:var(--orange);color:white;}
   .quantity-controls span{font-size:12px;font-weight:700;color:var(--ink);margin:0 4px;min-width:20px;text-align:center;}
-  .cart-remove{margin-left:auto;padding:6px 10px;border-radius:999px;border:1px solid rgba(220,38,38,0.18);background:rgba(244,113,110,0.12);color:var(--red);font-size:12px;font-weight:700;min-width:auto;}
+  .cart-remove{margin-left:0;align-self:center;padding:6px 12px;border-radius:999px;border:1px solid rgba(220,38,38,0.18);background:rgba(244,113,110,0.12);color:var(--red);font-size:12px;font-weight:700;min-width:72px;width:auto;}
   .cart-remove:hover{background:var(--red);border-color:var(--red);color:white;}
   .cart-checkout-note{font-size:12px;color:var(--ink-4);padding:6px 0 0;}
   .checkout-btn:disabled{opacity:.55;cursor:not-allowed;}
@@ -360,7 +360,7 @@
 
 <!-- HEADER -->
 <header class="hd" >
-  <button class="logo" onclick="goHome()">Ikeja<span class="dot">.</span>Online</button>
+  <a class="logo" href="/">Ikeja<span class="dot">.</span>Online</a>
   <div class="hd-search">
     <i class="fa-solid fa-magnifying-glass s-ic"></i>
     <input type="text" id="q" placeholder="Search laptops, phones…" oninput="doSearch()">
@@ -487,11 +487,11 @@
 
 <!-- BOTTOM NAV -->
 <nav class="bottom-nav">
-  <button class="bn-item on" onclick="goHome()"><i class="fa-solid fa-house"></i><span class="bl">Home</span></button>
+  <a class="bn-item on" href="/"><i class="fa-solid fa-house"></i><span class="bl">Home</span></a>
   <button class="bn-item" onclick="openDrawer()"><i class="fa-solid fa-bars"></i><span class="bl">Categories</span></button>
   <button class="bn-item" onclick="document.getElementById('q').focus()"><i class="fa-solid fa-magnifying-glass"></i><span class="bl">Search</span></button>
   <a class="bn-item" href="/wishlist" onclick="openWishlist(event)"><i class="fa-regular fa-heart"></i><span class="bl">Wishlist</span></a>
-  <button class="bn-item" onclick="showToast('Cart is empty','cart')"><i class="fa-solid fa-cart-shopping"></i><span class="bl">Cart</span></button>
+  <button class="bn-item" onclick="openCartDrawer()"><i class="fa-solid fa-cart-shopping"></i><span class="bl">Cart</span></button>
 </nav>
 
 <!-- AUTH MODAL -->
@@ -588,7 +588,7 @@
     </div>
     <div id="cart-checkout-note" class="cart-checkout-note">Sign in to checkout.</div>
     <div class="cart-actions">
-      <button class="checkout-btn" id="cart-checkout-btn" onclick="openCheckoutModal()">Proceed to Checkout</button>
+      <button class="checkout-btn" id="cart-checkout-btn" onclick="openCheckoutModal()">Checkout Now</button>
       <button class="checkout-btn" style="background:var(--cream2);color:var(--ink-3);border:1px solid var(--line);" onclick="closeCartDrawer()">Continue Shopping</button>
     </div>
   </div>

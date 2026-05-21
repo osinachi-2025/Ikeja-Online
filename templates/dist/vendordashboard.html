@@ -119,9 +119,31 @@
       padding: 0 1.25rem;
       gap: .5rem;
       transition: var(--ease);
+      flex-wrap: nowrap;
+      min-width: 0;
     }
-    .ik-navbar .nav-left  { display:flex; align-items:center; gap:.5rem; }
-    .ik-navbar .nav-right { display:flex; align-items:center; gap:.5rem; margin-left:auto; }
+    .ik-navbar .nav-left,
+    .ik-navbar .nav-right {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      flex-wrap: nowrap;
+      min-width: 0;
+    }
+    .ik-navbar .nav-left { flex: 1 1 auto; }
+    .ik-navbar .nav-right { flex: 0 0 auto; margin-left: auto; }
+    .ik-navbar .ik-nav-btn,
+    .ik-navbar .ik-theme-btn,
+    .ik-navbar .ik-notif-btn,
+    .ik-navbar .ik-user-btn {
+      flex-shrink: 0;
+    }
+    .ik-brand-mobile {
+      max-width: 160px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
 
     /* toggle button */
     .ik-nav-btn {
@@ -226,11 +248,13 @@
        DROPDOWN
     ============================================= */
     .ik-drop {
+      position: absolute;
       background: var(--bg-card);
       border: 1px solid var(--border-color);
       border-radius: var(--radius-md);
       box-shadow: var(--shadow-lg);
       padding: .5rem; min-width:270px;
+      z-index: 1205;
     }
     .ik-drop-hdr {
       padding:.875rem .875rem .5rem;
@@ -451,13 +475,18 @@
     .ik-card-title { font-size:.9rem; font-weight:700; color:var(--text-primary); margin:0; }
 
     /* stat cards */
+    .stat-card,
+    .card,
+    .small-box,
+    .ik-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      transition: var(--ease);
+    }
     .stat-card {
-      background:var(--bg-card);
-      border:1px solid var(--border-color);
-      border-radius:var(--radius-lg);
       padding:1.25rem;
-      box-shadow:var(--shadow-sm);
-      transition:var(--ease);
       position:relative; overflow:hidden;
     }
     .stat-card::after {
@@ -666,20 +695,56 @@
       margin-right: .75rem;
     }
     .table {
+      width: 100%;
+      margin-bottom: 1rem;
       color: var(--text-secondary);
-      background: var(--bg-card);
+      background: transparent;
+      border-collapse: collapse;
     }
     .table th,
     .table td {
-      border-color: var(--border-color);
+      border: 1px solid var(--border-color);
       vertical-align: middle;
+      padding: .85rem .95rem;
+      background: var(--bg-card);
     }
     .table thead th {
       background: var(--bg-body);
       color: var(--text-primary);
       border-bottom: 1px solid var(--border-color);
     }
-    .table tbody tr:hover { background: rgba(0,166,81,.05); }
+    .table tbody tr {
+      background: var(--bg-card);
+    }
+    .table-striped tbody tr:nth-of-type(odd) {
+      background-color: rgba(0,0,0,.03);
+    }
+    [data-theme="dark"] .table-striped tbody tr:nth-of-type(odd) {
+      background-color: rgba(255,255,255,.04);
+    }
+    .table-hover tbody tr:hover {
+      background: rgba(0,166,81,.08);
+    }
+    .table-bordered {
+      border: 1px solid var(--border-color);
+    }
+    .table-bordered th,
+    .table-bordered td {
+      border: 1px solid var(--border-color);
+    }
+    .table-light thead th,
+    .table-light th,
+    .table-light td {
+      background: var(--bg-card);
+      color: var(--text-secondary);
+    }
+    .table-light thead th {
+      background: var(--bg-body);
+      color: var(--text-primary);
+    }
+    .table-responsive {
+      background: transparent;
+    }
     .breadcrumb {
       background: transparent;
       padding: 0;
@@ -780,6 +845,10 @@
 
       .desktop-only { display: none !important; }
       .mobile-brand { display: flex !important; }
+      .ik-navbar { padding: 0 .75rem; }
+      .ik-navbar .nav-left,
+      .ik-navbar .nav-right { gap: .35rem; }
+      .ik-brand-mobile { font-size: .95rem; }
     }
 
     /* Desktop — mobile brand hidden */
@@ -929,15 +998,9 @@
               </a>
               <ul class="nav-treeview">
                 <li class="nav-item"><a href="/testingdashboard" class="nav-link active"><i class="nav-icon bi bi-house-door"></i><p>Dashboard Home</p></a></li>
-                <li class="nav-item"><a href="#" class="nav-link"><i class="nav-icon bi bi-bar-chart-line"></i><p>Sales Overview</p></a></li>
-                <li class="nav-item"><a href="#" class="nav-link"><i class="nav-icon bi bi-file-earmark-bar-graph"></i><p>Revenue Report</p></a></li>
               </ul>
             </li>
-
-            <!-- Analytics -->
-            <li class="nav-item">
-              <a href="#" class="nav-link"><i class="nav-icon bi bi-palette"></i><p>Analytics</p></a>
-            </li>
+            
 
             <!-- Products -->
             <li class="nav-item">
@@ -974,7 +1037,6 @@
                 <p>Earning &amp; Payouts<i class="nav-arrow bi bi-chevron-right"></i></p>
               </a>
               <ul class="nav-treeview">
-                <li class="nav-item"><a href="/vendor/earnings-summary" class="nav-link"><i class="nav-icon bi bi-wallet2"></i><p>Earning Summary</p></a></li>
                 <li class="nav-item"><a href="/vendor/monthly-revenue"  class="nav-link"><i class="nav-icon bi bi-graph-up-arrow"></i><p>Monthly Revenue</p></a></li>
                 <li class="nav-item"><a href="#" class="nav-link"><i class="nav-icon bi bi-arrow-down-circle"></i><p>Withdrawals</p></a></li>
                 <li class="nav-item"><a href="#" class="nav-link"><i class="nav-icon bi bi-cash-stack"></i><p>Payouts</p></a></li>

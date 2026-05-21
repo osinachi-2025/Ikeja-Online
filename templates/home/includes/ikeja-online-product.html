@@ -176,61 +176,7 @@
   .bn-item.on i,.bn-item.on .bl{color:var(--orange);}
   .bn-item:active{background:var(--cream2);}
 
-  /* ── AUTH (same as home) ── */
-  .auth-overlay{display:none;position:fixed;inset:0;z-index:800;background:rgba(28,25,22,.55);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:16px;}
-  .auth-overlay.open{display:flex;}
-  .auth-card{background:var(--white);border-radius:14px;width:100%;max-width:400px;box-shadow:0 24px 60px rgba(28,25,22,.18);overflow:hidden;animation:authPop .22s cubic-bezier(.34,1.3,.64,1);}
-  @keyframes authPop{from{opacity:0;transform:scale(.94) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}
-  .auth-top{padding:22px 22px 0;display:flex;align-items:flex-start;justify-content:space-between;}
-  .auth-logo{font-family:'Playfair Display',serif;font-weight:800;font-size:17px;color:var(--ink);}
-  .auth-logo .dot{color:var(--orange);}
-  .auth-close{width:30px;height:30px;border-radius:6px;background:var(--cream2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ink-3);font-size:12px;}
-  .auth-close:hover{background:var(--red-bg);border-color:var(--red);color:var(--red);}
-  .auth-tabs{display:flex;margin:18px 22px 0;background:var(--cream2);border-radius:8px;padding:3px;}
-  .auth-tab{flex:1;text-align:center;font-family:'Lato',sans-serif;font-size:13px;font-weight:700;padding:8px 10px;border-radius:6px;cursor:pointer;color:var(--ink-3);transition:all .18s;}
-  .auth-tab.on{background:white;color:var(--ink);box-shadow:0 1px 4px rgba(28,25,22,.08);}
-  .auth-body{padding:20px 22px 26px;}
-  .auth-panel{display:none;}
-  .auth-panel.on{display:block;}
-  .auth-greeting{font-family:'Playfair Display',serif;font-size:19px;font-weight:700;color:var(--ink);margin-bottom:4px;}
-  .auth-sub{font-size:13px;color:var(--ink-3);margin-bottom:18px;line-height:1.5;font-family:'Source Serif 4',serif;font-style:italic;}
-  .auth-field{margin-bottom:13px;}
-  .auth-field label{display:block;font-size:10.5px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-3);margin-bottom:5px;}
-  .auth-field input{width:100%;font-family:'Lato',sans-serif;font-size:14px;background:var(--cream2);border:1.5px solid var(--line);border-radius:8px;padding:10px 12px;color:var(--ink);outline:none;transition:border-color .18s;-webkit-appearance:none;}
-  .auth-field input:focus{border-color:var(--orange);background:white;}
-  .auth-field input::placeholder{color:var(--ink-4);}
-  .auth-field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-  .auth-pw-wrap{position:relative;}
-  .auth-pw-wrap input{padding-right:40px;}
-  .pw-toggle{position:absolute;right:11px;top:50%;transform:translateY(-50%);color:var(--ink-4);cursor:pointer;font-size:14px;}
-  .auth-forgot{text-align:right;font-size:12px;color:var(--orange);cursor:pointer;margin-top:-8px;margin-bottom:14px;}
-  .auth-submit{width:100%;font-family:'Lato',sans-serif;font-weight:700;font-size:14px;background:var(--orange);color:white;border:none;border-radius:8px;padding:12px;cursor:pointer;transition:background .18s;margin-top:4px;}
-  .auth-submit:hover{background:#b8420a;}
-  .auth-divider{display:flex;align-items:center;gap:12px;margin:16px 0;}
-  .auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:var(--line);}
-  .auth-divider span{font-size:11.5px;color:var(--ink-4);white-space:nowrap;}
-  .auth-socials{display:flex;gap:10px;}
-  .auth-social{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;font-family:'Lato',sans-serif;font-size:13px;font-weight:700;background:var(--cream2);border:1.5px solid var(--line);border-radius:8px;padding:10px 8px;cursor:pointer;color:var(--ink-2);white-space:nowrap;}
-  .auth-social:hover{border-color:var(--ink-3);}
-  .auth-switch{text-align:center;font-size:13px;color:var(--ink-3);margin-top:16px;}
-  .auth-switch a{color:var(--orange);cursor:pointer;font-weight:700;}
-  .auth-terms{font-size:11px;color:var(--ink-4);line-height:1.6;text-align:center;margin-top:12px;font-family:'Source Serif 4',serif;}
-  .auth-terms a{color:var(--orange);cursor:pointer;}
-  .auth-msg{display:none;padding:9px 12px;border-radius:7px;font-size:12.5px;margin-bottom:12px;font-weight:500;}
-  .auth-msg.err{background:var(--red-bg);color:var(--red);border:1px solid #fecaca;display:block;}
-  .profile-panel{display:none;}
-  .profile-panel.on{display:block;}
-  .profile-avatar{width:60px;height:60px;border-radius:50%;background:var(--orange-bg);border:2px solid var(--orange);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;color:var(--orange);}
-  .profile-avatar i{font-size:24px;}
-  .profile-name{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;text-align:center;color:var(--ink);margin-bottom:3px;}
-  .profile-email{text-align:center;font-size:12px;color:var(--ink-3);margin-bottom:20px;}
-  .profile-actions{display:flex;flex-direction:column;gap:8px;}
-  .profile-action-btn{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:8px;background:var(--cream2);border:1px solid var(--line);font-family:'Lato',sans-serif;font-size:13px;color:var(--ink-2);cursor:pointer;transition:all .15s;text-decoration:none;}
-  .profile-action-btn:hover{border-color:var(--orange);color:var(--orange);background:var(--orange-bg);}
-  .profile-action-btn i{font-size:15px;width:18px;text-align:center;flex-shrink:0;}
-  .profile-action-btn span{flex:1;}
-  .profile-logout{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;font-family:'Lato',sans-serif;font-size:13px;font-weight:700;background:transparent;border:1.5px solid var(--line);color:var(--ink-3);border-radius:8px;padding:10px;cursor:pointer;transition:all .15s;margin-top:8px;}
-  .profile-logout:hover{border-color:var(--red);color:var(--red);background:var(--red-bg);}
+  /* ── AUTH & PROFILE STYLES ARE INHERITED FROM home/ikeja-online.html ── */
 
   /* ── TOAST ── */
   .toast{position:fixed;z-index:999;bottom:calc(var(--bnh)+12px);left:50%;transform:translateX(-50%) translateY(30px);background:var(--ink);color:white;border-radius:8px;padding:10px 18px;font-size:13px;display:flex;align-items:center;gap:8px;box-shadow:0 4px 20px rgba(0,0,0,.2);opacity:0;transition:opacity .22s,transform .22s;pointer-events:none;max-width:90vw;}
@@ -376,16 +322,7 @@
   </button>
 </div>
 
-<div class="toast" id="toast"><i class="fa-solid fa-check t-i" id="t-ico"></i><span id="t-msg">Done</span></div>
-
-<script src="/static/js/wishlist-system.js"></script>
 <script>
-/* ── EXPORTED UTILITIES (from parent or local) ── */
-const normalizeSlug = value =>
-  (value||'').toString().trim().toLowerCase().replace(/[_\s]+/g,'-').replace(/[^a-z0-9-]/g,'');
-const CAT_ICONS = {laptops:'fa-laptop', desktops:'fa-desktop', monitors:'fa-display', keyboards:'fa-keyboard', mouse:'fa-mouse', components_gpu_cpu_ram:'fa-microchip', phones:'fa-mobile-screen', smart_watches:'fa-clock', fitness_trackers:'fa-heart-pulse', tools_hardware:'fa-wrench',headphones:'fa-headphones', audio_equipment:'fa-headphones', cameras:'fa-camera', drones:'fa-drone', printers_scanners: 'fa-printer', networking_equipment:'fa-network-wired', software_games:'fa-gamepad', office_electronics: 'fa-building', wearable_technology: 'fa-watch', smart_home_devices: 'fa-home', virtual_reality_vr: 'fa-vr-headset', augmented_reality_ar: 'fa-vr-headset', automotive_electronics:'fa-car', gaming_consoles: 'fa-gamepad', streaming_devices: 'fa-stream', power_bank_chargers: 'fa-battery-three-quarters', tablets:'fa-tablet-screen-button', audio:'fa-headphones', tvs:'fa-tv', cameras:'fa-camera', accessories:'fa-computer-mouse', gaming:'fa-gamepad', wearables:'fa-clock'};
-const CAT_ICON_LOOKUP = Object.fromEntries(Object.entries(CAT_ICONS).map(([key, icon]) => [normalizeSlug(key), icon]));
-
 let currentProduct = null;
 let qty = 1;
 let currentId = null;
