@@ -158,7 +158,7 @@
               title="Add to wishlist">
               ♡
             </button>
-            <img src="${product.image || '/static/assets/img/product-placeholder.jpg'}" class="ik-card-img-top" alt="${product.name}">
+            <img src="${product.image || '/static/assets/img/default-150x150.png'}" class="ik-card-img-top" alt="${product.name}" onerror="this.onerror=null;this.src='/static/assets/img/default-150x150.png';">
             <div class="ik-card-body d-flex flex-column">
               <h5 class="ik-card-title">${product.name}</h5>
               <p class="ik-card-text text-truncate">${product.description || 'No description available.'}</p>

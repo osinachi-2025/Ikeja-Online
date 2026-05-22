@@ -101,6 +101,25 @@
     text-shadow: none !important;
     font-weight: 700 !important;
   }
+
+  @media (max-width: 992px) {
+    .row.g-3.mb-4 > .col-6,
+    .row.g-3.mb-4 > .col-md-3 {
+      flex: 0 0 100% !important;
+      max-width: 100% !important;
+      padding-left: 0 !important;
+      padding-right: 0 !important;
+    }
+    .row.g-3.mb-4 {
+      gap: 1rem !important;
+    }
+    .stat-card {
+      width: 100% !important;
+      display: block !important;
+      margin: 0 auto !important;
+      box-sizing: border-box !important;
+    }
+  }
 </style>
 
 {% block dashboard_current %}
@@ -118,28 +137,28 @@
           <div class="container-fluid">
             <!-- Stat cards -->
             <div class="row g-3 mb-4">
-              <div class="col-6 col-md-3">
+              <div class="col-12 col-md-3">
                 <div class="stat-card green">
                   <div class="stat-icon green"><i class="bi bi-bag-check-fill"></i></div>
                   <div class="stat-label">Total Orders</div>
                   <div class="stat-value order-box-number">0</div>
                 </div>
               </div>
-              <div class="col-6 col-md-3">
+              <div class="col-12 col-md-3">
                 <div class="stat-card blue">
                   <div class="stat-icon blue"><i class="bi bi-heart-fill"></i></div>
                   <div class="stat-label">Wishlist Items</div>
                   <div class="stat-value wishlist-box-number">0</div>
                 </div>
               </div>
-              <div class="col-6 col-md-3">
+              <div class="col-12 col-md-3">
                 <div class="stat-card orange">
                   <div class="stat-icon orange"><i class="bi bi-cart-fill"></i></div>
                   <div class="stat-label">Total Spent</div>
                   <div class="stat-value spent-box">₦0.00</div>
                 </div>
               </div>
-              <div class="col-6 col-md-3">
+              <div class="col-12 col-md-3">
                 <div class="stat-card gold">
                   <div class="stat-icon gold"><i class="bi bi-star-fill"></i></div>
                   <div class="stat-label">Reviews Left</div>
@@ -276,10 +295,6 @@
                         </tbody>
                       </table>
                     </div>
-                  </div>
-                  <div class="d-flex justify-content-between align-items-center pt-3 border-top mt-0">
-                    <a href="javascript:void(0)" class="btn btn-sm btn-primary">Place New Order</a>
-                    <a href="javascript:void(0)" class="btn btn-sm btn-secondary">View All Orders</a>
                   </div>
                 </div>
               </div>

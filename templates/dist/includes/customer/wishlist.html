@@ -63,7 +63,7 @@
       wishlistGrid.innerHTML = items.map(item => `
         <div class="col">
           <div class="ik-card h-100 shadow-sm">
-            <img src="${item.image || '/static/assets/img/product-placeholder.jpg'}" class="ik-card-img-top" alt="${item.name}">
+            <img src="${item.image || '/static/assets/img/default-150x150.png'}" class="ik-card-img-top" alt="${item.name}" onerror="this.onerror=null;this.src='/static/assets/img/default-150x150.png';">
             <div class="ik-card-body d-flex flex-column">
               <h5 class="ik-card-title">${item.name}</h5>
               <p class="ik-card-text text-muted">${item.store_name || 'Unknown store'}</p>

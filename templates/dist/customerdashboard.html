@@ -440,7 +440,9 @@
   /* stat-card and quick-action shared styles (copied from vendordashboard) */
   .ik-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); transition:var(--transition); }
   .ik-card:hover { box-shadow:var(--shadow-md); transform:translateY(-1px); }
-  .ik-card-body { padding:1.25rem; }
+  .ik-card.h-100 { display:flex; flex-direction:column; }
+  .ik-card-img-top { display:block; width:100%; height:220px; object-fit:cover; border-top-left-radius:var(--radius-lg); border-top-right-radius:var(--radius-lg); }
+  .ik-card-body { padding:1.25rem; display:flex; flex-direction:column; flex:1 1 auto; min-height:0; }
   .ik-card-hdr { padding:1rem 1.25rem 0; display:flex; align-items:center; justify-content:space-between; }
   .ik-card-title { font-size:.9rem; font-weight:700; color:var(--text); margin:0; }
 
