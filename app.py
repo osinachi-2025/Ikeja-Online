@@ -11,7 +11,8 @@ from flask_jwt_extended import JWTManager, create_access_token, jwt_required, ge
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from datetime import datetime
+from datetime import datetime, timedelta
+import json
 import os
 try:
     from dotenv import load_dotenv
@@ -54,9 +55,12 @@ if not app.config['JWT_SECRET_KEY']:
     raise ValueError("JWT_SECRET_KEY environment variable is required")
 
 # JWT configuration
-app.config['JWT_TOKEN_LOCATION'] = ['headers']
+app.config['JWT_TOKEN_LOCATION'] = ['headers', 'cookies']
 app.config['JWT_HEADER_NAME'] = 'Authorization'
 app.config['JWT_HEADER_TYPE'] = 'Bearer'
+app.config['JWT_ACCESS_COOKIE_NAME'] = 'access_token'
+# Disable CSRF protection for cookie-based JWTs if frontend cannot handle it
+app.config['JWT_COOKIE_CSRF_PROTECT'] = False
 
 # Paystack configuration
 app.config['TEST_PUBLIC_KEY'] = os.getenv('TEST_PUBLIC_KEY')
@@ -1629,19 +1633,51 @@ def login():
             return render_template('auth/login.html', error='Invalid email or password')
         
         try:
+            cookie_consent = (data.get('cookie_consent') or '').strip().lower()
+            consented = cookie_consent == 'accepted'
+
+            remember = data.get('remember') if isinstance(data, dict) else request.form.get('remember')
+            remember_flag = False
+            if isinstance(remember, str):
+                remember_flag = remember.lower() in ('1', 'true', 'on', 'yes')
+            elif isinstance(remember, bool):
+                remember_flag = remember
+
+            if not consented:
+                remember_flag = False
+
             # Create JWT token (identity must be a string)
-            access_token = create_access_token(identity=str(user.id))
-            
-            # Return token as JSON
-            return jsonify({
+            if remember_flag:
+                expires = timedelta(days=30)
+            else:
+                expires = timedelta(hours=2)
+
+            access_token = create_access_token(identity=str(user.id), expires_delta=expires)
+
+            # Prepare response
+            resp = jsonify({
                 'success': True,
                 'access_token': access_token,
                 'user_id': user.id,
                 'role': user.role.name,
                 'first_name': user.first_name,
-                'last_name': user.last_name
-            }), 200
-            
+                'last_name': user.last_name,
+                'cookies_accepted': consented
+            })
+
+            # Set auth cookies only when the user accepted cookies
+            if consented:
+                max_age = int(expires.total_seconds())
+                secure_flag = not app.debug
+                resp.set_cookie('access_token', access_token, max_age=max_age, httponly=True, samesite='Lax', secure=secure_flag)
+                user_info = {'user_id': user.id, 'first_name': user.first_name, 'last_name': user.last_name, 'role': user.role.name, 'email': user.email}
+                resp.set_cookie('user_info', json.dumps(user_info), max_age=30*24*60*60, httponly=False, samesite='Lax', secure=secure_flag)
+            else:
+                resp.delete_cookie('access_token')
+                resp.delete_cookie('user_info')
+
+            return resp, 200
+
         except Exception as e:
             return jsonify({'success': False, 'message': f'Login failed: {str(e)}'}), 500
     

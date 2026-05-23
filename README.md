@@ -1,155 +1,180 @@
-Ikeja Online Marketplace
+# Ikeja Online Marketplace
 
-A multi-vendor e-commerce marketplace connecting customers with vendors in Ikeja, Nigeria.
-The platform allows vendors to manage stores and products while customers can browse, purchase, and track orders.
+Ikeja Online is a multi-vendor e-commerce platform built for the Ikeja community in Nigeria. The application enables vendors to manage stores and products while customers browse, purchase, and track orders from a single marketplace.
 
-Overview
+## Overview
 
-The Ikeja Online Marketplace is designed to provide a scalable platform where multiple vendors can sell products while customers can discover and purchase from different stores in one unified marketplace.
+This platform is designed to support a scalable marketplace experience with a strong focus on vendor storefront management, customer shopping, and order fulfillment.
 
-Key capabilities include:
+### Core capabilities
 
-Vendor storefronts
-Product listings
-Customer shopping experience
-Secure payments
-Order management
-Vendor dashboards
-Features
-Customer Features
-Product browsing
-Multi-vendor cart system
-Secure checkout
-Order tracking
-Customer dashboard
-Wallet deposit system
-Vendor Features
-Vendor store creation
-Product management
-Order management
-Vendor dashboard analytics
-Store profile settings
-Marketplace Admin Capabilities
-Vendor management
-Product moderation
-Payment monitoring
-Marketplace analytics
-Tech Stack
-Backend
-Python
-Flask
-Flask-SQLAlchemy
-Flask-Migrate
-Flask-Login
-Frontend
-HTML
-CSS
-JavaScript
-Infrastructure
-Redis (task queue)
-Celery (background jobs)
-Gunicorn (production server)
-Payments
-Paystack API
-Email Services
-Resend API
-Architecture
-Client Browser
-      │
-      ▼
-Flask Application (API + Templates)
-      │
-      ▼
-Database (PostgreSQL / SQLite)
-      │
-      ├── Redis Queue
-      │        │
-      │        ▼
-      │      Celery Workers (Emails, Background Tasks)
-      │
-      ▼
-External Services
-   ├── Paystack (Payments)
-   └── Resend (Email)
-Installation
-Clone the repository
+- Multi-vendor storefront management
+- Product catalog and listing management
+- Customer shopping cart and checkout
+- Order tracking and history
+- Vendor dashboards and analytics
+- Secure payment processing
+
+## Features
+
+### Customer features
+
+- Product browsing and search
+- Multi-vendor cart experience
+- Secure checkout flow
+- Order tracking dashboard
+- Wallet deposit and payment options
+
+### Vendor features
+
+- Store creation and profile settings
+- Product management and inventory control
+- Order fulfillment dashboard
+- Vendor analytics and reporting
+
+### Admin capabilities
+
+- Vendor account management
+- Product moderation tools
+- Payment monitoring and reconciliation
+- Marketplace analytics
+
+## Technology Stack
+
+### Backend
+
+- Python
+- Flask
+- Flask-SQLAlchemy
+- Flask-Migrate
+- Flask-Login
+
+### Frontend
+
+- HTML
+- CSS
+- JavaScript
+
+### Infrastructure
+
+- Redis (task queue)
+- Celery (background jobs)
+- Gunicorn (production server)
+
+### Integrations
+
+- Paystack API for payments
+- Resend API for email delivery
+
+## Architecture
+
+Client Browser → Flask Application (API + Templates) → Database (PostgreSQL / SQLite)
+
+The application also supports background workers via Redis and Celery for tasks such as email delivery and asynchronous processing.
+
+External services:
+
+- Paystack for payments
+- Resend for email notifications
+
+## Installation
+
+### Clone the repository
+
+```bash
 git clone https://github.com/osinachi-2025/Ikeja-Online.git
 cd Ikeja-Online
-Create virtual environment
+```
+
+### Create and activate a virtual environment
+
+```bash
 python -m venv venv
+```
 
-Activate it:
+- Windows:
+  ```powershell
+  venv\Scripts\activate
+  ```
+- macOS / Linux:
+  ```bash
+  source venv/bin/activate
+  ```
 
-Windows
+### Install dependencies
 
-venv\Scripts\activate
-
-Mac/Linux
-
-source venv/bin/activate
-Install dependencies
+```bash
 pip install -r requirements.txt
-Configure environment variables
+```
 
-Create .env
+### Configure environment variables
 
+Create a `.env` file at the project root and add the required settings:
+
+```dotenv
 SECRET_KEY=your_secret_key
 DATABASE_URL=your_database_url
 PAYSTACK_SECRET_KEY=your_paystack_secret
 RESEND_API_KEY=your_resend_key
 REDIS_URL=redis://localhost:6379
-Run the application
+```
+
+### Run the application
+
+```bash
 python run.py
+```
 
-Application will run at:
+The development server will be available at:
 
+```
 http://127.0.0.1:5000
-Project Structure
+```
+
+## Project structure
+
+```text
 Ikeja-Online
-│
 ├── app
 │   ├── models.py
 │   ├── routes.py
 │   ├── templates
 │   ├── static
 │   └── services
-│
 ├── migrations
-│
 ├── instance
 │   └── config.py
-│
 ├── requirements.txt
 ├── run.py
 └── README.md
-Roadmap
+```
 
-Planned future improvements:
+## Roadmap
 
-Vendor subscription plans
-Escrow payment system
-Advanced vendor analytics
-Product recommendation engine
-Mobile application
-Contributing
+Future enhancements may include:
 
-Contributions are welcome.
+- Vendor subscription plans
+- Escrow payment support
+- Advanced analytics for vendors
+- Personalized product recommendations
+- Native mobile applications
 
-Fork the repository
-Create a new branch
-git checkout -b feature-name
-Commit changes
-git commit -m "Add feature"
-Push branch
-git push origin feature-name
-Open a Pull Request
-License
+## Contributing
+
+Contributions are welcome. To contribute:
+
+1. Fork the repository
+2. Create a new branch: `git checkout -b feature-name`
+3. Commit your changes: `git commit -m "Add feature"`
+4. Push your branch: `git push origin feature-name`
+5. Open a pull request
+
+## License
 
 This project is licensed under the MIT License.
 
-Author
+## Author
 
 Developed by Osinachi Joshua
 
-GitHub:
-https://github.com/osinachi-2025
+GitHub: https://github.com/osinachi-2025
