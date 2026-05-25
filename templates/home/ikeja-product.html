@@ -198,11 +198,6 @@
   .auth-field input{width:100%;font-family:'Lato',sans-serif;font-size:14px;background:var(--cream2);border:1.5px solid var(--line);border-radius:8px;padding:10px 12px;color:var(--ink);outline:none;transition:border-color .18s;-webkit-appearance:none;}
   .auth-field input:focus{border-color:var(--orange);background:white;}
   .auth-field input::placeholder{color:var(--ink-4);}
-  .auth-field textarea{width:100%;font-family:'Lato',sans-serif;font-size:14px;background:var(--cream2);border:1.5px solid var(--line);border-radius:8px;padding:10px 12px;color:var(--ink);outline:none;transition:border-color .18s;resize:vertical;min-height:120px;}
-  .auth-field textarea:focus{border-color:var(--orange);background:white;}
-  .contact-box{background:var(--white);border:1px solid var(--line);border-radius:12px;padding:20px;margin-bottom:24px;}
-  .contact-note{font-size:13px;color:var(--ink-4);margin-bottom:16px;line-height:1.7;}
-  .contact-form .btn-cart-main{width:100%;}
   .auth-field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
   .auth-pw-wrap{position:relative;}
   .auth-pw-wrap input{padding-right:40px;}
@@ -453,29 +448,6 @@
           <div class="specs-title">Key Specifications</div>
           <div class="specs-grid" id="p-specs"></div>
         </div>
-
-        <div class="contact-box">
-          <div class="section-heading">Contact Vendor</div>
-          <p class="contact-note">Ask a question or send a message directly to the vendor about this product. Customers and guests can both use this form.</p>
-          <div class="contact-form">
-            <div class="auth-field-row">
-              <div class="auth-field">
-                <label>Name</label>
-                <input type="text" id="contact-name" placeholder="Your name">
-              </div>
-              <div class="auth-field">
-                <label>Email</label>
-                <input type="email" id="contact-email" placeholder="you@example.com">
-              </div>
-            </div>
-            <div class="auth-field">
-              <label>Message</label>
-              <textarea id="contact-message" placeholder="Write your message here"></textarea>
-            </div>
-            <div id="contact-status" class="auth-msg" style="display:none;"></div>
-            <button class="btn-cart-main" id="contact-send" type="button" onclick="sendVendorMessage()">Send Message</button>
-          </div>
-        </div>
       </div>
     </div>
 
@@ -628,7 +600,6 @@ const THUMB_ICONS=['fa-magnifying-glass','fa-rotate','fa-circle-info','fa-box'];
 let currentProduct = null;
 let qty = 1;
 let currentId = null;
-let currentVendorId = null;
 let wished = false;
 
 async function loadProductDetails(productId) {
@@ -679,7 +650,6 @@ function refreshWishCount(){
 
 function renderProduct(p) {
   currentId = p.id;
-  currentVendorId = p.vendor_id || null;
   const wishButton = document.getElementById('btn-wish');
   if (wishButton) {
     wishButton.setAttribute('data-wishlist-btn', currentId);
@@ -725,10 +695,6 @@ function renderProduct(p) {
 
   document.getElementById('p-desc').textContent = p.description || 'No description available for this product.';
   document.getElementById('tab-desc-text').textContent = p.description || 'No description available for this product.';
-  const contactName = document.getElementById('contact-name');
-  const contactEmail = document.getElementById('contact-email');
-  if (contactName && window.currentUser) contactName.value = `${currentUser.fname || ''} ${currentUser.lname || ''}`.trim();
-  if (contactEmail && window.currentUser) contactEmail.value = currentUser.email || '';
 
   document.getElementById('p-price').textContent = '₦' + fmt(p.price);
   document.getElementById('p-was').style.display = 'none';
@@ -928,66 +894,6 @@ function updateWishBtn(){
   document.getElementById('wish-icon').className=`fa-${wished?'solid':'regular'} fa-heart`;
 }
 
-function sendVendorMessage(){
-  const contactName = document.getElementById('contact-name');
-  const contactEmail = document.getElementById('contact-email');
-  const contactMessage = document.getElementById('contact-message');
-  const status = document.getElementById('contact-status');
-  const btn = document.getElementById('contact-send');
-  const name = contactName ? contactName.value.trim() : '';
-  const email = contactEmail ? contactEmail.value.trim() : '';
-  const message = contactMessage ? contactMessage.value.trim() : '';
-
-  if (!currentVendorId) {
-    setMsg('contact-status','Unable to identify vendor for this product.','err');
-    return;
-  }
-  if (!message) {
-    setMsg('contact-status','Please enter a message for the vendor.','err');
-    return;
-  }
-
-  if (btn) {
-    btn.disabled = true;
-    btn.textContent = 'Sending…';
-  }
-
-  const payload = {
-    vendor_id: currentVendorId,
-    product_id: currentId,
-    name,
-    email,
-    message
-  };
-
-  const headers = {
-    'Content-Type': 'application/json'
-  };
-  const token = localStorage.getItem('access_token');
-  if (token) headers['Authorization'] = `Bearer ${token}`;
-
-  fetch('/api/vendor/messages', {
-    method: 'POST',
-    headers,
-    body: JSON.stringify(payload)
-  })
-    .then(res => res.json())
-    .then(data => {
-      if (btn) { btn.disabled = false; btn.textContent = 'Send Message'; }
-      if (!data.success) {
-        setMsg('contact-status', data.message || 'Unable to send message.', 'err');
-        return;
-      }
-      setMsg('contact-status', data.message || 'Message sent to vendor.', 'ok');
-      if (contactMessage) contactMessage.value = '';
-    })
-    .catch(err => {
-      if (btn) { btn.disabled = false; btn.textContent = 'Send Message'; }
-      setMsg('contact-status', 'Could not send your message. Please try again later.', 'err');
-      console.error(err);
-    });
-}
-
 function switchTab(tab,btn){
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('on'));
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('on'));
@@ -1052,7 +958,7 @@ function closeCartDrawer(){
   if(overlay){overlay.classList.remove('open');}
   document.body.style.overflow = '';
 }
-function setMsg(id,txt,type){const el=document.getElementById(id);if(!el) return;el.textContent=txt;el.className='auth-msg '+type;el.style.display='block';}
+function setMsg(id,txt,type){const el=document.getElementById(id);el.textContent=txt;el.className='auth-msg '+type;}
 
 const FA_ICONS={cart:'fa-cart-shopping','cart-plus':'fa-cart-plus',heart:'fa-heart','heart-crack':'fa-heart-crack',check:'fa-check',envelope:'fa-envelope',box:'fa-box',gear:'fa-gear','right-from-bracket':'fa-right-from-bracket','hand-wave':'fa-hand-wave','thumbs-up':'fa-thumbs-up'};
 let tt;

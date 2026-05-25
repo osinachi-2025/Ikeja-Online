@@ -273,15 +273,6 @@
               document.getElementById('totalOrders').textContent = stats.total_orders;
               document.getElementById('totalProducts').textContent = stats.total_products;
               document.getElementById('totalRevenue').textContent = '₦' + parseFloat(stats.total_revenue).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-              // Update rating and reviews display (show average and count)
-              try{
-                const vendorRatingEl = document.getElementById('vendorRating');
-                if(vendorRatingEl){
-                  const avg = (typeof stats.average_rating !== 'undefined') ? parseFloat(stats.average_rating).toFixed(2) : '0.00';
-                  const count = stats.total_reviews || 0;
-                  vendorRatingEl.textContent = `${avg} (${count})`;
-                }
-              }catch(e){console.warn('Could not set vendor rating', e)}
               
               // Update wallet section
               document.getElementById('availableBalance').textContent = parseFloat(stats.wallet_balance).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
