@@ -175,8 +175,27 @@ class Reviews(db.Model):
     created_at = db.Column(db.DateTime, default=func.now())
     product = db.relationship('Products', backref=db.backref('reviews', lazy=True))
     customer = db.relationship('Customers', backref=db.backref('reviews', lazy=True))
-    
-    
+
+
+class VendorMessages(db.Model):
+    __tablename__ = 'vendor_messages'
+    id = db.Column(db.Integer, primary_key=True)
+    vendor_id = db.Column(db.Integer, db.ForeignKey('vendors.id'), nullable=False)
+    product_id = db.Column(db.Integer, db.ForeignKey('products.id'), nullable=True)
+    customer_id = db.Column(db.Integer, db.ForeignKey('customers.id'), nullable=True)
+    guest_name = db.Column(db.String(120), nullable=True)
+    guest_email = db.Column(db.String(120), nullable=True)
+    message = db.Column(db.Text, nullable=False)
+    response = db.Column(db.Text, nullable=True)
+    response_at = db.Column(db.DateTime, nullable=True)
+    sender_type = db.Column(db.String(20), default='guest')
+    created_at = db.Column(db.DateTime, default=func.now())
+    updated_at = db.Column(db.DateTime, default=func.now(), onupdate=func.now())
+    vendor = db.relationship('Vendors', backref=db.backref('messages', lazy=True))
+    product = db.relationship('Products', backref=db.backref('messages', lazy=True))
+    customer = db.relationship('Customers', backref=db.backref('messages', lazy=True))
+
+
 class Wishlists(db.Model):
     __tablename__ = 'wishlists'
     id = db.Column(db.Integer, primary_key=True)

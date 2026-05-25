@@ -4,7 +4,7 @@ from sqlalchemy import text
 import requests
 from io import BytesIO
 from flask_cors import CORS
-from models import db, Roles, Users, Vendors, Customers, Categories, Products, Product_Images, Orders, Order_Items, Reviews, Payments, Wishlists, Wishlist_Items, SaveForLater, SaveForLater_Items, Wallet, Deposits, VendorWallet, WalletTransaction, CustomerWalletTransaction, VendorWalletTransaction, VendorWithdrawal, VendorDeposit, CustomerAddress, DeliveryPreference
+from models import db, Roles, Users, Vendors, Customers, Categories, Products, Product_Images, Orders, Order_Items, Reviews, VendorMessages, Payments, Wishlists, Wishlist_Items, SaveForLater, SaveForLater_Items, Wallet, Deposits, VendorWallet, WalletTransaction, CustomerWalletTransaction, VendorWalletTransaction, VendorWithdrawal, VendorDeposit, CustomerAddress, DeliveryPreference
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity, decode_token
@@ -1745,11 +1745,255 @@ def vendor_store_profile():
     return render_template('dist/includes/vendor/vendor_store_profile.html')
 
 
+@app.route('/vendor/inbox')
+def vendor_inbox():
+    # Vendor inbox page for customer and guest messages
+    return render_template('dist/includes/vendor/vendor_inbox.html')
+
+
+@app.route('/vendor/reviews')
+def vendor_reviews():
+    # Vendor customer reviews page
+    return render_template('dist/includes/vendor/vendor_reviews.html')
+
 
 @app.route('/vendor/login-security')
 def vendor_login_security():
     # Vendor login information and password change page
     return render_template('dist/includes/vendor/vendor_login_security.html')
+
+
+@app.route('/api/vendor/messages', methods=['POST'])
+@jwt_required(optional=True)
+def submit_vendor_message():
+    try:
+        data = request.get_json() or {}
+        vendor_id = data.get('vendor_id')
+        product_id = data.get('product_id')
+        message_text = (data.get('message') or '').strip()
+        guest_name = (data.get('name') or '').strip()
+        guest_email = (data.get('email') or '').strip()
+
+        if not message_text:
+            return jsonify({'success': False, 'message': 'Message content is required.'}), 400
+
+        product = None
+        if product_id:
+            product = Products.query.get(product_id)
+            if not product:
+                return jsonify({'success': False, 'message': 'Product not found.'}), 404
+            if not vendor_id:
+                vendor_id = product.vendor_id
+
+        if not vendor_id:
+            return jsonify({'success': False, 'message': 'Vendor ID is required.'}), 400
+
+        vendor = Vendors.query.get(vendor_id)
+        if not vendor:
+            return jsonify({'success': False, 'message': 'Vendor not found.'}), 404
+
+        customer_id = None
+        sender_type = 'guest'
+        user_identity = get_jwt_identity()
+        if user_identity:
+            user = Users.query.get(int(user_identity))
+            if user and user.role.name == 'customer':
+                customer = Customers.query.filter_by(user_id=user.id).first()
+                if customer:
+                    customer_id = customer.id
+                    sender_type = 'customer'
+                    if not guest_name:
+                        guest_name = f'{user.first_name} {user.last_name}'
+                    if not guest_email:
+                        guest_email = user.email
+
+        if not guest_name:
+            guest_name = 'Guest'
+
+        message = VendorMessages(
+            vendor_id=vendor.id,
+            product_id=product.id if product else None,
+            customer_id=customer_id,
+            guest_name=guest_name,
+            guest_email=guest_email,
+            message=message_text,
+            sender_type=sender_type
+        )
+        db.session.add(message)
+        db.session.commit()
+
+        return jsonify({'success': True, 'message': 'Your message has been sent to the vendor.'}), 200
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@app.route('/api/vendor/messages', methods=['GET'])
+@jwt_required()
+def get_vendor_messages():
+    user_id = int(get_jwt_identity())
+    user = Users.query.get(user_id)
+    if not user or user.role.name != 'vendor':
+        return jsonify({'success': False, 'message': 'Vendor access only.'}), 403
+
+    vendor = Vendors.query.filter_by(user_id=user.id).first()
+    if not vendor:
+        return jsonify({'success': False, 'message': 'Vendor profile not found.'}), 404
+
+    messages = VendorMessages.query.filter_by(vendor_id=vendor.id).order_by(VendorMessages.created_at.desc()).all()
+    data = []
+    for msg in messages:
+        customer_name = None
+        customer_email = None
+        if msg.customer and msg.customer.user:
+            customer_name = f'{msg.customer.user.first_name} {msg.customer.user.last_name}'
+            customer_email = msg.customer.user.email
+
+        data.append({
+            'id': msg.id,
+            'product_id': msg.product_id,
+            'product_name': msg.product.name if msg.product else 'General inquiry',
+            'customer_name': customer_name or msg.guest_name or 'Guest',
+            'customer_email': customer_email or msg.guest_email or '',
+            'sender_type': msg.sender_type,
+            'message': msg.message,
+            'response': msg.response,
+            'created_at': msg.created_at.isoformat(),
+            'response_at': msg.response_at.isoformat() if msg.response_at else None,
+        })
+
+    return jsonify({'success': True, 'messages': data}), 200
+
+
+@app.route('/api/vendor/messages/<int:message_id>/reply', methods=['POST'])
+@jwt_required()
+def reply_vendor_message(message_id):
+    user_id = int(get_jwt_identity())
+    user = Users.query.get(user_id)
+    if not user or user.role.name != 'vendor':
+        return jsonify({'success': False, 'message': 'Vendor access only.'}), 403
+
+    vendor = Vendors.query.filter_by(user_id=user.id).first()
+    if not vendor:
+        return jsonify({'success': False, 'message': 'Vendor profile not found.'}), 404
+
+    msg = VendorMessages.query.filter_by(id=message_id, vendor_id=vendor.id).first()
+    if not msg:
+        return jsonify({'success': False, 'message': 'Message not found.'}), 404
+
+    data = request.get_json() or {}
+    response_text = (data.get('response') or '').strip()
+    if not response_text:
+        return jsonify({'success': False, 'message': 'Reply content is required.'}), 400
+
+    msg.response = response_text
+    msg.response_at = datetime.utcnow()
+    db.session.commit()
+
+    return jsonify({'success': True, 'message': 'Reply saved successfully.'}), 200
+
+
+@app.route('/api/vendor/reviews', methods=['GET'])
+@jwt_required()
+def get_vendor_reviews():
+    user_id = int(get_jwt_identity())
+    user = Users.query.get(user_id)
+    if not user or user.role.name != 'vendor':
+        return jsonify({'success': False, 'message': 'Vendor access only.'}), 403
+
+    vendor = Vendors.query.filter_by(user_id=user.id).first()
+    if not vendor:
+        return jsonify({'success': False, 'message': 'Vendor profile not found.'}), 404
+
+    product_ids = [product.id for product in vendor.products]
+    if not product_ids:
+        return jsonify({'success': True, 'reviews': []}), 200
+
+    reviews = Reviews.query.filter(Reviews.product_id.in_(product_ids)).order_by(Reviews.created_at.desc()).all()
+    data = []
+    for review in reviews:
+        reviewer_name = 'Customer'
+        if review.customer and review.customer.user:
+            reviewer_name = f'{review.customer.user.first_name} {review.customer.user.last_name}'
+        data.append({
+            'id': review.id,
+            'product_id': review.product_id,
+            'product_name': review.product.name if review.product else 'Unknown product',
+            'rating': review.rating,
+            'comment': review.comment,
+            'customer_name': reviewer_name,
+            'created_at': review.created_at.isoformat(),
+        })
+
+    return jsonify({'success': True, 'reviews': data}), 200
+
+
+@app.route('/api/customer/messages', methods=['GET'])
+@jwt_required()
+def get_customer_messages():
+    user_id = int(get_jwt_identity())
+    user = Users.query.get(user_id)
+    if not user or user.role.name != 'customer':
+        return jsonify({'success': False, 'message': 'Customer access only.'}), 403
+
+    customer = Customers.query.filter_by(user_id=user.id).first()
+    if not customer:
+        return jsonify({'success': False, 'message': 'Customer profile not found.'}), 404
+
+    messages = VendorMessages.query.filter_by(customer_id=customer.id).order_by(VendorMessages.created_at.desc()).all()
+    data = []
+    for msg in messages:
+        data.append({
+            'id': msg.id,
+            'vendor_id': msg.vendor_id,
+            'vendor_name': msg.vendor.store_name if msg.vendor and msg.vendor.store_name else (msg.vendor.user and f'{msg.vendor.user.first_name} {msg.vendor.user.last_name}' if msg.vendor and msg.vendor.user else 'Vendor'),
+            'product_id': msg.product_id,
+            'product_name': msg.product.name if msg.product else 'General inquiry',
+            'message': msg.message,
+            'response': msg.response,
+            'created_at': msg.created_at.isoformat(),
+            'response_at': msg.response_at.isoformat() if msg.response_at else None,
+        })
+
+    return jsonify({'success': True, 'messages': data}), 200
+
+
+@app.route('/api/customer/messages/<int:message_id>', methods=['GET'])
+@jwt_required()
+def get_customer_message_detail(message_id):
+    user_id = int(get_jwt_identity())
+    user = Users.query.get(user_id)
+    if not user or user.role.name != 'customer':
+        return jsonify({'success': False, 'message': 'Customer access only.'}), 403
+
+    customer = Customers.query.filter_by(user_id=user.id).first()
+    if not customer:
+        return jsonify({'success': False, 'message': 'Customer profile not found.'}), 404
+
+    msg = VendorMessages.query.filter_by(id=message_id, customer_id=customer.id).first()
+    if not msg:
+        return jsonify({'success': False, 'message': 'Message not found.'}), 404
+
+    vendor_name = 'Vendor'
+    if msg.vendor:
+        if msg.vendor.store_name:
+            vendor_name = msg.vendor.store_name
+        elif msg.vendor.user:
+            vendor_name = f'{msg.vendor.user.first_name} {msg.vendor.user.last_name}'
+
+    return jsonify({
+        'success': True,
+        'message': {
+            'id': msg.id,
+            'vendor_id': msg.vendor_id,
+            'vendor_name': vendor_name,
+            'product_id': msg.product_id,
+            'product_name': msg.product.name if msg.product else 'General inquiry',
+            'message': msg.message,
+            'response': msg.response,
+            'created_at': msg.created_at.isoformat(),
+            'response_at': msg.response_at.isoformat() if msg.response_at else None,
+        }
+    }), 200
 
 
 @app.route('/add-product', methods=['GET'])
@@ -3248,13 +3492,20 @@ def get_customer_stats():
         wishlist_count = 0
         if wishlist:
             wishlist_count = Wishlist_Items.query.filter_by(wishlist_id=wishlist.id).count()
+
+        # Number of reviews this customer has left
+        try:
+            reviews_left = Reviews.query.filter_by(customer_id=customer.id).count()
+        except Exception:
+            reviews_left = 0
         
         return jsonify({
             'success': True,
             'stats': {
                 'total_spent': float(total_spent),
                 'wishlist_count': wishlist_count,
-                'total_orders': total_orders_count
+                'total_orders': total_orders_count,
+                'reviews_left': int(reviews_left)
             }
         }), 200
         
@@ -4253,7 +4504,21 @@ def get_vendor_stats():
         
         wallet_balance = wallet.balance
         wallet_earned = wallet.total_earned
-        
+
+        # Reviews for vendor's products
+        total_reviews = 0
+        average_rating = 0.0
+        try:
+            if product_ids:
+                reviews_q = Reviews.query.filter(Reviews.product_id.in_(product_ids)).all()
+                total_reviews = len(reviews_q)
+                if total_reviews > 0:
+                    rating_sum = sum((r.rating or 0) for r in reviews_q)
+                    average_rating = float(rating_sum) / total_reviews
+        except Exception:
+            total_reviews = 0
+            average_rating = 0.0
+
         return jsonify({
             'success': True,
             'stats': {
@@ -4262,7 +4527,9 @@ def get_vendor_stats():
                 'total_revenue': float(total_revenue),
                 'total_deposits': float(total_deposits),
                 'wallet_balance': float(wallet_balance),
-                'total_earned': float(wallet_earned)
+                'total_earned': float(wallet_earned),
+                'total_reviews': int(total_reviews),
+                'average_rating': float(round(average_rating, 2))
             }
         }), 200
         
@@ -5201,6 +5468,7 @@ def get_product_details(product_id):
             'status': product.status,
             'category_name': product.category.name if product.category else 'Uncategorized',
             'category_id': product.category_id,
+            'vendor_id': product.vendor_id,
             'store_name': store_name,
             'vendor_name': vendor_display_name,
             'processor': product.processor,
@@ -7536,6 +7804,15 @@ def vendor_dashboard_home():
 @app.route('/customer/dashboard/home')
 def customer_dashboard_home():
     return render_template('dist/includes/customer/customerdashboard_home.html')
+
+@app.route('/customer/dashboard/messages')
+def customer_dashboard_messages():
+    return render_template('dist/includes/customer/customer_messages.html')
+
+
+@app.route('/customer/dashboard/messages/<int:message_id>')
+def customer_dashboard_message_detail(message_id):
+    return render_template('dist/includes/customer/customer_message_detail.html')
 
 @app.route('/customer/dashboard/browse-products')
 def customer_dashboard_browse_products():

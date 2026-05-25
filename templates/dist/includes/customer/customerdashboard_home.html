@@ -162,7 +162,7 @@
                 <div class="stat-card gold">
                   <div class="stat-icon gold"><i class="bi bi-star-fill"></i></div>
                   <div class="stat-label">Reviews Left</div>
-                  <div class="stat-value">0</div>
+                  <div class="stat-value" id="reviewsLeft">0</div>
                 </div>
               </div>
             </div>
@@ -452,6 +452,11 @@
                             wishList_Items.forEach(el => {
                                 el.textContent = data.stats.wishlist_count || 0;
                             })
+                            // Update reviews left
+                            try{
+                              const reviewsEl = document.getElementById('reviewsLeft');
+                              if(reviewsEl) reviewsEl.textContent = data.stats.reviews_left || 0;
+                            }catch(e){console.warn('Could not set reviews left', e)}
                             });
                         }
                     } catch (error) {

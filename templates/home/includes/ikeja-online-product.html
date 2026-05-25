@@ -96,6 +96,15 @@
   .spec-v{font-size:13px;color:var(--ink);}
   .actions{display:flex;gap:10px;margin-bottom:16px;}
   .qty-wrap{display:flex;align-items:center;border:1.5px solid var(--line);border-radius:8px;overflow:hidden;flex-shrink:0;}
+  .contact-vendor{background:var(--white);border:1px solid var(--line);border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:12px;margin-bottom:22px;}
+  .contact-vendor-title{font-size:14px;font-weight:700;color:var(--ink);}
+  .contact-vendor-textarea{min-height:110px;border:1.5px solid var(--line);border-radius:12px;padding:12px;font-family:'Lato',sans-serif;font-size:14px;color:var(--ink);resize:vertical;outline:none;}
+  .contact-vendor-textarea:focus{border-color:var(--orange);}
+  .contact-vendor-meta{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .contact-vendor-input{border:1.5px solid var(--line);border-radius:10px;padding:12px 14px;font-size:14px;color:var(--ink);outline:none;}
+  .contact-vendor-input:focus{border-color:var(--orange);}
+  .contact-vendor-submit{width:100%;font-size:14px;}
+  .contact-vendor-alert{border-radius:10px;padding:12px 14px;font-size:13px;line-height:1.4;}
   .qty-btn{width:36px;height:46px;background:var(--cream2);border:none;font-size:16px;cursor:pointer;color:var(--ink-2);display:flex;align-items:center;justify-content:center;}
   .qty-btn:hover{background:var(--line);}
   .qty-val{width:38px;text-align:center;font-size:15px;font-weight:700;color:var(--ink);border:none;background:white;outline:none;}
@@ -269,6 +278,17 @@
           <button class="btn-wish-main" id="btn-wish" onclick="toggleWish()">
             <i class="fa-regular fa-heart" id="wish-icon"></i>
           </button>
+        </div>
+
+        <div class="contact-vendor">
+          <div class="contact-vendor-title">Contact Vendor</div>
+          <textarea id="vendor-message" class="contact-vendor-textarea" placeholder="Write your message to the vendor about this product..."></textarea>
+          <div class="contact-vendor-meta">
+            <input id="vendor-guest-name" type="text" class="contact-vendor-input" placeholder="Your name (optional)">
+            <input id="vendor-guest-email" type="email" class="contact-vendor-input" placeholder="Your email (optional)">
+          </div>
+          <button class="btn-cart-main contact-vendor-submit" type="button" onclick="sendVendorMessage()">Send Message</button>
+          <div id="vendor-message-alert" class="contact-vendor-alert" style="display:none;"></div>
         </div>
 
         <div class="specs-box">
@@ -650,6 +670,64 @@ function updateWishBtn(){
   }
   btn.classList.toggle('on',wished);
   document.getElementById('wish-icon').className=`fa-${wished?'solid':'regular'} fa-heart`;
+}
+
+function setVendorMessageAlert(message, type) {
+  const alertEl = document.getElementById('vendor-message-alert');
+  if (!alertEl) return;
+  alertEl.textContent = message;
+  alertEl.style.display = 'block';
+  alertEl.style.color = type === 'success' ? '#115e59' : '#7f1d1d';
+  alertEl.style.background = type === 'success' ? '#d1fae5' : '#fee2e2';
+  alertEl.style.border = type === 'success' ? '1px solid #10b981' : '1px solid #ef4444';
+  setTimeout(() => {
+    if (alertEl) alertEl.style.display = 'none';
+  }, 6000);
+}
+
+async function sendVendorMessage() {
+  const message = (document.getElementById('vendor-message')?.value || '').trim();
+  const name = (document.getElementById('vendor-guest-name')?.value || '').trim();
+  const email = (document.getElementById('vendor-guest-email')?.value || '').trim();
+  if (!message) {
+    setVendorMessageAlert('Please enter a message before sending.', 'error');
+    return;
+  }
+
+  const payload = {
+    vendor_id: currentProduct?.vendor_id || null,
+    product_id: currentProduct?.id || currentId,
+    message: message,
+    name: name,
+    email: email
+  };
+
+  try {
+    const token = localStorage.getItem('access_token');
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const response = await fetch('/api/vendor/messages', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(payload)
+    });
+    const data = await response.json();
+    if (!data.success) {
+      setVendorMessageAlert(data.message || 'Unable to send message. Please try again.', 'error');
+      return;
+    }
+
+    setVendorMessageAlert('Message sent to vendor successfully.', 'success');
+    document.getElementById('vendor-message').value = '';
+    document.getElementById('vendor-guest-name').value = '';
+    document.getElementById('vendor-guest-email').value = '';
+  } catch (error) {
+    console.error('sendVendorMessage error', error);
+    setVendorMessageAlert('Unable to send message right now. Try again later.', 'error');
+  }
 }
 
 function switchTab(tab,btn){
