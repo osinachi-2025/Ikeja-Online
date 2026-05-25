@@ -3,56 +3,530 @@
 {% block title %}Home | Ikeja Online{% endblock title %}
 
 {% block Content %}
-    <main>
+<style>
+  /* ══════════════════════════════════════
+     AD SLOT SYSTEM
+  ══════════════════════════════════════ */
+  .ad-slot{position:relative;overflow:hidden;border-radius:10px;}
+  .ad-slot::before{content:'AD';position:absolute;top:7px;right:9px;font-size:8px;font-weight:900;letter-spacing:1.5px;color:var(--ink-4);background:var(--cream2);border:1px solid var(--line);padding:2px 6px;border-radius:3px;z-index:2;}
+  .ad-slot-inner{width:100%;height:100%;background:linear-gradient(135deg,var(--cream2) 0%,var(--cream) 100%);border:1px dashed var(--line);border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;transition:border-color .2s,background .2s;}
+  .ad-slot-inner:hover{border-color:var(--orange-mid);background:var(--orange-bg);}
+  .ad-slot-inner i{font-size:22px;color:var(--ink-4);opacity:.5;}
+  .ad-slot-inner span{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--ink-4);}
+  .ad-slot-inner small{font-size:9px;color:var(--ink-4);opacity:.7;}
+  /* Leaderboard */
+  .ad-leaderboard{margin-bottom:14px;}
+  .ad-leaderboard .ad-slot-inner{height:64px;flex-direction:row;gap:12px;padding:0 20px;}
+  /* Billboard */
+  .ad-billboard .ad-slot-inner{height:200px;}
+  /* Native card in pgrid */
+  .ad-native-card{background:white;border:1.5px dashed var(--line);border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:20px 14px;position:relative;min-height:220px;}
+  .ad-native-card::before{content:'SPONSORED';position:absolute;top:8px;right:8px;font-size:7.5px;font-weight:900;letter-spacing:1.5px;color:var(--ink-4);background:var(--cream2);border:1px solid var(--line);padding:2px 6px;border-radius:3px;}
+  .ad-native-card i{font-size:26px;color:var(--ink-4);opacity:.3;}
+  .ad-native-card span{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--ink-4);}
+  .ad-native-card small{font-size:9px;color:var(--ink-4);opacity:.6;text-align:center;line-height:1.5;}
 
-    <!-- FILTER CHIPS -->
-    <div class="filter-bar show" id="fbar">
-      <div class="fchip on" onclick="chipCat('all',this)"><i class="fa-solid fa-house"></i>All</div>
-      <div class="fchip" onclick="chipCat('laptops',this)"><i class="fa-solid fa-laptop"></i>Laptops</div>
-      <div class="fchip" onclick="chipCat('desktops',this)"><i class="fa-solid fa-laptop"></i>Desktops</div>
-      <div class="fchip" onclick="chipCat('phones',this)"><i class="fa-solid fa-mobile-screen"></i>Phones</div>
-      <div class="fchip" onclick="chipCat('keyboards',this)"><i class="fa-solid fa-mobile-screen"></i>Keyboards</div>
-      <div class="fchip" onclick="chipCat('tablets',this)"><i class="fa-solid fa-tablet-screen-button"></i>Tablets</div>
-      <div class="fchip" onclick="chipCat('audio',this)"><i class="fa-solid fa-headphones"></i>Audio</div>
-      <div class="fchip" onclick="chipCat('tvs',this)"><i class="fa-solid fa-tv"></i>TVs</div>
-      <div class="fchip" onclick="chipCat('cameras',this)"><i class="fa-solid fa-camera"></i>Cameras</div>
-      
+  /* ══════════════════════════════════════
+     LIVE DEAL TICKER
+  ══════════════════════════════════════ */
+  .ticker-wrap{background:var(--ink);overflow:hidden;height:30px;display:flex;align-items:center;margin-bottom:0;border-radius:0;}
+  .ticker-label{flex-shrink:0;font-size:8.5px;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--orange-mid);padding:0 12px 0 14px;border-right:1px solid rgba(255,255,255,.1);height:100%;display:flex;align-items:center;gap:5px;white-space:nowrap;}
+  .ticker-track{display:flex;animation:tickerScroll 32s linear infinite;}
+  .ticker-track:hover{animation-play-state:paused;}
+  @keyframes tickerScroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+  .ticker-item{white-space:nowrap;font-size:11px;color:rgba(255,255,255,.6);padding:0 26px;display:flex;align-items:center;gap:7px;}
+  .ticker-item .t-dot{width:3px;height:3px;border-radius:50%;background:var(--orange-mid);flex-shrink:0;}
+  .ticker-item strong{color:white;}
+
+  /* ══════════════════════════════════════
+     VALUE PROMO STRIP
+  ══════════════════════════════════════ */
+  .promo-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:22px;}
+  .promo-card{background:white;border:1px solid var(--line);border-radius:10px;padding:13px 15px;display:flex;align-items:center;gap:12px;transition:box-shadow .18s,transform .18s;}
+  @media(hover:hover){.promo-card:hover{transform:translateY(-2px);box-shadow:0 5px 20px rgba(26,23,20,.08);border-color:#cfc8be;}}
+  .promo-ic{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .promo-ic i{font-size:15px;}
+  .promo-ic.orange{background:var(--orange-bg);color:var(--orange);}
+  .promo-ic.green{background:var(--green-bg);color:var(--green);}
+  .promo-ic.ink{background:var(--cream2);color:var(--ink-2);}
+  .promo-title{font-size:12px;font-weight:700;color:var(--ink);margin-bottom:1px;line-height:1.2;}
+  .promo-sub{font-size:10.5px;color:var(--ink-4);font-family:'Source Serif 4',serif;font-style:italic;}
+
+  /* ══════════════════════════════════════
+     CATEGORY SHOWCASE — horizontal scroll
+     Works identically on mobile & desktop
+  ══════════════════════════════════════ */
+  .cat-showcase{margin-bottom:26px;}
+  .cat-showcase-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+  .cat-showcase-head h3{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--ink);}
+  .cat-browse-link{font-size:12px;color:var(--orange);text-decoration:none;font-weight:700;display:flex;align-items:center;gap:5px;white-space:nowrap;transition:gap .15s;}
+  .cat-browse-link:hover{gap:8px;}
+
+  /* Scroll container */
+  .cat-scroll{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;padding-bottom:6px;scrollbar-width:none;}
+  .cat-scroll::-webkit-scrollbar{display:none;}
+
+  /* Each tile */
+  .cat-tile{flex:0 0 auto;width:110px;border-radius:12px;overflow:hidden;cursor:pointer;text-decoration:none;position:relative;scroll-snap-align:start;transition:transform .18s,box-shadow .18s;display:block;}
+  @media(min-width:600px){.cat-tile{width:130px;}}
+  @media(min-width:900px){.cat-tile{width:140px;}}
+  @media(hover:hover){.cat-tile:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(26,23,20,.13);}}
+  .cat-tile:active{transform:scale(.97);}
+
+  /* Image area */
+  .cat-tile-img{width:100%;aspect-ratio:1;overflow:hidden;position:relative;background:var(--cream2);}
+  .cat-tile-img img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .32s ease;}
+  .cat-tile:hover .cat-tile-img img{transform:scale(1.06);}
+  /* Dark gradient overlay at bottom */
+  .cat-tile-img::after{content:'';position:absolute;inset:0;background:linear-gradient(to bottom,transparent 40%,rgba(28,25,22,.68) 100%);}
+
+  /* Label pinned over image */
+  .cat-tile-label{position:absolute;bottom:0;left:0;right:0;padding:9px 10px 8px;z-index:1;}
+  .cat-tile-name{font-size:11.5px;font-weight:700;color:white;line-height:1.2;display:block;}
+  .cat-tile-from{font-size:9.5px;color:rgba(255,255,255,.65);display:block;margin-top:1px;}
+
+  /* Active / selected glow */
+  .cat-tile.active-cat .cat-tile-img::after{background:linear-gradient(to bottom,rgba(212,80,10,.18) 0%,rgba(212,80,10,.75) 100%);}
+  .cat-tile.active-cat .cat-tile-img{outline:2.5px solid var(--orange);outline-offset:-2.5px;border-radius:12px;}
+
+  /* Placeholder shimmer when no image loads */
+  .cat-tile-img img.no-img{display:none;}
+  .cat-tile-img .cat-fa-fallback{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:28px;color:var(--ink-3);opacity:.35;}
+
+  /* ══════════════════════════════════════
+     DEALS SECTION HEADER
+  ══════════════════════════════════════ */
+  .deals-head{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+  .deals-head h3{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--ink);}
+  .deal-badge{font-size:8.5px;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;background:var(--red);color:white;padding:3px 8px;border-radius:4px;}
+  .countdown{display:flex;align-items:center;gap:4px;margin-left:auto;}
+  .cd-unit{display:flex;flex-direction:column;align-items:center;background:var(--ink);color:white;border-radius:5px;padding:4px 7px;min-width:28px;}
+  .cd-n{font-family:'Playfair Display',serif;font-size:13px;font-weight:700;line-height:1;}
+  .cd-l{font-size:7px;font-weight:700;letter-spacing:1px;text-transform:uppercase;opacity:.45;margin-top:1px;}
+  .cd-sep{font-size:13px;font-weight:700;color:var(--ink-3);}
+
+  /* ══════════════════════════════════════
+     BRAND TRUST ROW
+  ══════════════════════════════════════ */
+  .brand-trust{border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:16px 0;margin-bottom:26px;}
+  .brand-trust-inner{display:flex;align-items:center;gap:14px;}
+  .brand-trust-label{font-size:9px;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--ink-4);flex-shrink:0;white-space:nowrap;}
+  .brand-logos{display:flex;align-items:center;gap:22px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;flex:1;padding:2px 0;}
+  .brand-logos::-webkit-scrollbar{display:none;}
+  .brand-logo-item{font-family:'Playfair Display',serif;font-size:13px;font-weight:700;color:var(--ink-4);white-space:nowrap;opacity:.5;transition:opacity .2s;cursor:default;flex-shrink:0;letter-spacing:-.3px;user-select:none;}
+  .brand-logo-item:hover{opacity:.9;}
+
+  /* ══════════════════════════════════════
+     RECENTLY VIEWED
+  ══════════════════════════════════════ */
+  .recent-viewed{margin-bottom:26px;}
+  .rv-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+  .rv-head h3{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--ink);}
+  .rv-scroll{display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding-bottom:2px;}
+  .rv-scroll::-webkit-scrollbar{display:none;}
+  .rv-card-ph{flex-shrink:0;width:110px;background:white;border:1px solid var(--line);border-radius:10px;height:130px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;transition:border-color .15s,box-shadow .15s;}
+  .rv-card-ph:hover{border-color:var(--orange-mid);box-shadow:0 3px 12px rgba(26,23,20,.07);}
+  .rv-card-ph i{font-size:22px;color:var(--ink-4);opacity:.35;}
+  .rv-card-ph span{font-size:9px;color:var(--ink-4);text-align:center;padding:0 8px;line-height:1.4;}
+
+  /* ══════════════════════════════════════
+     RESPONSIVE
+  ══════════════════════════════════════ */
+  @media(max-width:680px){
+    .promo-strip{grid-template-columns:1fr 1fr;gap:8px;}
+    .promo-strip .promo-card:last-child{grid-column:1/-1;}
+    .brand-trust-label{display:none;}
+    .countdown .cd-unit{min-width:24px;padding:3px 5px;}
+    .cd-n{font-size:12px;}
+    .ad-leaderboard .ad-slot-inner{flex-direction:column;height:80px;gap:4px;padding:0 12px;}
+  }
+  @media(max-width:480px){
+    .promo-strip{grid-template-columns:1fr;}
+    .promo-strip .promo-card:last-child{grid-column:auto;}
+    .cat-tile{width:100px;}
+    .cat-tile-name{font-size:11px;}
+    .cat-tile-from{font-size:9px;}
+    .countdown{display:none;}
+  }
+</style>
+
+<main>
+
+  <!-- ════ FILTER CHIPS (mobile) ════ -->
+  <div class="filter-bar show" id="fbar">
+    <div class="fchip on"  onclick="chipCat('all',this)"><i class="fa-solid fa-house"></i>All</div>
+    <div class="fchip" onclick="chipCat('laptops',this)"><i class="fa-solid fa-laptop"></i>Laptops</div>
+    <div class="fchip" onclick="chipCat('desktops',this)"><i class="fa-solid fa-desktop"></i>Desktops</div>
+    <div class="fchip" onclick="chipCat('phones',this)"><i class="fa-solid fa-mobile-screen"></i>Phones</div>
+    <div class="fchip" onclick="chipCat('keyboards',this)"><i class="fa-solid fa-keyboard"></i>Keyboards</div>
+    <div class="fchip" onclick="chipCat('tablets',this)"><i class="fa-solid fa-tablet-screen-button"></i>Tablets</div>
+    <div class="fchip" onclick="chipCat('audio',this)"><i class="fa-solid fa-headphones"></i>Audio</div>
+    <div class="fchip" onclick="chipCat('tvs',this)"><i class="fa-solid fa-tv"></i>TVs</div>
+    <div class="fchip" onclick="chipCat('cameras',this)"><i class="fa-solid fa-camera"></i>Cameras</div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       AD PLACEMENT: leaderboard-top
+       Swap .ad-slot-inner content with your ad tag.
+       Sizes: 728×90 desktop / 320×50 mobile
+  ════════════════════════════════════════ -->
+  <div class="ad-leaderboard ad-slot" id="ad-leaderboard-top">
+    <div class="ad-slot-inner">
+      <i class="fa-regular fa-rectangle-ad"></i>
+      <span>Advertise Here</span>
+      <small>728 × 90 — Leaderboard</small>
     </div>
+  </div>
 
-    <!-- HERO -->
-    <div class="hero" id="hero-banner">
-      <div class="hero-inner">
-        <span class="hero-tag">Weekend Flash Sale</span>
-        <h1>The Tech You Want, <em>Priced to Move</em></h1>
-        <p>Top brands, real deals. Delivered anywhere in Nigeria.</p>
-        <div class="hero-btns">
-          <button class="btn-hp" onclick="chipCat('laptops',null)">Shop Laptops</button>
-          <button class="btn-hg" onclick="chipCat('phones',null)">View Phones</button>
-        </div>
-        <div class="hero-stats">
-          <div class="h-stat"><div class="sv"><em>40</em>%</div><div class="sl">Up to off</div></div>
-          <div class="h-stat"><div class="sv"><em>21</em>+</div><div class="sl">Products</div></div>
-          <div class="h-stat"><div class="sv"><em>24h</em></div><div class="sl">Delivery</div></div>
-        </div>
+  <!-- ════ LIVE DEAL TICKER ════ -->
+  <div class="ticker-wrap">
+    <div class="ticker-label"><i class="fa-solid fa-bolt"></i>Live Deals</div>
+    <div style="overflow:hidden;flex:1;display:flex;min-width:0;">
+      <div class="ticker-track" id="ticker-track">
+        <div class="ticker-item loading"><span class="t-dot"></span>Loading live deals…</div>
       </div>
     </div>
+  </div>
 
-    <!-- SECTION BAR -->
-    <div class="sec-bar">
-      <h2 id="sec-h2">All Products</h2>
-      <span class="sec-crumb" id="sec-crumb" style="display:none;"></span>
-      <span class="sec-count" id="sec-count">21 items</span>
-      <div class="sort-wrap">
-        <select class="sort-sel" id="sort-sel" onchange="doSort()">
-          <option value="default">Featured</option>
-          <option value="price-asc">Price ↑</option>
-          <option value="price-desc">Price ↓</option>
-          <option value="rating">Top rated</option>
-        </select>
+  <!-- ════ HERO BANNER ════ -->
+  <div class="hero" id="hero-banner" style="margin-top:14px;">
+    <div class="hero-inner">
+      <span class="hero-tag">Weekend Flash Sale</span>
+      <h1>The Tech You Want, <em>Priced to Move</em></h1>
+      <p>Top brands, real deals. Delivered anywhere in Nigeria.</p>
+      <div class="hero-btns">
+        <button class="btn-hp" onclick="chipCat('laptops',null)">Shop Laptops</button>
+        <button class="btn-hg" onclick="chipCat('phones',null)">View Phones</button>
+      </div>
+      <div class="hero-stats">
+        <div class="h-stat"><div class="sv"><em>40</em>%</div><div class="sl">Up to off</div></div>
+        <div class="h-stat"><div class="sv"><em>21</em>+</div><div class="sl">Products</div></div>
+        <div class="h-stat"><div class="sv"><em>24h</em></div><div class="sl">Delivery</div></div>
       </div>
     </div>
+  </div>
 
-    <div class="pgrid" id="pgrid"></div>
+  <!-- ════ VALUE PROMO STRIP ════ -->
+  <div class="promo-strip" style="margin-top:16px;">
+    <div class="promo-card">
+      <div class="promo-ic orange"><i class="fa-solid fa-truck-fast"></i></div>
+      <div>
+        <div class="promo-title">Same-day Delivery</div>
+        <div class="promo-sub">Lagos orders before 2 PM</div>
+      </div>
+    </div>
+    <div class="promo-card">
+      <div class="promo-ic green"><i class="fa-solid fa-shield-halved"></i></div>
+      <div>
+        <div class="promo-title">Genuine Products</div>
+        <div class="promo-sub">100% authentic &amp; sealed</div>
+      </div>
+    </div>
+    <div class="promo-card">
+      <div class="promo-ic ink"><i class="fa-solid fa-rotate-left"></i></div>
+      <div>
+        <div class="promo-title">7-Day Returns</div>
+        <div class="promo-sub">No questions asked</div>
+      </div>
+    </div>
+  </div>
 
-  </main>
+  <!-- ════ BRAND TRUST ════ -->
+  <div class="brand-trust">
+    <div class="brand-trust-inner">
+      <span class="brand-trust-label">Trusted brands</span>
+      <div class="brand-logos">
+        <span class="brand-logo-item">Apple</span>
+        <span class="brand-logo-item">Samsung</span>
+        <span class="brand-logo-item">Sony</span>
+        <span class="brand-logo-item">Dell</span>
+        <span class="brand-logo-item">LG</span>
+        <span class="brand-logo-item">Lenovo</span>
+        <span class="brand-logo-item">HP</span>
+        <span class="brand-logo-item">Bose</span>
+        <span class="brand-logo-item">Canon</span>
+        <span class="brand-logo-item">Huawei</span>
+        <span class="brand-logo-item">Asus</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       CATEGORY SHOWCASE
+       • Horizontal scroll — works on all screen sizes
+       • Tiles use real <img> with Unsplash photos
+       • Replace src URLs with your own CDN images
+       • chipCat() called on click to filter products
+  ════════════════════════════════════════ -->
+    <div class="cat-showcase">
+    <div class="cat-showcase-head">
+      <h3>Shop by Category</h3>
+      <a class="cat-browse-link" href="#" onclick="openDrawer();return false;">Browse all <i class="fa-solid fa-arrow-right" style="font-size:10px;"></i></a>
+    </div>
+
+    <div class="cat-scroll" id="cat-scroll">
+
+      <div class="cat-tile" id="ct-all" onclick="chipCat('all',null);setCatActive('ct-all')">
+        <div class="cat-tile-img">
+          <img src="https://images.unsplash.com/photo-1593642632559-0c6d3fc62b89?w=300&q=70&auto=format" alt="All products" onerror="this.classList.add('no-img')">
+          <div class="cat-fa-fallback"><i class="fa-solid fa-store"></i></div>
+        </div>
+        <div class="cat-tile-label">
+          <span class="cat-tile-name">All</span>
+          <span class="cat-tile-from">{{ productCount }} Products</span>
+        </div>
+      </div>
+
+      <div class="cat-tile" id="ct-laptops" onclick="chipCat('laptops',null);setCatActive('ct-laptops')">
+        <div class="cat-tile-img">
+          <img src="https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=300&q=70&auto=format" alt="Laptops" onerror="this.classList.add('no-img')">
+          <div class="cat-fa-fallback"><i class="fa-solid fa-laptop"></i></div>
+        </div>
+        <div class="cat-tile-label">
+          <span class="cat-tile-name">Laptops</span>
+          <span class="cat-tile-from">From ₦450k</span>
+        </div>
+      </div>
+
+      <div class="cat-tile" id="ct-phones" onclick="chipCat('phones',null);setCatActive('ct-phones')">
+        <div class="cat-tile-img">
+          <img src="https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=300&q=70&auto=format" alt="Phones" onerror="this.classList.add('no-img')">
+          <div class="cat-fa-fallback"><i class="fa-solid fa-mobile-screen"></i></div>
+        </div>
+        <div class="cat-tile-label">
+          <span class="cat-tile-name">Phones</span>
+          <span class="cat-tile-from">From ₦120k</span>
+        </div>
+      </div>
+
+      <div class="cat-tile" id="ct-tablets" onclick="chipCat('tablets',null);setCatActive('ct-tablets')">
+        <div class="cat-tile-img">
+          <img src="https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=300&q=70&auto=format" alt="Tablets" onerror="this.classList.add('no-img')">
+          <div class="cat-fa-fallback"><i class="fa-solid fa-tablet-screen-button"></i></div>
+        </div>
+        <div class="cat-tile-label">
+          <span class="cat-tile-name">Tablets</span>
+          <span class="cat-tile-from">From ₦250k</span>
+        </div>
+      </div>
+
+      <div class="cat-tile" id="ct-cameras" onclick="chipCat('cameras',null);setCatActive('ct-cameras')">
+        <div class="cat-tile-img">
+          <img src="https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=300&q=70&auto=format" alt="Cameras" onerror="this.classList.add('no-img')">
+          <div class="cat-fa-fallback"><i class="fa-solid fa-camera"></i></div>
+        </div>
+        <div class="cat-tile-label">
+          <span class="cat-tile-name">Cameras</span>
+          <span class="cat-tile-from">From ₦180k</span>
+        </div>
+      </div>
+
+      <div class="cat-tile" id="ct-keyboards" onclick="chipCat('keyboards',null);setCatActive('ct-keyboards')">
+        <div class="cat-tile-img">
+          <img src="https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=300&q=70&auto=format" alt="Keyboards" onerror="this.classList.add('no-img')">
+          <div class="cat-fa-fallback"><i class="fa-solid fa-keyboard"></i></div>
+        </div>
+        <div class="cat-tile-label">
+          <span class="cat-tile-name">Keyboards</span>
+          <span class="cat-tile-from">From ₦25k</span>
+        </div>
+      </div>
+
+      <div class="cat-tile" id="ct-desktops" onclick="chipCat('desktops',null);setCatActive('ct-desktops')">
+        <div class="cat-tile-img">
+          <img src="https://images.unsplash.com/photo-1547082299-de196ea013d6?w=300&q=70&auto=format" alt="Desktops" onerror="this.classList.add('no-img')">
+          <div class="cat-fa-fallback"><i class="fa-solid fa-desktop"></i></div>
+        </div>
+        <div class="cat-tile-label">
+          <span class="cat-tile-name">Desktops</span>
+          <span class="cat-tile-from">From ₦600k</span>
+        </div>
+      </div>
+
+    </div><!-- /cat-scroll -->
+  </div><!-- /cat-showcase -->
+
+  
+  <!-- ════ DEALS OF THE DAY — section header ════ -->
+  <div class="deals-head">
+    <h3>Deals of the Day</h3>
+    <span class="deal-badge">Limited Time</span>
+    <div class="countdown" id="countdown">
+      <div class="cd-unit"><span class="cd-n" id="cd-h">00</span><span class="cd-l">hrs</span></div>
+      <span class="cd-sep">:</span>
+      <div class="cd-unit"><span class="cd-n" id="cd-m">00</span><span class="cd-l">min</span></div>
+      <span class="cd-sep">:</span>
+      <div class="cd-unit"><span class="cd-n" id="cd-s">00</span><span class="cd-l">sec</span></div>
+    </div>
+  </div>
+
+  <!-- ════ MAIN SECTION BAR ════ -->
+  <div class="sec-bar">
+    <h2 id="sec-h2">All Products</h2>
+    <span class="sec-crumb" id="sec-crumb" style="display:none;"></span>
+    <span class="sec-count" id="sec-count">21 items</span>
+    <div class="sort-wrap">
+      <select class="sort-sel" id="sort-sel" onchange="doSort()">
+        <option value="default">Featured</option>
+        <option value="price-asc">Price ↑</option>
+        <option value="price-desc">Price ↓</option>
+        <option value="rating">Top rated</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       PRODUCT GRID
+       AD PLACEMENT: mid-grid-native
+       Inject .ad-native-card into #pgrid every
+       N products via your renderProducts() JS.
+       Example commented below.
+  ════════════════════════════════════════ -->
+  <div class="pgrid" id="pgrid">
+    <!-- Native ad card inside product grid (appears like a product card) -->
+    <div class="ad-native-card" id="ad-mid-grid-1">
+      <i class="fa-regular fa-rectangle-ad"></i>
+      <span>Your Ad Here</span>
+      <small>Native card slot · 300 × 250</small>
+    </div>
+  </div>
+  <!-- Note: billboard ad moved into product grid as native card to match product layout -->
+
+  <!-- ════ RECENTLY VIEWED (populated from localStorage) ════ -->
+  <div class="recent-viewed" id="recently-viewed-section" style="display:none;">
+    <div class="rv-head">
+      <h3>Recently Viewed</h3>
+    </div>
+    <div class="rv-scroll" id="rv-scroll"></div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       AD PLACEMENT: leaderboard-bottom
+       Recommended size: 728×90 / 320×50 mobile
+  ════════════════════════════════════════ -->
+  <div class="ad-leaderboard ad-slot" id="ad-leaderboard-bottom" style="margin-bottom:20px;">
+    <div class="ad-slot-inner">
+      <i class="fa-regular fa-rectangle-ad"></i>
+      <span>Advertise Here</span>
+      <small>728 × 90 — Leaderboard (bottom)</small>
+    </div>
+  </div>
+</div>
+</main>
+
+<script>
+/* ─── LIVE DEALS: fetch 6 products and render as cards ─── */
+async function loadLiveDeals(){
+  try{
+    const res = await fetch('/api/public-products?limit=6');
+    const data = await res.json();
+    if(!data || !data.success) return;
+    const list = data.products || [];
+    const grid = document.getElementById('live-deals-grid');
+    if(!grid) return;
+    grid.innerHTML='';
+    list.forEach(p=>{
+      const a = document.createElement('a');
+      a.className='pcard';
+      a.href = '/product/' + (p.slug || p.id);
+      const img = p.image || (p.images && p.images[0]) || '/static/images/placeholder.png';
+      const price = (p.price!=null)?('₦'+Number(p.price).toLocaleString()):'';
+      a.innerHTML = `
+        <div class="pcard-img"><img src="${img}" alt="${(p.name||'Product')}" onerror="this.src='/static/images/placeholder.png'"></div>
+        <div class="pcard-body">
+          <div class="pcard-brand">${p.vendor_name||''}</div>
+          <div class="pcard-name">${p.name||''}</div>
+          <div class="pcard-meta"><span class="pcard-now">${price}</span></div>
+        </div>
+      `;
+      grid.appendChild(a);
+    });
+    // show native ad card after deals
+    const ad = document.getElementById('home-ad-card');
+    if(ad){ ad.style.display='flex'; grid.parentNode.insertBefore(ad, grid.nextSibling); }
+  }catch(e){console.error('loadLiveDeals error',e)}
+}
+
+// Initialize live deals after DOM ready
+document.addEventListener('DOMContentLoaded', function(){
+  // attempt to load live deals if container exists
+  if(document.getElementById('live-deals-grid')) loadLiveDeals();
+});
+/* ─── CATEGORY TILE ACTIVE STATE ─── */
+function setCatActive(id){
+  document.querySelectorAll('.cat-tile').forEach(function(t){t.classList.remove('active-cat');});
+  var el=document.getElementById(id);
+  if(el) el.classList.add('active-cat');
+}
+// Default: highlight "All" on load
+document.addEventListener('DOMContentLoaded',function(){
+  setCatActive('ct-all');
+});
+
+/* ─── COUNTDOWN TO MIDNIGHT ─── */
+(function(){
+  var end=new Date();
+  end.setHours(23,59,59,0);
+  function pad(n){return String(n).padStart(2,'0');}
+  function tick(){
+    var now=new Date(),diff=end-now;
+    if(diff<=0){var c=document.getElementById('countdown');if(c)c.style.display='none';return;}
+    var h=Math.floor(diff/3600000),m=Math.floor((diff%3600000)/60000),s=Math.floor((diff%60000)/1000);
+    document.getElementById('cd-h').textContent=pad(h);
+    document.getElementById('cd-m').textContent=pad(m);
+    document.getElementById('cd-s').textContent=pad(s);
+  }
+  tick();setInterval(tick,1000);
+})();
+
+/* ─── RECENTLY VIEWED (from localStorage) ─── */
+(function(){
+  try{
+    var rv=JSON.parse(localStorage.getItem('ikeja_rv')||'[]');
+    if(!rv.length)return;
+    var sec=document.getElementById('recently-viewed-section');
+    var scroll=document.getElementById('rv-scroll');
+    if(!sec||!scroll)return;
+    sec.style.display='block';
+    rv.slice(0,8).forEach(function(item){
+      var d=document.createElement('div');
+      d.className='rv-card-ph';
+      d.title=item.name||'Product';
+      d.onclick=function(){if(item.id)window.location.href='/product/'+item.id;};
+      var icon=item.category==='phones'?'fa-mobile-screen':item.category==='tablets'?'fa-tablet-screen-button':item.category==='audio'?'fa-headphones':item.category==='cameras'?'fa-camera':item.category==='tvs'?'fa-tv':'fa-laptop';
+      d.innerHTML='<i class="fa-solid '+icon+'"></i><span>'+(item.name||'Product').substring(0,22)+'</span>';
+      scroll.appendChild(d);
+    });
+  }catch(e){}
+})();
+
+/* ─── DYNAMIC TICKER: populate from backend and duplicate items for seamless loop ─── */
+async function loadTickerDeals(limit=6){
+  try{
+    const el = document.getElementById('ticker-track');
+    if(!el) return;
+    const resp = await fetch(`/api/public-products?limit=${limit}`);
+    const data = await resp.json();
+    if(!data || !data.success){ el.innerHTML = '<div class="ticker-item">No deals available</div>'; return; }
+    const products = data.products || [];
+    el.innerHTML = '';
+    const makeItem = (p)=>{
+      const price = (p.price!=null)?('₦'+Number(p.price).toLocaleString()):'';
+      const div = document.createElement('div');
+      div.className = 'ticker-item';
+      div.innerHTML = `<span class="t-dot"></span>${(p.name||'Product')} — <strong>${price}</strong>`;
+      return div;
+    };
+    // append products
+    products.forEach(p=> el.appendChild(makeItem(p)));
+    // duplicate for seamless loop
+    products.forEach(p=> el.appendChild(makeItem(p)));
+  }catch(e){console.error('loadTickerDeals',e);}  
+}
+
+// load ticker on DOM ready
+document.addEventListener('DOMContentLoaded', function(){
+  loadTickerDeals(6);
+});
+</script>
 {% endblock Content %}
