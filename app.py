@@ -101,6 +101,25 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['VENDOR_UPLOAD_FOLDER'] = VENDOR_UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = MAX_FILE_SIZE
 
+# Validate database URL before init_app to provide clear error messages
+if not db_url or not db_url.strip():
+    raise ValueError(
+        "Database URL is empty. Set SQLALCHEMY_DATABASE_URI or DATABASE_URL environment variable. "
+        "Examples: 'postgresql://user:pass@host/db' or 'sqlite:///ikeja_online.db'"
+    )
+
+# Attempt to parse the URL to catch format errors early
+try:
+    from sqlalchemy.engine import make_url
+    make_url(db_url)
+except Exception as e:
+    # Show a sanitized version of the URL (first and last few chars) to help debug
+    url_preview = db_url[:20] + "..." + db_url[-20:] if len(db_url) > 40 else db_url[:40]
+    raise ValueError(
+        f"Invalid database URL format. Ensure SQLALCHEMY_DATABASE_URI or DATABASE_URL is set correctly. "
+        f"URL preview: {url_preview}... (full error: {str(e)})"
+    ) from e
+
 db.init_app(app)
 jwt = JWTManager(app)
 migrate = Migrate(app, db)
