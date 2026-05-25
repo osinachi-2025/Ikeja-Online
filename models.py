@@ -189,6 +189,7 @@ class VendorMessages(db.Model):
     response = db.Column(db.Text, nullable=True)
     response_at = db.Column(db.DateTime, nullable=True)
     sender_type = db.Column(db.String(20), default='guest')
+    is_read = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=func.now())
     updated_at = db.Column(db.DateTime, default=func.now(), onupdate=func.now())
     vendor = db.relationship('Vendors', backref=db.backref('messages', lazy=True))

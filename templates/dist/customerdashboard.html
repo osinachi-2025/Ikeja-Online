@@ -1250,7 +1250,15 @@ function toggleDD(id){
   const dd = document.getElementById(id);
   const wasOpen = dd.classList.contains('open');
   document.querySelectorAll('.dropdown.open').forEach(d=>d.classList.remove('open'));
-  if(!wasOpen) dd.classList.add('open');
+  if(!wasOpen) {
+    dd.classList.add('open');
+    if(id === 'ddNotif'){
+      // mark server-side messages as read
+      const token = localStorage.getItem('access_token');
+      if(token) fetch('/api/customer/messages/mark-read',{method:'POST',headers:{'Authorization':'Bearer '+token}}).catch(()=>{});
+      resetNewNotifs();
+    }
+  }
 }
 document.addEventListener('click',e=>{
   if(!e.target.closest('.dropdown')) document.querySelectorAll('.dropdown.open').forEach(d=>d.classList.remove('open'));
@@ -1317,6 +1325,7 @@ async function loadUser(){
 
 /* ── NOTIFICATIONS ───────────────────────────── */
 let notifs = [];
+let newNotifs = 0;
 const icons = {update:'bi-arrow-repeat',shipped:'bi-truck',delivered:'bi-check-circle',cancelled:'bi-x-circle',warning:'bi-exclamation-circle',info:'bi-info-circle'};
 
 function renderNotifs(){
@@ -1324,8 +1333,8 @@ function renderNotifs(){
   const badge = document.getElementById('notifCount');
   const hdr = document.getElementById('notifHeader');
   const n = notifs.length;
-  if(badge){ badge.textContent=n; badge.style.display=n>0?'flex':'none'; }
-  if(hdr) hdr.textContent = n ? n+' new':'';
+  if(badge){ badge.textContent=newNotifs; badge.style.display=newNotifs>0?'flex':'none'; }
+  if(hdr) hdr.textContent = newNotifs ? newNotifs+' new':'';
   if(!list) return;
   if(!n){ list.innerHTML='<div class="ni" style="justify-content:center;color:var(--text3);font-size:.8rem">No notifications</div>'; return; }
   list.innerHTML = notifs.slice(0,8).map(n=>`
@@ -1335,15 +1344,17 @@ function renderNotifs(){
     </div>`).join('');
 }
 
-function clearNotifs(e){ e.preventDefault(); notifs=[]; renderNotifs(); }
+function clearNotifs(e){ e.preventDefault(); notifs=[]; newNotifs=0; renderNotifs(); }
+function resetNewNotifs(){ newNotifs = 0; renderNotifs(); }
 
 async function loadNotifs(){
   const token = localStorage.getItem('access_token');
   if(!token) return;
   notifs=[];
-  const [oR,wR] = await Promise.allSettled([
+  const [oR,wR,mR] = await Promise.allSettled([
     fetch('/api/orders',{headers:{'Authorization':'Bearer '+token}}),
-    fetch('/api/customer/wallet-transactions',{headers:{'Authorization':'Bearer '+token}})
+    fetch('/api/customer/wallet-transactions',{headers:{'Authorization':'Bearer '+token}}),
+    fetch('/api/customer/messages',{headers:{'Authorization':'Bearer '+token}})
   ]);
 
   if(oR.status==='fulfilled'&&oR.value.ok){
@@ -1385,8 +1396,31 @@ async function loadNotifs(){
     }
   }
 
-  notifs.sort((a,b)=>new Date(b.date)-new Date(a.date));
-  renderNotifs();
+  if(mR.status==='fulfilled'&&mR.value.ok){
+    const d = await mR.value.json().catch(()=>{});
+    if(d?.success&&Array.isArray(d.messages)){
+      if(d.messages.length){
+        notifs.push({title:`You have ${d.messages.length} message${d.messages.length===1?'':'s'} from vendors`,msg:'Check your inbox for replies and updates.',type:'info',date:new Date(d.messages[0].created_at)});
+        d.messages.slice(0,3).forEach(m=>{
+          notifs.push({title:`Message from ${m.vendor_name||'Vendor'}`,msg:`${m.product_name||'Inquiry'}`,type:'info',date:m.response_at?new Date(m.response_at):new Date(m.created_at)});
+        });
+      }
+    }
+  }
+
+    notifs.sort((a,b)=>new Date(b.date)-new Date(a.date));
+
+    // Prefer server-side unread count if available
+    try{
+      const uc = await fetch('/api/customer/messages/unread-count', { headers: token ? { 'Authorization':'Bearer '+token } : undefined, credentials: 'include' });
+      if(uc.ok){
+        const ud = await uc.json();
+        if(ud?.success) newNotifs = ud.unread || 0;
+        else newNotifs = notifs.length;
+      } else newNotifs = notifs.length;
+    }catch(e){ newNotifs = notifs.length; }
+
+    renderNotifs();
 }
 
 /* ── LOGOUT ──────────────────────────────────── */

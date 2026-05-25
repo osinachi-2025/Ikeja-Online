@@ -26,8 +26,11 @@ import cloudinary.uploader
 import cloudinary.api
 
 # Load environment variables from .env file (only in development)
-if os.path.exists('.env') and load_dotenv:
-    load_dotenv()
+if os.path.exists('.env'):
+    if load_dotenv:
+        load_dotenv()
+    else:
+        print("WARNING: python-dotenv is not installed; .env file will not be loaded.")
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TEMPLATE_DIR = os.path.join(BASE_DIR, 'templates')
@@ -40,8 +43,10 @@ app = Flask(
 )
 
 # Database configuration
-db_url = os.getenv('DATABASE_URL', 'sqlite:///ikeja_online.db')
+db_url = os.getenv('SQLALCHEMY_DATABASE_URI') or os.getenv('DATABASE_URL') or 'sqlite:///ikeja_online.db'
 # Fix PostgreSQL URL format for SQLAlchemy compatibility
+if db_url.startswith('postgres://'):
+    db_url = db_url.replace('postgres://', 'postgresql://', 1)
 app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -1857,11 +1862,59 @@ def get_vendor_messages():
             'sender_type': msg.sender_type,
             'message': msg.message,
             'response': msg.response,
+            'is_read': bool(msg.is_read),
             'created_at': msg.created_at.isoformat(),
             'response_at': msg.response_at.isoformat() if msg.response_at else None,
         })
 
     return jsonify({'success': True, 'messages': data}), 200
+
+
+@app.route('/api/vendor/messages/unread-count', methods=['GET'])
+@jwt_required()
+def vendor_unread_count():
+    user_id = int(get_jwt_identity())
+    user = Users.query.get(user_id)
+    if not user or user.role.name != 'vendor':
+        return jsonify({'success': False, 'message': 'Vendor access only.'}), 403
+    vendor = Vendors.query.filter_by(user_id=user.id).first()
+    if not vendor:
+        return jsonify({'success': False, 'message': 'Vendor profile not found.'}), 404
+    count = VendorMessages.query.filter_by(vendor_id=vendor.id, is_read=False).count()
+    return jsonify({'success': True, 'unread': count}), 200
+
+
+@app.route('/api/vendor/deposits/unread-count', methods=['GET'])
+@jwt_required()
+def vendor_deposits_unread_count():
+    user_id = int(get_jwt_identity())
+    user = Users.query.get(user_id)
+    if not user or user.role.name != 'vendor':
+        return jsonify({'success': False, 'message': 'Vendor access only.'}), 403
+    vendor = Vendors.query.filter_by(user_id=user.id).first()
+    if not vendor:
+        return jsonify({'success': False, 'message': 'Vendor profile not found.'}), 404
+    # Count pending vendor deposits (new/awaiting processing)
+    try:
+        count = VendorDeposit.query.filter_by(vendor_id=vendor.id, status='pending').count()
+    except Exception:
+        count = 0
+    return jsonify({'success': True, 'unread': count}), 200
+
+
+@app.route('/api/vendor/messages/mark-read', methods=['POST'])
+@jwt_required()
+def vendor_mark_read():
+    user_id = int(get_jwt_identity())
+    user = Users.query.get(user_id)
+    if not user or user.role.name != 'vendor':
+        return jsonify({'success': False, 'message': 'Vendor access only.'}), 403
+    vendor = Vendors.query.filter_by(user_id=user.id).first()
+    if not vendor:
+        return jsonify({'success': False, 'message': 'Vendor profile not found.'}), 404
+    VendorMessages.query.filter_by(vendor_id=vendor.id, is_read=False).update({'is_read': True})
+    db.session.commit()
+    return jsonify({'success': True, 'message': 'Marked vendor messages as read.'}), 200
 
 
 @app.route('/api/vendor/messages/<int:message_id>/reply', methods=['POST'])
@@ -1950,11 +2003,41 @@ def get_customer_messages():
             'product_name': msg.product.name if msg.product else 'General inquiry',
             'message': msg.message,
             'response': msg.response,
+            'is_read': bool(msg.is_read),
             'created_at': msg.created_at.isoformat(),
             'response_at': msg.response_at.isoformat() if msg.response_at else None,
         })
 
     return jsonify({'success': True, 'messages': data}), 200
+
+
+@app.route('/api/customer/messages/unread-count', methods=['GET'])
+@jwt_required()
+def customer_unread_count():
+    user_id = int(get_jwt_identity())
+    user = Users.query.get(user_id)
+    if not user or user.role.name != 'customer':
+        return jsonify({'success': False, 'message': 'Customer access only.'}), 403
+    customer = Customers.query.filter_by(user_id=user.id).first()
+    if not customer:
+        return jsonify({'success': False, 'message': 'Customer profile not found.'}), 404
+    count = VendorMessages.query.filter_by(customer_id=customer.id, is_read=False).count()
+    return jsonify({'success': True, 'unread': count}), 200
+
+
+@app.route('/api/customer/messages/mark-read', methods=['POST'])
+@jwt_required()
+def customer_mark_read():
+    user_id = int(get_jwt_identity())
+    user = Users.query.get(user_id)
+    if not user or user.role.name != 'customer':
+        return jsonify({'success': False, 'message': 'Customer access only.'}), 403
+    customer = Customers.query.filter_by(user_id=user.id).first()
+    if not customer:
+        return jsonify({'success': False, 'message': 'Customer profile not found.'}), 404
+    VendorMessages.query.filter_by(customer_id=customer.id, is_read=False).update({'is_read': True})
+    db.session.commit()
+    return jsonify({'success': True, 'message': 'Marked customer messages as read.'}), 200
 
 
 @app.route('/api/customer/messages/<int:message_id>', methods=['GET'])

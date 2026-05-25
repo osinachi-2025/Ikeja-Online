@@ -988,7 +988,7 @@
 
       <!-- Notifications -->
       <div class="dropdown">
-        <button class="ik-notif-btn" data-bs-toggle="dropdown" aria-label="Notifications">
+        <button class="ik-notif-btn" data-bs-toggle="dropdown" aria-label="Notifications" onclick="(async()=>{ const token=localStorage.getItem('access_token'); if(token) await fetch('/api/vendor/messages/mark-read',{method:'POST',headers:{'Authorization':'Bearer '+token}}).catch(()=>{}); resetNewNotifs(); })()">
           <i class="bi bi-bell"></i>
           <span class="ik-notif-dot" id="notifCount" style="display:none;">0</span>
         </button>
@@ -1456,6 +1456,7 @@ function highlightNav() {
    NOTIFICATIONS
 ============================================= */
 let notifs = [];
+let newNotifs = 0;
 function addNotif(title, msg, type, date) {
   notifs.push({ title, msg, type, date });
   notifs.sort((a,b) => new Date(b.date) - new Date(a.date));
@@ -1466,9 +1467,9 @@ function renderNotifs() {
   const badge  = document.getElementById('notifCount');
   const header = document.getElementById('notifHeader');
   const n = notifs.length;
-  badge.textContent = n;
-  badge.style.display = n > 0 ? 'flex' : 'none';
-  if (header) header.textContent = n ? n + ' new' : '';
+  badge.textContent = newNotifs;
+  badge.style.display = newNotifs > 0 ? 'flex' : 'none';
+  if (header) header.textContent = newNotifs ? newNotifs + ' new' : '';
   if (!list) return;
   if (!n) { list.innerHTML = '<div class="ik-notif-item" style="color:var(--text-muted);justify-content:center;font-size:.82rem;">No notifications</div>'; return; }
   const icons = { order:'bi-bag-check', shipped:'bi-truck', delivered:'bi-check-circle', cancelled:'bi-x-circle', info:'bi-info-circle', warning:'bi-exclamation-circle' };
@@ -1507,7 +1508,8 @@ function loadVendorUser() {
   const token = localStorage.getItem('access_token');
   if (!token) return;
   fetch('/vendor/dashboard/get-vendor-settings', {
-    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
+    headers: token ? { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json' },
+    credentials: 'include'
   })
   .then(r => r.json())
   .then(data => { if (data.vendor && data.user) setUser({ logo_url:data.vendor.logo_url, username:data.user.username, email:data.user.email, created_at:data.user.created_at }); })
@@ -1521,11 +1523,20 @@ async function loadRecentOrders() {
   const token = localStorage.getItem('access_token');
   if (!token) return;
   try {
-    const res  = await fetch('/vendor/orders', { headers:{ 'Authorization':'Bearer '+token } });
-    if (!res.ok) return;
-    const data = await res.json();
-    const orders = data.orders || data;
-    if (!Array.isArray(orders)) return;
+    notifs = [];
+    newNotifs = 0;
+    const [ordersRes, messagesRes] = await Promise.allSettled([
+      fetch('/api/vendor/orders', { headers: token ? { 'Authorization':'Bearer '+token } : undefined, credentials: 'include' }),
+      fetch('/api/vendor/messages', { headers: token ? { 'Authorization':'Bearer '+token } : undefined, credentials: 'include' })
+    ]);
+
+    let orders = [];
+    if (ordersRes.status === 'fulfilled' && ordersRes.value.ok) {
+      const data = await ordersRes.value.json().catch(() => null);
+      orders = Array.isArray(data?.orders) ? data.orders : [];
+    } else {
+      console.warn('Vendor orders fetch failed:', ordersRes.status === 'rejected' ? ordersRes.reason : ordersRes.value.status);
+    }
 
     const el = document.getElementById('statOrders');
     if (el) el.textContent = orders.length;
@@ -1545,8 +1556,41 @@ async function loadRecentOrders() {
 
     const stmap = { Processing:'order', Shipped:'shipped', Delivered:'delivered', Cancelled:'cancelled', Pending:'order' };
     orders.slice(0,5).forEach(o => addNotif(`Order #${o.id} — ${o.status}`, `Status: ${o.status}`, stmap[o.status]||'order', o.created_at ? new Date(o.created_at) : new Date()));
+
+    if (messagesRes.status === 'fulfilled' && messagesRes.value.ok) {
+      const data = await messagesRes.value.json().catch(() => null);
+      if (data?.success && Array.isArray(data.messages)) {
+        if (data.messages.length) {
+          addNotif(`New vendor inquiries`, `${data.messages.length} new message${data.messages.length === 1 ? '' : 's'}`, 'info', data.messages[0].created_at ? new Date(data.messages[0].created_at) : new Date());
+          data.messages.slice(0,3).forEach(m => addNotif(`Message from ${m.customer_name}`, `${m.product_name||'Product inquiry'}`, 'info', m.created_at ? new Date(m.created_at) : new Date()));
+        }
+      }
+    } else {
+      console.warn('Vendor messages fetch failed:', messagesRes.status === 'rejected' ? messagesRes.reason : messagesRes.value.status);
+    }
+    // Prefer server-side unread count for vendor messages
+    try{
+      // Fetch unread messages count (supports cookie or header auth)
+      const uc = await fetch('/api/vendor/messages/unread-count', { headers: token ? { 'Authorization':'Bearer '+token } : undefined, credentials: 'include' });
+      let msgCount = 0;
+      if(uc.ok){
+        const ud = await uc.json();
+        if(ud?.success) msgCount = (typeof ud.unread === 'number') ? ud.unread : 0;
+      }
+      // Fetch pending vendor deposits
+      const dc = await fetch('/api/vendor/deposits/unread-count', { headers: token ? { 'Authorization':'Bearer '+token } : undefined, credentials: 'include' });
+      let depCount = 0;
+      if(dc.ok){
+        const dd = await dc.json();
+        if(dd?.success) depCount = (typeof dd.unread === 'number') ? dd.unread : 0;
+      }
+      newNotifs = msgCount + depCount + notifs.length;
+    }catch(e){ newNotifs = notifs.length; }
+    renderNotifs();
   } catch(e) { console.warn('loadRecentOrders:', e); }
 }
+
+function resetNewNotifs(){ newNotifs = 0; renderNotifs(); }
 
 /* =============================================
    CHARTS
@@ -1629,6 +1673,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initCharts();
   initMap();
   loadRecentOrders();
+  setInterval(loadRecentOrders, 30000);
 });
 </script>
 

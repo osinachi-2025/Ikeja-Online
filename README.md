@@ -113,7 +113,9 @@ Create a `.env` file at the project root and add the required settings:
 
 ```dotenv
 SECRET_KEY=your_secret_key
-DATABASE_URL=your_database_url
+JWT_SECRET_KEY=your_jwt_secret_key
+SQLALCHEMY_DATABASE_URI=sqlite:///ikeja_online.db
+# DATABASE_URL is also supported as a fallback
 PAYSTACK_SECRET_KEY=your_paystack_secret
 RESEND_API_KEY=your_resend_key
 REDIS_URL=redis://localhost:6379
@@ -122,7 +124,25 @@ REDIS_URL=redis://localhost:6379
 ### Run the application
 
 ```bash
-python run.py
+python app.py
+```
+
+### Database migrations
+
+This project includes Flask-Migrate for schema migrations. Use `manage.py` from the project root with the active virtual environment.
+
+```bash
+python manage.py db migrate -m "create initial schema"
+python manage.py db upgrade
+python manage.py db current
+```
+
+If you prefer Flask CLI directly, you can also use:
+
+```bash
+set FLASK_APP=app.py
+flask db migrate -m "create initial schema"
+flask db upgrade
 ```
 
 The development server will be available at:
