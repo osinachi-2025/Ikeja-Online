@@ -2253,14 +2253,15 @@ def get_public_products():
     try:
         # Get pagination parameters
         page = request.args.get('page', 1, type=int)
-        limit = request.args.get('limit', 8, type=int)
+        # Increase default homepage product limit to better serve marketplace listings
+        limit = request.args.get('limit', 24, type=int)
         category_id = request.args.get('category_id', None, type=int)
         
         # Validate pagination parameters
         if page < 1:
             page = 1
         if limit < 1 or limit > 100:
-            limit = 8
+            limit = 24
         
         # Build query
         query = Products.query.filter_by(status='active')

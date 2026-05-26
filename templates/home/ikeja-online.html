@@ -687,6 +687,13 @@ let P = []; // Will be populated from API
 let categories = []; // Will be populated from API
 let totalProductsCount = 0; // Will be updated from API
 let aCat='all',aBrands=[],aList=[],cartN=0,moreOpen=false,currentUser=null;
+// Infinite scroll / pagination state
+let currentPage = 1;
+let isLoadingProducts = false;
+let hasMoreProducts = true;
+let currentCategoryId = null;
+let renderedProductCount = 0; // number of product cards rendered (excludes ad cards)
+const PAGE_LIMIT = 24;
 
 /* ── API FUNCTIONS ── */
 async function loadCategories() {
@@ -717,48 +724,65 @@ async function loadCategories() {
   }
 }
 
-async function loadProducts(categoryId = null) {
+async function loadProducts(categoryId = null, page = 1, append = false) {
   try {
-    console.log('Loading products with categoryId:', categoryId);
-    let url = '/api/public-products';
+    if (isLoadingProducts) return;
+    isLoadingProducts = true;
+    console.log('Loading products with categoryId:', categoryId, 'page:', page, 'append:', append);
+    currentCategoryId = categoryId;
+    let url = `/api/public-products?page=${page}&limit=${PAGE_LIMIT}`;
     if (categoryId) {
-      url += `?category_id=${categoryId}`;
+      url += `&category_id=${categoryId}`;
     }
     console.log('Fetching URL:', url);
     const response = await fetch(url);
     const data = await response.json();
     console.log('API Response:', data);
     if (data.success) {
-      console.log('Products received:', data.products.length);
-      P = data.products.map(product => ({
+      const newProducts = data.products.map(product => ({
         id: product.id,
-        cat: product.category_name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
+        cat: (product.category_name||'').toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
         brand: product.vendor_name,
         name: product.name,
         price: product.price,
-        was: null, // API doesn't provide was price
+        was: null,
         rating: product.average_rating,
         reviews: product.review_count,
-        tag: null, // API doesn't provide tags
+        tag: null,
         desc: product.description,
         image: product.image,
         slug: product.slug
       }));
-      console.log('Mapped products:', P);
-      aList = [...P];
-      console.log('Calling paint with:', P.length, 'products');
-      paint(P);
-      
-      // Update "All Products" count if loading all products (no category filter)
-      if (!categoryId && data.pagination) {
-        console.log('Updating All Products count with:', data.pagination.total);
+
+      // Update pagination state
+      hasMoreProducts = data.pagination ? !!data.pagination.has_next : (newProducts.length === PAGE_LIMIT);
+
+      if (!append) {
+        P = newProducts;
+        aList = [...P];
+        renderedProductCount = 0;
+        document.getElementById('pgrid').innerHTML = '';
+        paint(P);
+      } else {
+        // append
+        P = [...P, ...newProducts];
+        aList = [...P];
+        appendProducts(newProducts);
+      }
+
+      // Update total count if provided
+      if (data.pagination && data.pagination.total != null) {
         updateAllProductsCount(data.pagination.total);
       }
+
+      currentPage = page;
     } else {
       console.error('Failed to load products:', data.error);
     }
   } catch (error) {
     console.error('Error loading products:', error);
+  } finally {
+    isLoadingProducts = false;
   }
 }
 
@@ -912,7 +936,10 @@ async function loadProductsByCategory(catSlug) {
       categoryId = category.id;
     }
   }
-  await loadProducts(categoryId);
+  // reset pagination state for new category
+  currentPage = 1;
+  hasMoreProducts = true;
+  await loadProducts(categoryId, 1, false);
   aList = [...P];
   doSort();
 }
@@ -973,7 +1000,7 @@ function strs(r){const f=Math.floor(r);return'★'.repeat(f)+(r-f>=.5?'½':'')+'
 function paint(list){
   console.log('Painting products:', list.length);
   const g=document.getElementById('pgrid');
-  document.getElementById('sec-count').textContent=list.length+' item'+(list.length!==1?'s':'');
+  document.getElementById('sec-count').textContent=(totalProductsCount||list.length)+' item'+((totalProductsCount||list.length)!==1?'s':'');
   if(!list.length){
     g.innerHTML=`<div class="no-res"><i class="fa-solid fa-magnifying-glass"></i><h3>Nothing found</h3><p>Try a different category or search term.</p></div>`;
     return;
@@ -1013,6 +1040,8 @@ function paint(list){
     </div>
   `;
 
+  // reset rendered product counter and render all items
+  renderedProductCount = list.length;
   const out = [];
   let inserted = 0;
   for(let i=0;i<items.length;i++){
@@ -1024,6 +1053,53 @@ function paint(list){
   if(inserted===0 && items.length>=4){ out.splice(4,0,adHtml); }
 
   g.innerHTML = out.join('');
+}
+
+// Append new products to the grid (used by infinite scroll)
+function appendProducts(newProducts){
+  if(!newProducts || !newProducts.length) return;
+  const g=document.getElementById('pgrid');
+  const wish=getWish();
+  const adHtml = `
+    <div class="ad-native-card ad-in-grid">
+      <i class="fa-regular fa-rectangle-ad"></i>
+      <span>Sponsored</span>
+      <small>Advertise here</small>
+    </div>
+  `;
+
+  const parts = [];
+  for(let i=0;i<newProducts.length;i++){
+    const p = newProducts[i];
+    const ico=CAT_ICON_LOOKUP[normalizeSlug(p.cat)]||'fa-microchip';
+    const wished=wish.includes(p.id);
+    const imageUrl = p.image || '';
+    const imageHtml = imageUrl ? `<img src="${imageUrl}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover;">` : `<i class="fa-solid ${ico} pcard-fa"></i>`;
+    parts.push(`<a class="pcard" href="/product/${p.id}">
+      <div class="pcard-img">
+        ${imageHtml}
+        <div class="pcard-wish${wished?' wished':''}" data-wishlist-btn="${p.id}" onclick="event.preventDefault();event.stopPropagation();toggleWish(${p.id},this)" title="${wished?'Remove from wishlist':'Add to wishlist'}">
+          <i class="fa-${wished?'solid':'regular'} fa-heart"></i>
+        </div>
+      </div>
+      <div class="pcard-body">
+        <div class="pcard-brand">${p.brand}</div>
+        <div class="pcard-name">${p.name}</div>
+        <div class="pcard-meta"><span class="pcard-stars">${strs(p.rating)}</span><span class="pcard-rc">(${p.reviews})</span></div>
+        <div class="pcard-foot">
+          <div>${p.was?`<div class="pcard-was">₦${fmt(p.was)}</div>`:''}<div class="pcard-now">₦${fmt(p.price)}</div></div>
+          <button class="pcard-add" onclick="event.preventDefault();event.stopPropagation();addCart(${p.id})" title="Add to cart"><i class="fa-solid fa-plus"></i></button>
+        </div>
+      </div>
+    </a>`);
+
+    renderedProductCount++;
+    if(renderedProductCount % 8 === 0){ parts.push(adHtml); }
+  }
+
+  g.insertAdjacentHTML('beforeend', parts.join(''));
+  // update visible count
+  document.getElementById('sec-count').textContent=(totalProductsCount||P.length)+' item'+((totalProductsCount||P.length)!==1?'s':'');
 }
 
 async function toggleWish(id,btn){
@@ -1429,6 +1505,16 @@ document.addEventListener('DOMContentLoaded', async function() {
   } else {
     await loadProductsByCategory('all');
   }
+
+  // Infinite scroll: load next page when near bottom
+  function onScrollLoad(){
+    if(!hasMoreProducts || isLoadingProducts) return;
+    const threshold = 800; // px from bottom
+    if(window.innerHeight + window.scrollY >= document.body.offsetHeight - threshold){
+      loadProducts(currentCategoryId, currentPage + 1, true);
+    }
+  }
+  window.addEventListener('scroll', onScrollLoad);
 });
 </script>
 </body>
