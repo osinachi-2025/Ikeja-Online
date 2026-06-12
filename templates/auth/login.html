@@ -5,8 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Login - Ikeja Online</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.2/css/bootstrap.min.css" integrity="sha512-8rzlferDg10E0pjRkwKLtD6nHxlrMKs9x4NYss+vL+KAtVnYxt3dMbS4mM2S1K55j2i6u+4AyncDw2cYmvyf/w==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3H0DqSl8Gyj8w0gYVjcWw16nB3dWDVhJ8+7Tq1WNcGJNDg+lD0lz5rrBcFW3G80v9LCRb5bHlhQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <style>
         body {
             background: linear-gradient(135deg, #0f2d28 0%, #1a3a2e 50%, #0d5a52 100%);
@@ -72,10 +71,10 @@
             justify-content: center;
             width: 80px;
             height: 80px;
-            background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%);
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
             border-radius: 16px;
             margin-bottom: 1.2rem;
-            box-shadow: 0 12px 30px rgba(255, 107, 53, 0.3);
+            box-shadow: 0 12px 30px rgba(37,99,235,0.28);
             animation: bounce 2s infinite;
         }
 
@@ -115,7 +114,7 @@
             font-size: 0.9rem;
             text-transform: uppercase;
             letter-spacing: 0.8px;
-            color: #FF6B35;
+            color: #2563eb;
         }
 
         .form-control {
@@ -133,8 +132,8 @@
         .form-control:focus {
             outline: none;
             background-color: white;
-            border-color: #FF6B35;
-            box-shadow: 0 0 0 5px rgba(255, 107, 53, 0.1);
+            border-color: #2563eb;
+            box-shadow: 0 0 0 5px rgba(37,99,235,0.1);
             transform: translateY(-2px);
         }
 
@@ -160,7 +159,7 @@
             transform: translateY(-50%);
             background: none;
             border: none;
-            color: #FF6B35;
+            color: #2563eb;
             cursor: pointer;
             padding: 0;
             font-size: 1rem;
@@ -198,7 +197,7 @@
             height: 1.3rem;
             margin-top: 0;
             cursor: pointer;
-            accent-color: #FF6B35;
+            accent-color: #2563eb;
             flex-shrink: 0;
             border: 2px solid #e5e5e5;
             border-radius: 6px;
@@ -206,12 +205,12 @@
         }
 
         .form-check-input:hover {
-            border-color: #FF6B35;
+            border-color: #2563eb;
         }
 
         .form-check-input:checked {
-            background: #FF6B35;
-            border-color: #FF6B35;
+            background: #2563eb;
+            border-color: #2563eb;
         }
 
         .form-check-label {
@@ -227,7 +226,7 @@
         }
 
         .forgot-password a {
-            color: #FF6B35;
+            color: #2563eb;
             text-decoration: none;
             font-size: 0.9rem;
             font-weight: 600;
@@ -239,10 +238,102 @@
             text-decoration: underline;
         }
 
+        .auth-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 1050;
+            background: rgba(28,25,22,.75);
+            backdrop-filter: blur(4px);
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+        .auth-overlay.open, .auth-overlay[style*="display:flex"] {
+            display: flex;
+        }
+        .auth-card {
+            width: 100%;
+            max-width: 420px;
+            background: white;
+            border-radius: 18px;
+            box-shadow: 0 28px 80px rgba(15,23,42,.18);
+            overflow: hidden;
+        }
+        .auth-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 18px 22px 0;
+        }
+        .auth-logo {
+            font-size: 1.15rem;
+            font-weight: 800;
+            letter-spacing: -.4px;
+            color: #111827;
+        }
+        .auth-close {
+            border: none;
+            background: transparent;
+            color: #111827;
+            font-size: 1.1rem;
+            cursor: pointer;
+        }
+        .auth-body {
+            padding: 20px 22px 28px;
+        }
+        .auth-field {
+            margin-bottom: 1rem;
+        }
+        .auth-field label {
+            display: block;
+            margin-bottom: 0.45rem;
+            font-weight: 700;
+            color: #374151;
+            font-size: 0.9rem;
+        }
+        .auth-field input {
+            width: 100%;
+            padding: 0.95rem 1rem;
+            border: 1px solid #d1d5db;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            color: #111827;
+            background: #f8fafc;
+            outline: none;
+        }
+        .auth-field input:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 4px rgba(37,99,235,.08);
+        }
+        .auth-submit {
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            color: white;
+            padding: 0.95rem 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            width: auto;
+        }
+        .auth-msg {
+            margin-top: 0.95rem;
+            font-size: 0.9rem;
+            color: #dc2626;
+        }
+        .cookie-banner-secondary {
+            border-radius: 10px;
+            padding: 0.95rem 1rem;
+            background: transparent;
+            border: 1px solid #d1d5db;
+            color: #374151;
+            cursor: pointer;
+        }
+
         .btn-login {
             width: 100%;
             padding: 1.1rem 2rem;
-            background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%);
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
             border: none;
             border-radius: 10px;
             color: white;
@@ -250,7 +341,7 @@
             font-size: 1rem;
             transition: all 0.3s ease;
             margin-top: 1.5rem;
-            box-shadow: 0 15px 30px rgba(255, 107, 53, 0.35);
+            box-shadow: 0 15px 30px rgba(37,99,235,0.28);
             cursor: pointer;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             text-transform: uppercase;
@@ -272,7 +363,7 @@
 
         .btn-login:hover {
             transform: translateY(-3px);
-            box-shadow: 0 20px 40px rgba(255, 107, 53, 0.4);
+            box-shadow: 0 20px 40px rgba(37,99,235,0.32);
             color: white;
         }
 
@@ -293,14 +384,14 @@
         }
 
         .signup-link a {
-            color: #FF6B35;
+            color: #2563eb;
             text-decoration: none;
             font-weight: 700;
             transition: color 0.3s ease;
         }
 
         .signup-link a:hover {
-            color: #E85A25;
+            color: #1d4ed8;
         }
 
         .alert {
@@ -589,7 +680,7 @@
                 <div class="form-group">
                     <label for="email" class="form-label">Email Address</label>
                     <div class="input-group">
-                        <input type="email" class="form-control" id="email" name="email" required placeholder="user@ikejaonline.com" autofocus>
+                        <input type="email" class="form-control" id="email" name="email" required placeholder="user@ikejaonline.com" value="{{ verify_email or '' }}" autofocus>
                         <span class="input-group-text"><i class="fas fa-envelope"></i></span>
                     </div>
                 </div>
@@ -614,7 +705,7 @@
                         </label>
                     </div>
                     <div class="forgot-password">
-                        <a href="#"><i class="fas fa-question-circle me-1"></i>Need help?</a>
+                        <a href="/authentication?mode=reset"><i class="fas fa-question-circle me-1"></i>Need help?</a>
                     </div>
                 </div>
 
@@ -652,6 +743,86 @@
             }
         }
 
+        function showAlert(type, message) {
+            const container = document.getElementById('alertContainer');
+            const icon = type === 'success' ? 'check-circle' : 'exclamation-circle';
+            container.innerHTML = `
+                <div class="alert alert-${type} alert-flash" role="alert">
+                    <i class="fas fa-${icon}"></i>
+                    <span>${message}</span>
+                    <button type="button" class="close-btn" onclick="this.parentElement.style.display='none';">&times;</button>
+                </div>
+            `;
+        }
+
+        function openForgot() {
+            const email = (document.getElementById('email') || {}).value || '';
+            window.location.href = '/authentication?mode=reset' + (email ? '&email=' + encodeURIComponent(email) : '');
+        }
+
+        function openVerify(email) {
+            const preferredEmail = email || (document.getElementById('email') || {}).value || '';
+            window.location.href = '/authentication?mode=verify' + (preferredEmail ? '&email=' + encodeURIComponent(preferredEmail) : '');
+        }
+
+        async function submitVerify() {
+            const email = document.getElementById('verify-email').value.trim();
+            const code = document.getElementById('verify-code').value.trim();
+            if (!email || !code) {
+                showAlert('danger', 'Email and verification code are required.');
+                return;
+            }
+            const submit = document.getElementById('verify-submit-btn');
+            setButtonLoading(submit, true, 'Verifying...');
+            try {
+                const response = await fetch('/api/verify-code', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, code })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    showAlert('success', 'Email verified successfully.');
+                    closeVerify();
+                } else {
+                    showAlert('danger', data.message || 'Verification failed.');
+                }
+            } catch (error) {
+                console.error(error);
+                showAlert('danger', 'Unable to verify code.');
+            } finally {
+                setButtonLoading(submit, false);
+            }
+        }
+
+        async function resendCode() {
+            const email = document.getElementById('verify-email').value.trim();
+            if (!email) {
+                showAlert('danger', 'Please enter your email to resend the code.');
+                return;
+            }
+            const submit = document.getElementById('send-code-btn');
+            setButtonLoading(submit, true, 'Sending...');
+            try {
+                const response = await fetch('/api/send-verification-code', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    showAlert('success', 'Verification code resent if account exists.');
+                } else {
+                    showAlert('danger', data.message || 'Unable to resend code.');
+                }
+            } catch (error) {
+                console.error(error);
+                showAlert('danger', 'Unable to resend code.');
+            } finally {
+                setButtonLoading(submit, false);
+            }
+        }
+
         // Handle login form submission
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -678,6 +849,8 @@
                 });
                 
                 const data = await response.json();
+                console.log('Login response:', data);
+                console.log('User role:', data.role);
                 
                 if (response.ok && data.success) {
                     const cookieConsent = getCookie('cookie_consent');
@@ -691,14 +864,26 @@
                     }
                     
                     // Redirect based on role
+                    console.log('Attempting redirect for role:', data.role);
                     if (data.role === 'super_admin') {
-                        window.location.href = '/admin/dashboard';
+                        console.log('Redirecting super_admin to {{ url_for("admin_dashboard") }}');
+                        window.location.href = '{{ url_for("admin_dashboard") }}';
                     } else if (data.role === 'vendor') {
+                        console.log('Redirecting vendor to {{ url_for("vendor_dashboard_home") }}');
                         window.location.href = '{{ url_for("vendor_dashboard_home") }}';
                     } else if (data.role === 'customer') {
+                        console.log('Redirecting customer to {{ url_for("customer_dashboard_home") }}');
                         window.location.href = '{{ url_for("customer_dashboard_home") }}';
+                    } else {
+                        console.error('Unknown role:', data.role);
+                        showAlert('Unknown user role. Please contact support.', 'danger');
                     }
                 } else {
+                    if (data.needs_verification) {
+                        window.location.href = '/authentication?mode=verify&email=' + encodeURIComponent(email);
+                        return;
+                    }
+                    console.error('Login failed:', data);
                     showAlert(data.message || 'Login failed', 'danger');
                     loginBtn.disabled = false;
                     loginBtn.innerHTML = '<i class="fas fa-sign-in-alt me-2"></i>Log In';
@@ -710,6 +895,22 @@
                 loginBtn.innerHTML = '<i class="fas fa-sign-in-alt me-2"></i>Log In';
             }
         });
+
+        function setButtonLoading(btn, loading, text) {
+            if (!btn) return;
+            if (loading) {
+                btn.disabled = true;
+                btn.dataset.origText = btn.dataset.origText || btn.textContent;
+                btn.textContent = text;
+                btn.classList.add('loading');
+            } else {
+                btn.disabled = false;
+                btn.classList.remove('loading');
+                if (btn.dataset.origText) {
+                    btn.textContent = btn.dataset.origText;
+                }
+            }
+        }
 
         function showAlert(message, type) {
             const alertContainer = document.getElementById('alertContainer');

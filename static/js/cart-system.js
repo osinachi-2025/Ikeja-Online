@@ -253,11 +253,11 @@ class ShoppingCart {
             position: fixed;
             top: 20px;
             right: 20px;
-            background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%);
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
             color: white;
             padding: 16px 24px;
             border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            box-shadow: 0 10px 30px rgba(37,99,235,0.18);
             z-index: 9999;
             animation: slideIn 0.3s ease;
             font-weight: 600;

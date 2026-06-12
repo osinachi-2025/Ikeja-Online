@@ -96,6 +96,115 @@
                           <small class="form-text text-muted">Provide a detailed description of your product, including features, specifications, and usage instructions</small>
                         </div>
 
+                        <div class="card mb-4">
+                          <div class="card-header">
+                            <h5 class="card-title mb-0">
+                              <i class="fas fa-sliders-h mr-2"></i>
+                              Optional Specifications
+                            </h5>
+                          </div>
+                          <div class="card-body">
+                            <div class="row">
+                              <div class="col-md-6">
+                                <div class="form-group">
+                                  <label for="processor">Processor</label>
+                                  <input type="text" class="form-control" id="processor" name="processor" placeholder="e.g., Apple M2">
+                                </div>
+                              </div>
+                              <div class="col-md-6">
+                                <div class="form-group">
+                                  <label for="ram">RAM</label>
+                                  <input type="text" class="form-control" id="ram" name="ram" placeholder="e.g., 16GB DDR5">
+                                </div>
+                              </div>
+                            </div>
+                            <div class="row">
+                              <div class="col-md-6">
+                                <div class="form-group">
+                                  <label for="storage">Storage</label>
+                                  <input type="text" class="form-control" id="storage" name="storage" placeholder="e.g., 512GB SSD">
+                                </div>
+                              </div>
+                              <div class="col-md-6">
+                                <div class="form-group">
+                                  <label for="display">Display</label>
+                                  <input type="text" class="form-control" id="display" name="display" placeholder="e.g., 6.7-inch AMOLED">
+                                </div>
+                              </div>
+                            </div>
+                            <div class="row">
+                              <div class="col-md-6">
+                                <div class="form-group">
+                                  <label for="battery">Battery</label>
+                                  <input type="text" class="form-control" id="battery" name="battery" placeholder="e.g., 5000mAh">
+                                </div>
+                              </div>
+                              <div class="col-md-6">
+                                <div class="form-group">
+                                  <label for="chip">Chip</label>
+                                  <input type="text" class="form-control" id="chip" name="chip" placeholder="e.g., Snapdragon 8 Gen 3">
+                                </div>
+                              </div>
+                            </div>
+                            <div class="row">
+                              <div class="col-md-6">
+                                <div class="form-group">
+                                  <label for="type">Type</label>
+                                  <input type="text" class="form-control" id="type" name="type" placeholder="e.g., Smartphone">
+                                </div>
+                              </div>
+                              <div class="col-md-6">
+                                <div class="form-group">
+                                  <label for="rating">Rating</label>
+                                  <input type="text" class="form-control" id="rating" name="rating" placeholder="e.g., 4.5/5">
+                                </div>
+                              </div>
+                            </div>
+                            <div class="row">
+                              <div class="col-md-6">
+                                <div class="form-group">
+                                  <label for="charging">Charging</label>
+                                  <input type="text" class="form-control" id="charging" name="charging" placeholder="e.g., 65W fast charge">
+                                </div>
+                              </div>
+                              <div class="col-md-6">
+                                <div class="form-group">
+                                  <label for="weight">Weight</label>
+                                  <input type="text" class="form-control" id="weight" name="weight" placeholder="e.g., 189g">
+                                </div>
+                              </div>
+                            </div>
+                            <div class="row">
+                              <div class="col-md-6">
+                                <div class="form-group">
+                                  <label for="connectivity">Connectivity</label>
+                                  <input type="text" class="form-control" id="connectivity" name="connectivity" placeholder="e.g., 5G, Wi-Fi 6, Bluetooth 5.3">
+                                </div>
+                              </div>
+                              <div class="col-md-6">
+                                <div class="form-group">
+                                  <label for="color">Color</label>
+                                  <input type="text" class="form-control" id="color" name="color" placeholder="e.g., Midnight Black">
+                                </div>
+                              </div>
+                            </div>
+                            <div class="row">
+                              <div class="col-md-6">
+                                <div class="form-group">
+                                  <label for="screen_size">Screen Size</label>
+                                  <input type="text" class="form-control" id="screen_size" name="screen_size" placeholder="e.g., 6.7-inch">
+                                </div>
+                              </div>
+                              <div class="col-md-6">
+                                <div class="form-group">
+                                  <label for="condition">Condition</label>
+                                  <input type="text" class="form-control" id="condition" name="condition" placeholder="e.g., New / Refurbished">
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
                         <div class="form-group">
                           <div class="custom-control custom-switch">
                             <input type="checkbox" class="custom-control-input" id="productActive" name="status" value="active" checked>
@@ -256,6 +365,20 @@
           document.getElementById('productStock').value = product.stock_quantity || '';
           document.getElementById('productDescription').value = product.description || '';
           document.getElementById('productActive').checked = product.status === 'active';
+          document.getElementById('processor').value = product.processor || '';
+          document.getElementById('ram').value = product.ram || '';
+          document.getElementById('storage').value = product.storage || '';
+          document.getElementById('display').value = product.display || '';
+          document.getElementById('battery').value = product.battery || '';
+          document.getElementById('chip').value = product.chip || '';
+          document.getElementById('type').value = product.product_type || '';
+          document.getElementById('rating').value = product.rating || '';
+          document.getElementById('charging').value = product.charging || '';
+          document.getElementById('weight').value = product.weight || '';
+          document.getElementById('connectivity').value = product.connectivity || '';
+          document.getElementById('color').value = product.color || '';
+          document.getElementById('screen_size').value = product.screen_size || '';
+          document.getElementById('condition').value = product.condition || '';
 
           // Display current images
           if (product.images && product.images.length > 0) {

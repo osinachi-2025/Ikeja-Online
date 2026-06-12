@@ -14,6 +14,7 @@
             --white: #ffffff;
             --gold: #d4af37;
             --orange: #FF6B35;
+            --orange: #2563eb;
             --blue: #1e3a5f;
             --radius: 12px;
             --container: 1200px;
@@ -106,6 +107,7 @@
             font-weight: 800;
             margin-bottom: 10px;
             background: linear-gradient(135deg, var(--orange) 0%, var(--gold) 100%);
+                background: linear-gradient(135deg, var(--blue) 0%, var(--gold) 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -125,7 +127,8 @@
             margin-bottom: 40px;
             padding: 20px;
             background: rgba(255,107,53,0.05);
-            border: 1px solid rgba(255,107,53,0.2);
+                background: rgba(37,99,235,0.04);
+                border: 1px solid rgba(37,99,235,0.12);
             border-radius: var(--radius);
         }
 
@@ -183,8 +186,8 @@
 
         .timeline-item.active::before {
             background: var(--orange);
-            border-color: var(--orange);
-            box-shadow: 0 0 0 3px rgba(255,107,53,0.2);
+                border-color: var(--blue);
+                box-shadow: 0 0 0 3px rgba(37,99,235,0.16);
         }
 
         .timeline-item.completed::before {

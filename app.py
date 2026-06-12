@@ -1,10 +1,10 @@
 from flask import Flask, render_template, request, redirect, url_for, jsonify, send_from_directory, abort, flash, session, make_response, g, after_this_request, current_app,send_file
 from flask_migrate import Migrate
-from sqlalchemy import text
+from sqlalchemy import text, or_
 import requests
 from io import BytesIO
 from flask_cors import CORS
-from models import db, Roles, Users, Vendors, Customers, Categories, Products, Product_Images, Orders, Order_Items, Reviews, VendorMessages, Payments, Wishlists, Wishlist_Items, SaveForLater, SaveForLater_Items, Wallet, Deposits, VendorWallet, WalletTransaction, CustomerWalletTransaction, VendorWalletTransaction, VendorWithdrawal, VendorDeposit, CustomerAddress, DeliveryPreference
+from models import db, Roles, Users, Vendors, Customers, Categories, Products, Product_Images, Orders, Order_Items, Reviews, VendorMessages, Payments, Wishlists, Wishlist_Items, Cart_Items, SaveForLater, SaveForLater_Items, Wallet, Deposits, VendorWallet, WalletTransaction, CustomerWalletTransaction, VendorWalletTransaction, VendorWithdrawal, VendorDeposit, CustomerAddress, DeliveryPreference
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity, decode_token
@@ -24,6 +24,7 @@ import base64
 import cloudinary
 import cloudinary.uploader
 import cloudinary.api
+import random
 
 # Load environment variables from .env file (only in development)
 if os.path.exists('.env') and load_dotenv:
@@ -257,7 +258,7 @@ def send_verification_email(user_email, user_name, verification_token):
     """Send email verification link to user"""
     try:
         # Create verification link
-        verification_url = f"http://localhost:5000/verify-email/{verification_token}"
+        verification_url = f"http://ikeja-online.onrender.com/verify-email/{verification_token}"
         
         html_content = f"""
         <html>
@@ -297,58 +298,135 @@ def send_verification_email(user_email, user_name, verification_token):
 
 
 # ==================== PASSWORD RESET EMAIL ====================
-def send_password_reset_email(user_email, user_name, reset_token):
-    """Send password reset link to user"""
+def send_password_reset_email(user_email, user_name, reset_code):
+    """Send password reset code to user"""
     try:
-        reset_url = f"http://localhost:5000/reset-password/{reset_token}"
-        
         html_content = f"""
         <html>
             <body style="font-family: Arial, sans-serif; background-color: #f5f5f5; padding: 20px;">
                 <div style="max-width: 600px; margin: 0 auto; background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
                     <h2 style="color: #FF6B35; margin-bottom: 20px;">Reset Your Password</h2>
                     <p style="color: #333; font-size: 16px; line-height: 1.6;">Hi {user_name},</p>
-                    <p style="color: #333; font-size: 16px; line-height: 1.6;">We received a request to reset your password. Click the button below to create a new password:</p>
+                    <p style="color: #333; font-size: 16px; line-height: 1.6;">We received a request to reset your password. Use the code below to update your password on the recovery page.</p>
                     
-                    <div style="text-align: center; margin: 30px 0;">
-                        <a href="{reset_url}" style="display: inline-block; background-color: #FF6B35; color: white; padding: 15px 40px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px;">
-                            Reset Password
-                        </a>
+                    <div style="text-align:center; margin: 26px 0; padding: 20px 0; background: #fbe7f1; border-radius: 16px; font-size: 32px; font-weight: 800; letter-spacing: 0.3em; color: #c026d3;">{reset_code}</div>
+                    
+                    <p style="color: #475569; font-size: 15px; line-height: 1.7;">Use this code within 15 minutes. If you didn't request this, you can ignore this email and the code will expire automatically.</p>
+                    
+                    <div style="margin-top: 22px; padding: 18px; background: #fdf2f8; border-left: 4px solid #ec4899; border-radius: 12px; color: #831843; font-size: 14px; line-height: 1.6;">
+                        <strong>Next steps:</strong>
+                        <ol style="margin: 10px 0 0 16px; padding: 0; color: #334155;">
+                            <li>Return to Ikeja Online</li>
+                            <li>Enter your email and 6-digit code</li>
+                            <li>Choose a new password</li>
+                        </ol>
                     </div>
                     
-                    <p style="color: #666; font-size: 14px; line-height: 1.6;">Or copy and paste this link:</p>
-                    <p style="color: #FF6B35; font-size: 12px; word-break: break-all; background-color: #f9f9f9; padding: 10px; border-radius: 5px;">
-                        {reset_url}
-                    </p>
-                    
-                    <p style="color: #666; font-size: 14px; line-height: 1.6; margin-top: 20px;">This link will expire in 1 hour.</p>
-                    
-                    <div style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; border-radius: 5px;">
-                        <p style="color: #856404; font-size: 14px; margin: 0;">
-                            <strong>Security Tip:</strong> If you didn't request this, you can safely ignore this email. Your password will remain unchanged.
-                        </p>
-                    </div>
-                    
-                    <p style="color: #999; font-size: 12px; margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
-                        <strong>Ikeja Online Support Team</strong>
-                    </p>
+                    <p style="color: #999; font-size: 12px; margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;"><strong>Ikeja Online Support Team</strong></p>
                 </div>
             </body>
         </html>
         """
-        
-        return send_email(user_email, "Reset Your Password - Ikeja Online", html_content)
-    
+        return send_email(user_email, "Your password reset code - Ikeja Online", html_content)
     except Exception as e:
         print(f"[PASSWORD-RESET] Error sending password reset email: {str(e)}")
         return None
+
+
+def send_verification_code_email(user_email, user_name, code):
+    """Send a simple email containing a 6-digit verification code"""
+    try:
+        html_content = f"""
+        <html>
+            <body style="font-family: Arial, sans-serif; background-color: #f5f5f5; padding: 20px;">
+                <div style="max-width: 600px; margin: 0 auto; background-color: white; padding: 30px; border-radius: 12px; box-shadow: 0 18px 50px rgba(15,23,42,0.12);">
+                    <h2 style="color: #2563eb; margin-bottom: 18px;">Verify your email address</h2>
+                    <p style="color: #334155; font-size: 16px; line-height: 1.7;">Hi {user_name},</p>
+                    <p style="color: #334155; font-size: 16px; line-height: 1.7;">Thanks for registering with Ikeja Online. To keep your account secure, please use the one-time 6-digit code below to verify your email address.</p>
+                    <div style="text-align:center; margin: 26px 0; padding: 20px 0; background: #eef4ff; border-radius: 16px; font-size: 30px; font-weight: 800; letter-spacing: 0.3em; color: #1d4ed8;">{code}</div>
+                    <p style="color: #475569; font-size: 15px; line-height: 1.7;">Use this code within 15 minutes. If you did not create this account, please ignore this email and your code will expire automatically.</p>
+                    <div style="margin-top: 22px; padding: 18px; background: #eff6ff; border-left: 4px solid #2563eb; border-radius: 12px; color: #0f172a; font-size: 14px; line-height: 1.6;">
+                        <strong>Next steps:</strong>
+                        <ol style="margin: 10px 0 0 16px; padding: 0; color: #334155;">
+                            <li>Return to Ikeja Online</li>
+                            <li>Enter the 6-digit code from this email</li>
+                            <li>Complete your account verification</li>
+                        </ol>
+                    </div>
+                    <p style="color: #94a3b8; font-size: 13px; margin-top: 28px;">Need help? Reply to this email and our support team will assist you.</p>
+                    <p style="color: #475569; font-size: 13px; margin-top: 20px; border-top: 1px solid #e2e8f0; padding-top: 18px;"><strong>Ikeja Online Support Team</strong></p>
+                </div>
+            </body>
+        </html>
+        """
+        return send_email(user_email, "Your verification code - Ikeja Online", html_content)
+    except Exception as e:
+        print(f"[EMAIL-VERIFICATION-CODE] Error sending code email: {str(e)}")
+        return None
+
+
+@app.route('/api/send-verification-code', methods=['POST'])
+def api_send_verification_code():
+    data = request.get_json(silent=True) or request.form
+    email = (data.get('email') or '').strip().lower()
+    if not email:
+        return jsonify({'success': False, 'message': 'Email required'}), 400
+
+    user = Users.query.filter_by(email=email).first()
+    # Generate code regardless, but only store/send if user exists
+    code = str(random.randint(100000, 999999))
+    if user:
+        try:
+            expires = datetime.utcnow() + timedelta(minutes=15)
+            user.verification_code = code
+            user.verification_expires = expires
+            db.session.commit()
+            send_verification_code_email(user.email, user.first_name, code)
+            print(f"[VERIFICATION-CODE] Sent code to {email}")
+        except Exception as e:
+            db.session.rollback()
+            print(f"[VERIFICATION-CODE] Error: {str(e)}")
+
+    # Always return success to avoid revealing whether account exists
+    return jsonify({'success': True, 'message': 'If an account exists with that email, a verification code was sent.'}), 200
+
+
+@app.route('/api/verify-code', methods=['POST'])
+def api_verify_code():
+    data = request.get_json(silent=True) or request.form
+    email = (data.get('email') or '').strip().lower()
+    code = (data.get('code') or '').strip()
+    if not email or not code:
+        return jsonify({'success': False, 'message': 'Email and code are required'}), 400
+
+    user = Users.query.filter_by(email=email).first()
+    if not user or not user.verification_code:
+        return jsonify({'success': False, 'message': 'Invalid or expired code'}), 400
+
+    if user.verification_expires and user.verification_expires < datetime.utcnow():
+        return jsonify({'success': False, 'message': 'Code expired'}), 400
+
+    if user.verification_code != code:
+        return jsonify({'success': False, 'message': 'Invalid code'}), 400
+
+    # Mark verified
+    try:
+        user.email_verified = True
+        user.email_verified_at = datetime.utcnow()
+        user.verification_code = None
+        user.verification_expires = None
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Email verified successfully'}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': f'Error verifying: {str(e)}'}), 500
 
 
 # ==================== ORDER CONFIRMATION EMAIL ====================
 def send_order_confirmation_email(customer_email, customer_name, order_ref, items_details, total_amount):
     """Send order confirmation email to customer"""
     try:
-        order_tracking_url = f"http://localhost:5000/my-orders/{order_ref}"
+        order_tracking_url = f"http://ikeja-online.onrender.com/my-orders/{order_ref}"
         
         items_html = ""
         for item in items_details:
@@ -419,7 +497,7 @@ def send_order_confirmation_email(customer_email, customer_name, order_ref, item
 def send_order_shipped_email(customer_email, customer_name, order_ref, tracking_number=None, shipping_status='shipped'):
     """Send order shipping status update to customer"""
     try:
-        order_tracking_url = f"http://localhost:5000/my-orders/{order_ref}"
+        order_tracking_url = f"http://ikeja-online.onrender.com/my-orders/{order_ref}"
         
         # Define status-specific content
         status_config = {
@@ -891,12 +969,52 @@ def ensure_order_schema():
     except Exception as e:
         print(f"[DB-MIGRATION] Error in ensure_order_schema: {str(e)}")
 
+
+def ensure_product_schema():
+    """Ensure the products table has new optional electronics spec columns."""
+    try:
+        with db.engine.connect() as conn:
+            db_type = db.engine.dialect.name
+            if db_type == 'postgresql':
+                query = text("""
+                    SELECT column_name FROM information_schema.columns 
+                    WHERE table_name='products'
+                """)
+                result = conn.execute(query)
+                existing_columns = {row[0] for row in result}
+            elif db_type == 'sqlite':
+                query = text("PRAGMA table_info('products')")
+                result = conn.execute(query)
+                existing_columns = {row[1] for row in result}
+            else:
+                print(f"[DB-MIGRATION] Unknown database type: {db_type}")
+                return
+
+            required_columns = {
+                'color': 'VARCHAR(100)',
+                'screen_size': 'VARCHAR(100)',
+                'condition': 'VARCHAR(100)'
+            }
+
+            for col_name, col_type in required_columns.items():
+                if col_name not in existing_columns:
+                    statement = f"ALTER TABLE products ADD COLUMN {col_name} {col_type}"
+                    try:
+                        conn.execute(text(statement))
+                        conn.commit()
+                        print(f"[DB-MIGRATION] Applied: {statement}")
+                    except Exception as exc:
+                        print(f"[DB-MIGRATION] Failed to apply: {statement} -> {exc}")
+    except Exception as e:
+        print(f"[DB-MIGRATION] Error in ensure_product_schema: {str(e)}")
+
 # Initialize database and default data
 def init_db():
     """Initialize database with default roles and categories"""
     with app.app_context():
         db.create_all()
         ensure_order_schema()
+        ensure_product_schema()
         # Initialize default roles if they don't exist
         if not Roles.query.filter_by(name='super_admin').first():
             super_admin_role = Roles(name='super_admin', description='Super Administrator account with full control')
@@ -1021,6 +1139,83 @@ def add_claims_to_access_token(identity):
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def distribute_funds_to_vendors(order_id):
+    """
+    Distribute order payment to vendors based on their products when order is marked delivered.
+    Adds credit to vendor wallets and creates transaction records.
+    """
+    try:
+        order = Orders.query.get(order_id)
+        if not order:
+            print(f"[FUND-DIST] Order {order_id} not found")
+            return False
+        
+        # Check if order has completed payment
+        payment = Payments.query.filter_by(order_id=order_id).first()
+        if not payment or payment.status != 'completed':
+            print(f"[FUND-DIST] Order {order_id} payment not completed. Status: {payment.status if payment else 'no payment'}")
+            return False
+        
+        # Group order items by vendor and calculate each vendor's share
+        vendor_shares = {}
+        for item in order.items:
+            if item.product and item.product.vendor_id:
+                vendor_id = item.product.vendor_id
+                item_total = float(item.quantity * item.price_at_purchase)
+                if vendor_id not in vendor_shares:
+                    vendor_shares[vendor_id] = 0
+                vendor_shares[vendor_id] += item_total
+        
+        if not vendor_shares:
+            print(f"[FUND-DIST] No vendors found for order {order_id}")
+            return False
+        
+        # Distribute funds to each vendor
+        for vendor_id, amount in vendor_shares.items():
+            try:
+                vendor = Vendors.query.get(vendor_id)
+                if not vendor:
+                    print(f"[FUND-DIST] Vendor {vendor_id} not found")
+                    continue
+                
+                # Get or create vendor wallet
+                vendor_wallet = VendorWallet.query.filter_by(vendor_id=vendor_id).first()
+                if not vendor_wallet:
+                    vendor_wallet = VendorWallet(vendor_id=vendor_id, balance=0.0, total_earned=0.0)
+                    db.session.add(vendor_wallet)
+                    db.session.flush()
+                
+                # Update wallet balance and total earned
+                vendor_wallet.balance += amount
+                vendor_wallet.total_earned += amount
+                
+                # Create wallet transaction record
+                transaction = VendorWalletTransaction(
+                    vendor_wallet_id=vendor_wallet.id,
+                    transaction_type='credit',
+                    amount=amount,
+                    description=f"Payment for order {order.reference_number}",
+                    reference_id=order_id,
+                    status='completed'
+                )
+                db.session.add(transaction)
+                
+                print(f"[FUND-DIST] Credited ₦{amount} to vendor {vendor_id} ({vendor.store_name}) for order {order_id}")
+            except Exception as vendor_error:
+                print(f"[FUND-DIST] Error crediting vendor {vendor_id}: {str(vendor_error)}")
+                continue
+        
+        db.session.commit()
+        print(f"[FUND-DIST] Successfully distributed funds for order {order_id}")
+        return True
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"[FUND-DIST] Error in distribute_funds_to_vendors: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return False
 
 def save_image_to_db(file, product_id=None, is_primary=False):
     """Save uploaded file to Cloudinary and create database record"""
@@ -1269,43 +1464,120 @@ def verify_email(token):
 
 
 # ==================== PASSWORD RESET ROUTES ====================
+@app.route('/authentication')
+def authentication_page():
+    """Render the unified authentication page for recovery and verification."""
+    mode = request.args.get('mode', 'reset')
+    email = (request.args.get('email') or '').strip().lower()
+    return render_template('home/authentication.html', auth_mode=mode, auth_email=email)
+
+
 @app.route('/forgot-password', methods=['POST', 'GET'])
 def forgot_password():
-    """Handle password reset request"""
+    """Handle password reset request and redirect to the recovery experience."""
     if request.method == 'POST':
-        email = request.form.get('email', '').strip().lower()
-        
-        if not email:
-            return render_template('auth/login.html', error='Email is required')
-        
-        # Find user by email
-        user = Users.query.filter_by(email=email).first()
-        
-        if user:
-            try:
-                # Generate reset token (valid for 1 hour)
-                from datetime import timedelta
-                reset_token = generate_email_verification_token(user.id)  # Reuse token generation
-                expires_at = datetime.utcnow() + timedelta(hours=1)
-                
-                # Store token in database
-                user.password_reset_token = reset_token
-                user.password_reset_expires = expires_at
-                db.session.commit()
-                
-                # Send reset email
-                send_password_reset_email(user.email, user.first_name, reset_token)
-                print(f"[PASSWORD-RESET] Reset email sent to {email}")
-                
-            except Exception as e:
-                print(f"[PASSWORD-RESET] Error: {str(e)}")
-                db.session.rollback()
-        
-        # Always show success message for security (don't reveal if email exists)
-        flash('If an account exists with that email, a password reset link has been sent.', 'info')
-        return redirect(url_for('login'))
-    
-    return render_template('auth/login.html')
+        data = request.get_json(silent=True) or request.form
+        email = (data.get('email') or '').strip().lower()
+        if email:
+            user = Users.query.filter_by(email=email).first()
+            if user:
+                try:
+                    code = str(random.randint(100000, 999999))
+                    expires_at = datetime.utcnow() + timedelta(minutes=15)
+                    user.password_reset_token = code
+                    user.password_reset_expires = expires_at
+                    db.session.commit()
+                    send_password_reset_email(user.email, user.first_name, code)
+                    print(f"[PASSWORD-RESET-CODE] Sent reset code to {email}")
+                except Exception as e:
+                    print(f"[PASSWORD-RESET-CODE] Error sending code to {email}: {str(e)}")
+                    db.session.rollback()
+        if request.is_json:
+            return jsonify({'success': True, 'message': 'If an account exists, a password reset code has been sent.'})
+        flash('If an account exists, a password reset code has been sent.', 'info')
+        return redirect(url_for('authentication', mode='reset', email=email))
+    return redirect(url_for('authentication', mode='reset'))
+
+
+@app.route('/api/password-reset-code', methods=['POST'])
+def api_password_reset_code():
+    data = request.get_json(silent=True) or request.form
+    email = (data.get('email') or '').strip().lower()
+    if not email:
+        return jsonify({'success': False, 'message': 'Email is required.'}), 400
+
+    user = Users.query.filter_by(email=email).first()
+    if not user:
+        return jsonify({'success': True, 'message': 'If an account exists, a reset code has been sent.'})
+
+    try:
+        code = str(random.randint(100000, 999999))
+        expires_at = datetime.utcnow() + timedelta(minutes=15)
+        user.password_reset_token = code
+        user.password_reset_expires = expires_at
+        db.session.commit()
+        send_password_reset_email(user.email, user.first_name, code)
+        return jsonify({'success': True, 'message': 'Password reset code sent.'}), 200
+    except Exception as e:
+        db.session.rollback()
+        print(f"[API-PASSWORD-RESET-CODE] Error: {str(e)}")
+        return jsonify({'success': False, 'message': 'Unable to send reset code.'}), 500
+
+
+@app.route('/api/password-reset-verify', methods=['POST'])
+def api_password_reset_verify():
+    data = request.get_json(silent=True) or request.form
+    email = (data.get('email') or '').strip().lower()
+    code = (data.get('code') or '').strip()
+    if not email or not code:
+        return jsonify({'success': False, 'message': 'Email and code are required.'}), 400
+
+    user = Users.query.filter_by(email=email).first()
+    if not user or not user.password_reset_token:
+        return jsonify({'success': False, 'message': 'Invalid or expired code.'}), 400
+
+    if user.password_reset_expires and user.password_reset_expires < datetime.utcnow():
+        return jsonify({'success': False, 'message': 'Reset code has expired.'}), 400
+
+    if user.password_reset_token != code:
+        return jsonify({'success': False, 'message': 'Invalid reset code.'}), 400
+
+    return jsonify({'success': True, 'message': 'Code verified.'}), 200
+
+
+@app.route('/api/password-reset', methods=['POST'])
+def api_password_reset():
+    data = request.get_json(silent=True) or request.form
+    email = (data.get('email') or '').strip().lower()
+    code = (data.get('code') or '').strip()
+    password = data.get('password', '')
+    confirm_password = data.get('confirm_password', '')
+
+    if not email or not code or not password or not confirm_password:
+        return jsonify({'success': False, 'message': 'All fields are required.'}), 400
+    if password != confirm_password:
+        return jsonify({'success': False, 'message': 'Passwords do not match.'}), 400
+    if len(password) < 8:
+        return jsonify({'success': False, 'message': 'Password must be at least 8 characters.'}), 400
+
+    user = Users.query.filter_by(email=email).first()
+    if not user or not user.password_reset_token:
+        return jsonify({'success': False, 'message': 'Invalid reset code.'}), 400
+    if user.password_reset_expires and user.password_reset_expires < datetime.utcnow():
+        return jsonify({'success': False, 'message': 'Reset code has expired.'}), 400
+    if user.password_reset_token != code:
+        return jsonify({'success': False, 'message': 'Invalid reset code.'}), 400
+
+    try:
+        user.passwordhash = generate_password_hash(password)
+        user.password_reset_token = None
+        user.password_reset_expires = None
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Password reset successfully.'}), 200
+    except Exception as e:
+        db.session.rollback()
+        print(f"[API-PASSWORD-RESET] Error: {str(e)}")
+        return jsonify({'success': False, 'message': 'Unable to reset password.'}), 500
 
 
 @app.route('/reset-password/<token>', methods=['POST', 'GET'])
@@ -1499,7 +1771,8 @@ def register():
             
             db.session.commit()
             
-            # Send welcome email based on role
+            # Send welcome email based on role (non-blocking)
+            email_sent_status = False
             try:
                 full_name = f"{first_name} {last_name}"
                 
@@ -1569,39 +1842,47 @@ def register():
                     """
                     subject = "Welcome to Ikeja Online - Registration Complete"
                 
-                # Send the email
-                print(f"\n========== SENDING EMAIL ==========")
-                print(f"To: {email}")
-                print(f"Subject: {subject}")
+                # Send the welcome email
                 email_result = send_email(email, subject, html_content)
-                print(f"Email Result: {email_result}")
-                print(f"==================================\n")
-                
-                # Send verification email
-                print(f"\n========== SENDING VERIFICATION EMAIL ==========")
-                verification_token = generate_email_verification_token(new_user.id)
-                if verification_token:
-                    verification_result = send_verification_email(
-                        email,
-                        first_name,
-                        verification_token
-                    )
-                    print(f"Verification Email Result: {verification_result}")
+                if email_result:
+                    email_sent_status = True
+                    print(f"✓ Welcome email sent to {email}")
                 else:
-                    print(f"Failed to generate verification token")
-                print(f"==============================================\n")
+                    print(f"✗ Welcome email failed to send to {email}")
                 
             except Exception as email_error:
-                # Log email error but don't fail registration
-                print(f"Error sending emails to {email}: {str(email_error)}")
-                import traceback
-                traceback.print_exc()
+                print(f"[REGISTRATION-EMAIL] Error sending welcome email: {str(email_error)}")
             
-            # Flash success message
+            # Send verification code email (important for registration flow)
+            try:
+                code = str(random.randint(100000, 999999))
+                expires = datetime.utcnow() + timedelta(minutes=15)
+                # store code on user and commit
+                new_user.verification_code = code
+                new_user.verification_expires = expires
+                db.session.commit()
+                
+                # Send verification code - if this fails, log it but don't block registration
+                verification_result = send_verification_code_email(email, first_name, code)
+                if verification_result:
+                    print(f"✓ Verification code email sent to {email}")
+                else:
+                    print(f"✗ Verification code email failed for {email}")
+                    
+            except Exception as code_error:
+                print(f"[REGISTRATION-CODE] Error sending verification code: {str(code_error)}")
+                db.session.rollback()
+            
+            # Always succeed - emails are not critical to registration
             if request.is_json:
-                return jsonify({'success': True, 'message': 'Registration successful! Check your email to verify your account.'}), 200
+                return jsonify({
+                    'success': True, 
+                    'message': 'Registration successful! Check your email for verification code.',
+                    'verification_sent': True,
+                    'email': email
+                }), 200
             flash(f'Registration successful! Check your email to verify your account.', 'success')
-            return redirect(url_for('login'))
+            return redirect(url_for('authentication_page', mode='verify', email=email))
             
         except Exception as e:
             db.session.rollback()
@@ -1632,6 +1913,16 @@ def login():
                 return jsonify({'success': False, 'message': 'Invalid email or password'}), 401
             return render_template('auth/login.html', error='Invalid email or password')
         
+        # Skip email verification for super_admin users
+        if not user.email_verified and user.role.name != 'super_admin':
+            if request.is_json:
+                return jsonify({
+                    'success': False,
+                    'message': 'Please verify your email before logging in.',
+                    'needs_verification': True
+                }), 403
+            return render_template('auth/login.html', error='Please verify your email before logging in.', verify_email=email)
+
         try:
             cookie_consent = (data.get('cookie_consent') or '').strip().lower()
             consented = cookie_consent == 'accepted'
@@ -1662,7 +1953,8 @@ def login():
                 'role': user.role.name,
                 'first_name': user.first_name,
                 'last_name': user.last_name,
-                'cookies_accepted': consented
+                'cookies_accepted': consented,
+                'redirect_url': '/admin/dashboard' if user.role.name == 'super_admin' else None
             })
 
             # Set auth cookies only when the user accepted cookies
@@ -1682,6 +1974,14 @@ def login():
             return jsonify({'success': False, 'message': f'Login failed: {str(e)}'}), 500
     
     return render_template('auth/login.html')
+
+
+@app.route('/verify-account')
+def verify_account():
+    email = (request.args.get('email') or '').strip().lower()
+    user = Users.query.filter_by(email=email).first() if email else None
+    is_verified = bool(user and user.email_verified)
+    return render_template('auth/verify_account.html', email=email, is_verified=is_verified)
 
 
 @app.route('/vendor/dashboard')
@@ -2052,6 +2352,9 @@ def add_product_api():
         charging = request.form.get('charging', '').strip() or None
         weight = request.form.get('weight', '').strip() or None
         connectivity = request.form.get('connectivity', '').strip() or None
+        color = request.form.get('color', '').strip() or None
+        screen_size = request.form.get('screen_size', '').strip() or None
+        condition = request.form.get('condition', '').strip() or None
         
         # Validation
         if not all([category_id, product_name, description, price, stock_quantity]):
@@ -2107,7 +2410,10 @@ def add_product_api():
             rating=rating,
             charging=charging,
             weight=weight,
-            connectivity=connectivity
+            connectivity=connectivity,
+            color=color,
+            screen_size=screen_size,
+            condition=condition
         )
         
         db.session.add(new_product)
@@ -2380,6 +2686,20 @@ def get_product(product_id):
         'created_at': product.created_at.isoformat(),
         'category_id': product.category_id,
         'category_name': product.category.name,
+        'processor': product.processor,
+        'ram': product.ram,
+        'storage': product.storage,
+        'display': product.display,
+        'battery': product.battery,
+        'chip': product.chip,
+        'product_type': product.product_type,
+        'rating': product.rating,
+        'charging': product.charging,
+        'weight': product.weight,
+        'connectivity': product.connectivity,
+        'color': product.color,
+        'screen_size': product.screen_size,
+        'condition': product.condition,
         'images': [{'id': img.id, 'url': f'/api/product-image/{img.id}', 'is_primary': img.is_primary} for img in product.images]
     }
     
@@ -2412,6 +2732,20 @@ def update_product(product_id):
         stock_quantity = request.form.get('stock_quantity', type=int)
         status = request.form.get('status', 'active')
         category_id = request.form.get('category_id', type=int)
+        processor = request.form.get('processor', '').strip() or None
+        ram = request.form.get('ram', '').strip() or None
+        storage = request.form.get('storage', '').strip() or None
+        display = request.form.get('display', '').strip() or None
+        battery = request.form.get('battery', '').strip() or None
+        chip = request.form.get('chip', '').strip() or None
+        product_type = request.form.get('type', '').strip() or None
+        rating = request.form.get('rating', '').strip() or None
+        charging = request.form.get('charging', '').strip() or None
+        weight = request.form.get('weight', '').strip() or None
+        connectivity = request.form.get('connectivity', '').strip() or None
+        color = request.form.get('color', '').strip() or None
+        screen_size = request.form.get('screen_size', '').strip() or None
+        condition = request.form.get('condition', '').strip() or None
         
         # Validate
         if not all([product_name, description, price, stock_quantity is not None, category_id]):
@@ -2444,6 +2778,20 @@ def update_product(product_id):
         product.stock_quantity = stock_quantity
         product.status = status
         product.category_id = category_id
+        product.processor = processor
+        product.ram = ram
+        product.storage = storage
+        product.display = display
+        product.battery = battery
+        product.chip = chip
+        product.product_type = product_type
+        product.rating = rating
+        product.charging = charging
+        product.weight = weight
+        product.connectivity = connectivity
+        product.color = color
+        product.screen_size = screen_size
+        product.condition = condition
         
         # Handle image uploads if provided - now using BYTEA storage
         files = request.files.getlist('product_images')
@@ -5138,7 +5486,7 @@ def get_vendor_transactions():
 @app.route('/api/vendor/orders', methods=['GET'])
 @jwt_required()
 def get_vendor_orders():
-    """Get all orders for vendor's products"""
+    """Get all orders for vendor's products (vendors see all orders, but funds only released when super admin marks as delivered)"""
     try:
         user_id = int(get_jwt_identity())
         user = Users.query.get(user_id)
@@ -5159,10 +5507,12 @@ def get_vendor_orders():
         if not product_ids:
             return jsonify({'success': True, 'orders': []}), 200
         
-        # Get all orders containing these products
+        # Get ALL orders containing these products (vendors see all orders immediately)
         orders = db.session.query(Orders).join(
             Order_Items, Orders.id == Order_Items.order_id
-        ).filter(Order_Items.product_id.in_(product_ids)).distinct().order_by(Orders.created_at.desc()).all()
+        ).filter(
+            Order_Items.product_id.in_(product_ids)
+        ).distinct().order_by(Orders.created_at.desc()).all()
         
         print(f"Found {len(orders)} orders for vendor {vendor.id}")
         
@@ -5178,6 +5528,15 @@ def get_vendor_orders():
                 customer = Customers.query.filter_by(id=order.customer_id).first()
                 customer_user = Users.query.filter_by(id=customer.user_id).first() if customer else None
                 
+                # Calculate vendor's revenue from this order
+                vendor_revenue = 0
+                for item in order.items:
+                    if item.product and item.product.vendor_id == vendor.id:
+                        vendor_revenue += item.quantity * item.price_at_purchase
+                
+                # Determine if funds have been released (order must be delivered)
+                funds_released = order.shipping_status == 'delivered'
+                
                 order_data = {
                     'id': order.id,
                     'reference_number': order.reference_number,
@@ -5185,10 +5544,13 @@ def get_vendor_orders():
                     'customer_name': f"{customer_user.first_name} {customer_user.last_name}" if customer_user else 'Unknown',
                     'customer_email': customer_user.email if customer_user else 'unknown@email.com',
                     'total_amount': float(order.total_amount),
+                    'vendor_revenue': float(vendor_revenue) if funds_released else 0,  # Only show revenue if delivered
+                    'potential_revenue': float(vendor_revenue),  # What vendor will earn once delivered
                     'status': order.status or 'pending',
                     'shipping_status': order.shipping_status or 'pending',
                     'payment_status': payment_status,
                     'payment_method': payment_method,
+                    'funds_released': funds_released,  # True if super admin marked as delivered
                     'delivery_address_id': order.delivery_address_id,
                     'delivery_address': get_order_delivery_address(order),
                     'cancellation_request_status': order.cancellation_request_status,
@@ -5196,12 +5558,12 @@ def get_vendor_orders():
                     'created_at': order.created_at.isoformat() if order.created_at else None
                 }
                 orders_list.append(order_data)
-                print(f"Added order {order.id} to list")
+                print(f"Added order {order.id} to list - funds_released: {funds_released}, revenue: {vendor_revenue}")
             except Exception as order_error:
                 print(f"Error processing order {order.id}: {str(order_error)}")
                 continue
         
-        print(f"Returning {len(orders_list)} orders")
+        print(f"Returning {len(orders_list)} orders (all statuses)")
         return jsonify({
             'success': True,
             'orders': orders_list
@@ -5407,6 +5769,208 @@ def browse_Allproducts():
     return render_template('customer/browse_products.html')
 
 
+@app.route('/search', methods=['GET'])
+def search():
+    """Dedicated search page for all products"""
+    try:
+        # Get search parameters
+        query = request.args.get('q', '').strip()
+        page = request.args.get('page', 1, type=int)
+        sort_by = request.args.get('sort', 'relevance').strip()
+        
+        try:
+            min_price = float(request.args.get('min_price', 0)) if request.args.get('min_price') else None
+        except:
+            min_price = None
+            
+        try:
+            max_price = float(request.args.get('max_price', 0)) if request.args.get('max_price') else None
+        except:
+            max_price = None
+            
+        in_stock = request.args.get('in_stock', type=int)
+        on_sale = request.args.get('on_sale', type=int)
+        free_delivery = request.args.get('free_delivery', type=int)
+        
+        try:
+            min_rating = int(request.args.get('min_rating', 0)) if request.args.get('min_rating') else None
+        except:
+            min_rating = None
+        
+        # Get all active products
+        try:
+            products_query = Products.query.filter_by(status='active')
+            
+            # Filter by stock if requested
+            if in_stock:
+                products_query = products_query.filter(Products.stock_quantity > 0)
+            
+            # Get all products
+            all_products = products_query.all()
+        except Exception as e:
+            print(f"Database error fetching products: {str(e)}")
+            all_products = []
+        
+        # Filter by search query
+        if query and all_products:
+            query_lower = query.lower()
+            all_products = [
+                p for p in all_products 
+                if query_lower in (p.name or '').lower() 
+                or query_lower in (p.description or '').lower()
+                or query_lower in ((p.vendor.store_name if p.vendor and p.vendor.store_name else '')).lower()
+            ]
+        
+        # Filter by price range
+        if min_price is not None and all_products:
+            all_products = [p for p in all_products if (p.price or 0) >= min_price]
+        if max_price is not None and all_products:
+            all_products = [p for p in all_products if (p.price or 0) <= max_price]
+        
+        # Build product list with details
+        products_list = []
+        for product in all_products:
+            try:
+                # Get ratings safely
+                try:
+                    ratings = [review.rating for review in (product.reviews or [])]
+                    avg_rating = round(sum(ratings) / len(ratings), 1) if ratings else 0.0
+                except:
+                    avg_rating = 0.0
+                    ratings = []
+                
+                # Filter by rating if specified
+                if min_rating and avg_rating < min_rating:
+                    continue
+                
+                # Get primary image safely
+                image_url = None
+                try:
+                    if product.images and len(product.images) > 0:
+                        primary_image = next((img for img in product.images if img.is_primary), None)
+                        if primary_image:
+                            image_url = f'/api/product-image/{primary_image.id}'
+                        else:
+                            image_url = f'/api/product-image/{product.images[0].id}'
+                except:
+                    image_url = None
+                
+                # Get vendor name safely
+                store_name = 'Unknown Vendor'
+                try:
+                    if product.vendor:
+                        if product.vendor.store_name:
+                            store_name = product.vendor.store_name
+                        elif product.vendor.user:
+                            store_name = f"{product.vendor.user.first_name} {product.vendor.user.last_name}"
+                except:
+                    store_name = 'Unknown Vendor'
+                
+                product_dict = {
+                    'id': product.id,
+                    'name': product.name or 'Unnamed Product',
+                    'description': product.description or '',
+                    'slug': product.slug or '',
+                    'price': product.price or 0,
+                    'image_url': image_url,
+                    'category_name': (product.category.name if product.category else 'Uncategorized') or 'Uncategorized',
+                    'category_slug': (product.category.slug if product.category else '') or '',
+                    'store_name': store_name,
+                    'stock_quantity': product.stock_quantity or 0,
+                    'avg_rating': avg_rating,
+                    'review_count': len(ratings),
+                    'is_new': False,
+                    'is_hot': False,
+                    'in_wishlist': False
+                }
+                products_list.append(product_dict)
+            except Exception as e:
+                print(f"Error processing product {product.id}: {str(e)}")
+                continue
+        
+        # Sort products
+        try:
+            if sort_by == 'price_asc':
+                products_list.sort(key=lambda x: x['price'])
+            elif sort_by == 'price_desc':
+                products_list.sort(key=lambda x: x['price'], reverse=True)
+            elif sort_by == 'newest':
+                products_list.sort(key=lambda x: x['id'], reverse=True)
+            elif sort_by == 'rating':
+                products_list.sort(key=lambda x: x['avg_rating'], reverse=True)
+            elif sort_by == 'popular':
+                products_list.sort(key=lambda x: x['review_count'], reverse=True)
+        except Exception as e:
+            print(f"Sorting error: {str(e)}")
+        
+        # Get unique categories and brands for filters
+        categories_set = set()
+        brands_set = set()
+        try:
+            for p in Products.query.filter_by(status='active').all():
+                try:
+                    if p.category:
+                        categories_set.add((p.category.name, p.category.slug))
+                except:
+                    pass
+                try:
+                    if p.vendor and p.vendor.store_name:
+                        brands_set.add(p.vendor.store_name)
+                except:
+                    pass
+        except Exception as e:
+            print(f"Category/brand fetch error: {str(e)}")
+        
+        categories = [{'name': c[0], 'slug': c[1]} for c in sorted(categories_set)]
+        brands = [{'name': b, 'slug': b.lower().replace(' ', '-')} for b in sorted(brands_set)]
+        
+        # Pagination
+        per_page = 12
+        total = len(products_list)
+        total_pages = max(1, (total + per_page - 1) // per_page)
+        start = max(0, (page - 1) * per_page)
+        end = start + per_page
+        paginated_products = products_list[start:end]
+        
+        context = {
+            'query': query or '',
+            'products': paginated_products or [],
+            'total_results': total,
+            'categories': categories or [],
+            'brands': brands or [],
+            'min_price': min_price,
+            'max_price': max_price,
+            'in_stock': in_stock,
+            'on_sale': on_sale,
+            'free_delivery': free_delivery,
+            'min_rating': min_rating,
+            'sort': sort_by,
+            'page': page,
+            'total_pages': total_pages,
+            'has_next': page < total_pages,
+            'has_previous': page > 1,
+            'error': None
+        }
+        
+        return render_template('home/search.html', **context)
+    except Exception as e:
+        print(f"Search error: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return render_template('home/search.html', 
+            products=[], 
+            query='', 
+            error='Search failed',
+            categories=[],
+            brands=[],
+            total_results=0,
+            page=1,
+            total_pages=1,
+            has_next=False,
+            has_previous=False
+        )
+
+
 @app.route('/categories')
 def view_all_categories():
     # Guest-accessible categories page
@@ -5417,6 +5981,30 @@ def view_all_categories():
 def view_product_details(product_id):
     # Guest-accessible product details page
     return render_template('home/includes/ikeja-online-product.html', product_id=product_id)
+
+
+@app.route('/<string:store_slug>')
+def vendor_storefront(store_slug):
+    """Public vendor storefront page accessed by store_slug"""
+    try:
+        vendor = Vendors.query.filter_by(store_slug=store_slug).first()
+        if not vendor:
+            abort(404)
+
+        products = Products.query.filter_by(vendor_id=vendor.id, status='active').order_by(Products.created_at.desc()).all()
+        verified = bool(vendor.user and vendor.user.email_verified)
+
+        return render_template(
+            'home/vendor-store.html',
+            vendor=vendor,
+            products=products,
+            verified=verified
+        )
+    except Exception as e:
+        print(f"Vendor storefront error for slug {store_slug}: {e}")
+        import traceback
+        traceback.print_exc()
+        abort(404)
 
 
 @app.route('/api/product-details/<int:product_id>', methods=['GET'])
@@ -5472,6 +6060,7 @@ def get_product_details(product_id):
             'vendor_id': product.vendor_id,
             'store_name': store_name,
             'vendor_name': vendor_display_name,
+            'vendor_slug': product.vendor.store_slug if product.vendor and product.vendor.store_slug else None,
             'processor': product.processor,
             'ram': product.ram,
             'storage': product.storage,
@@ -5479,9 +6068,13 @@ def get_product_details(product_id):
             'battery': product.battery,
             'chip': product.chip,
             'product_type': product.product_type,
+            'rating': product.rating,
             'charging': product.charging,
             'weight': product.weight,
             'connectivity': product.connectivity,
+            'color': product.color,
+            'screen_size': product.screen_size,
+            'condition': product.condition,
             'image': image_url,
             'images': [
                 {
@@ -5699,7 +6292,31 @@ def init_first_admin():
 @app.route('/admin/dashboard')
 def admin_dashboard():
     # Client-side will check for token and super admin role
-    return render_template('admin/admin_dashboard.html')
+    return render_template('admin/dashboard.html', page='dashboard')
+
+@app.route('/admin/orders')
+def admin_orders_page():
+    return render_template('admin/orders.html', page='orders')
+
+@app.route('/admin/customers')
+def admin_customers_page():
+    return render_template('admin/customers.html', page='customers')
+
+@app.route('/admin/vendors')
+def admin_vendors_page():
+    return render_template('admin/vendors.html', page='vendors')
+
+@app.route('/admin/products')
+def admin_products_page():
+    return render_template('admin/products.html', page='products')
+
+@app.route('/admin/categories')
+def admin_categories_page():
+    return render_template('admin/categories.html', page='categories')
+
+@app.route('/admin/payments')
+def admin_payments_page():
+    return render_template('admin/payments.html', page='payments')
 
 
 @app.route('/api/admin/stats', methods=['GET'])
@@ -5777,9 +6394,11 @@ def admin_get_vendors():
         for v in vendors:
             vendor_dict = {
                 'id': v.id,
+                'user_id': v.user_id,
                 'store_name': v.store_name or 'Not Set',
-                'user_name': f"{v.user.first_name} {v.user.last_name}",
-                'user_email': v.user.email,
+                'owner_name': f"{v.user.first_name} {v.user.last_name}",
+                'email': v.user.email,
+                'is_active': v.user.is_active,
                 'store_description': v.store_description,
                 'phone': v.phone,
                 'address': v.address,
@@ -5819,6 +6438,50 @@ def admin_get_categories():
         
         return jsonify({'success': True, 'categories': categories_data}), 200
     except Exception as e:
+        return jsonify({'success': False, 'error': 'Server Error', 'message': str(e)}), 500
+
+
+@app.route('/api/admin/categories', methods=['POST'])
+@jwt_required()
+def admin_add_category():
+    """Create a new category"""
+    try:
+        user_id = int(get_jwt_identity())
+        user = Users.query.get(user_id)
+        if not user or user.role.name != 'super_admin':
+            return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+
+        data = request.get_json() or {}
+        name = (data.get('name') or '').strip()
+        slug = (data.get('slug') or '').strip()
+
+        if not name:
+            return jsonify({'success': False, 'error': 'Bad Request', 'message': 'Category name is required'}), 400
+
+        if not slug:
+            slug = slugify(name)
+        else:
+            slug = slugify(slug)
+
+        if not slug:
+            return jsonify({'success': False, 'error': 'Bad Request', 'message': 'Category slug could not be generated'}), 400
+
+        if Categories.query.filter((Categories.name == name) | (Categories.slug == slug)).first():
+            return jsonify({'success': False, 'error': 'Conflict', 'message': 'Category name or slug already exists'}), 409
+
+        category = Categories(name=name, slug=slug)
+        db.session.add(category)
+        db.session.commit()
+
+        return jsonify({'success': True, 'message': 'Category created successfully', 'category': {
+            'id': category.id,
+            'name': category.name,
+            'slug': category.slug,
+            'product_count': 0,
+            'created_at': category.created_at.isoformat()
+        }}), 201
+    except Exception as e:
+        db.session.rollback()
         return jsonify({'success': False, 'error': 'Server Error', 'message': str(e)}), 500
 
 
@@ -5912,6 +6575,7 @@ def admin_get_all_orders():
             
             order_dict = {
                 'id': order.id,
+                'customer_id': order.customer_id,
                 'reference_number': order.reference_number,
                 'customer_name': f"{user.first_name} {user.last_name}" if user else 'Unknown',
                 'customer_email': user.email if user else 'Unknown',
@@ -5948,7 +6612,7 @@ def admin_get_all_orders():
 @app.route('/api/admin/orders/<int:order_id>', methods=['GET'])
 @jwt_required()
 def admin_get_order_details(order_id):
-    """Get detailed order information for super admin"""
+    """Get detailed order information for super admin including customer and billing details"""
     try:
         admin_id = int(get_jwt_identity())
         admin = Users.query.get(admin_id)
@@ -5967,21 +6631,43 @@ def admin_get_order_details(order_id):
         # Get payment info
         payment = Payments.query.filter_by(order_id=order.id).first()
         payment_status = payment.status if payment else 'pending'
+        payment_method = payment.payment_method if payment else 'Unknown'
+        
+        # Get delivery address details (if available)
+        delivery_address_data = None
+        if order.delivery_address_id:
+            delivery_addr = CustomerAddress.query.get(order.delivery_address_id)
+            if delivery_addr:
+                delivery_address_data = {
+                    'label': delivery_addr.label or 'Delivery Address',
+                    'address_line1': delivery_addr.address_line1,
+                    'address_line2': delivery_addr.address_line2,
+                    'city': delivery_addr.city,
+                    'state': delivery_addr.state,
+                    'postal_code': delivery_addr.postal_code,
+                    'country': delivery_addr.country,
+                    'phone': delivery_addr.phone,
+                    'full_address': get_order_delivery_address(order)
+                }
         
         # Get order items with vendor info
         items_data = []
-        vendors_involved = set()
+        vendors_involved = []
         for item in order.items:
             vendor = None
             vendor_name = 'Unknown'
+            vendor_id = None
             if item.product and item.product.vendor_id:
                 vendor = Vendors.query.get(item.product.vendor_id)
                 vendor_name = vendor.store_name if vendor else 'Unknown'
-                vendors_involved.add((vendor.id, vendor_name) if vendor else None)
+                vendor_id = vendor.id if vendor else None
+                if (vendor_id, vendor_name) not in vendors_involved:
+                    vendors_involved.append((vendor_id, vendor_name))
             
             items_data.append({
                 'product_id': item.product_id,
                 'product_name': item.product.name if item.product else 'Unknown',
+                'vendor_id': vendor_id,
                 'vendor_name': vendor_name,
                 'quantity': item.quantity,
                 'price_at_purchase': float(item.price_at_purchase),
@@ -5992,19 +6678,27 @@ def admin_get_order_details(order_id):
             'id': order.id,
             'customer_id': order.customer_id,
             'reference_number': order.reference_number,
-            'customer_name': f"{customer_user.first_name} {customer_user.last_name}" if customer_user else 'Unknown',
-            'customer_email': customer_user.email if customer_user else 'Unknown',
-            'customer_phone': customer.phone if customer else 'Unknown',
+            # Customer Information
+            'customer': {
+                'id': customer.id if customer else None,
+                'first_name': customer_user.first_name if customer_user else 'Unknown',
+                'last_name': customer_user.last_name if customer_user else 'Unknown',
+                'full_name': f"{customer_user.first_name} {customer_user.last_name}" if customer_user else 'Unknown',
+                'email': customer_user.email if customer_user else 'Unknown',
+                'phone': customer.phone if customer else 'Not provided'
+            },
+            # Billing/Delivery Address
+            'delivery_address': delivery_address_data or get_order_delivery_address(order),
+            # Order Details
             'total_amount': float(order.total_amount),
             'status': order.status,
             'payment_status': payment_status,
+            'payment_method': payment_method,
             'shipping_status': order.shipping_status or 'pending',
             'tracking_number': order.tracking_number,
             'tracking_carrier': order.tracking_carrier,
             'shipped_at': order.shipped_at.isoformat() if order.shipped_at else None,
             'delivered_at': order.delivered_at.isoformat() if order.delivered_at else None,
-            'delivery_address_id': order.delivery_address_id,
-            'delivery_address': get_order_delivery_address(order),
             'cancellation_request_status': order.cancellation_request_status,
             'cancellation_reason': order.cancellation_reason,
             'cancellation_requested_at': order.cancellation_requested_at.isoformat() if order.cancellation_requested_at else None,
@@ -6012,7 +6706,8 @@ def admin_get_order_details(order_id):
             'cancellation_processed_by': order.cancellation_processor.id if order.cancellation_processor else None,
             'created_at': order.created_at.isoformat(),
             'items': items_data,
-            'vendors_count': len([v for v in vendors_involved if v])
+            'vendors_count': len(vendors_involved),
+            'vendors': [{'vendor_id': v[0], 'vendor_name': v[1]} for v in vendors_involved]
         }
         
         return jsonify({
@@ -6021,13 +6716,15 @@ def admin_get_order_details(order_id):
         }), 200
     except Exception as e:
         print(f"[ADMIN-ORDER-DETAILS] Error: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'success': False, 'error': 'Server Error', 'message': str(e)}), 500
 
 
 @app.route('/api/admin/orders/<int:order_id>/shipping-status', methods=['PUT', 'POST'])
 @jwt_required()
 def admin_update_shipping_status(order_id):
-    """Update shipping status for an order"""
+    """Update shipping status for an order. When marked as delivered, release vendor funds."""
     try:
         admin_id = int(get_jwt_identity())
         admin = Users.query.get(admin_id)
@@ -6052,16 +6749,29 @@ def admin_update_shipping_status(order_id):
         
         old_status = order.shipping_status or 'pending'
         order.shipping_status = new_status
+        
+        funds_released = False
+        funds_message = ''
+        
+        # When marking as delivered, distribute funds to vendors
+        if new_status == 'delivered':
+            funds_released = distribute_funds_to_vendors(order_id)
+            if funds_released:
+                funds_message = ' and vendor funds have been released to their wallets'
+            else:
+                funds_message = ' but vendor fund distribution failed - please check payment status'
+        
         db.session.commit()
         
         print(f"[ADMIN-UPDATE-SHIPPING] Order {order_id} shipping status updated from {old_status} to {new_status}")
         
         return jsonify({
             'success': True,
-            'message': f'Shipping status updated to {new_status}',
+            'message': f'Shipping status updated to {new_status}{funds_message}',
             'order_id': order_id,
             'old_status': old_status,
-            'new_status': new_status
+            'new_status': new_status,
+            'funds_released': funds_released
         }), 200
     except Exception as e:
         db.session.rollback()
@@ -6143,10 +6853,157 @@ def admin_get_customer_details(customer_id):
         return jsonify({'success': False, 'error': 'Server Error', 'message': str(e)}), 500
 
 
-@app.route('/admin/orders')
-def admin_orders_page():
-    """Admin orders management page"""
-    return render_template('admin/admin_orders.html')
+# ============ NEW ADMIN API ENDPOINTS ============
+
+@app.route('/api/admin/customers', methods=['GET'])
+@jwt_required()
+def admin_get_customers():
+    """Get list of all customers"""
+    try:
+        admin_id = int(get_jwt_identity())
+        admin = Users.query.get(admin_id)
+        if not admin or admin.role.name != 'super_admin':
+            return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+        
+        customers = db.session.query(Customers, Users).join(Users).all()
+        customers_data = [
+            {
+                'id': c.Customers.id,
+                'user_id': c.Customers.user_id,
+                'first_name': c.Users.first_name,
+                'last_name': c.Users.last_name,
+                'email': c.Users.email,
+                'phone': c.Customers.phone,
+                'is_active': c.Users.is_active,
+                'created_at': c.Customers.created_at.isoformat()
+            }
+            for c in customers
+        ]
+        return jsonify({'success': True, 'customers': customers_data}), 200
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/admin/products', methods=['GET'])
+@jwt_required()
+def admin_get_products():
+    """Get list of all products"""
+    try:
+        admin_id = int(get_jwt_identity())
+        admin = Users.query.get(admin_id)
+        if not admin or admin.role.name != 'super_admin':
+            return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+        
+        search_query = request.args.get('q', '').strip()
+        product_query = Products.query
+        if search_query:
+            product_query = product_query.join(Vendors).join(Categories).filter(
+                db.or_(
+                    Products.name.ilike(f"%{search_query}%"),
+                    Vendors.store_name.ilike(f"%{search_query}%"),
+                    Categories.name.ilike(f"%{search_query}%")
+                )
+            )
+
+        products = product_query.all()
+        products_data = []
+        for p in products:
+            vendor = Vendors.query.get(p.vendor_id) if p.vendor_id else None
+            category = Categories.query.get(p.category_id) if p.category_id else None
+            products_data.append({
+                'id': p.id,
+                'name': p.name,
+                'vendor_name': vendor.store_name if vendor else 'Unknown',
+                'vendor_id': p.vendor_id,
+                'category_name': category.name if category else 'Uncategorized',
+                'category_id': p.category_id,
+                'price': float(p.price),
+                'stock': p.stock_quantity,
+                'status': p.status,
+                'is_active': p.status == 'active'
+            })
+        return jsonify({'success': True, 'products': products_data}), 200
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/admin/products/<int:product_id>', methods=['DELETE'])
+@jwt_required()
+def admin_delete_product(product_id):
+    """Delete a product"""
+    try:
+        admin_id = int(get_jwt_identity())
+        admin = Users.query.get(admin_id)
+        if not admin or admin.role.name != 'super_admin':
+            return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+        
+        product = Products.query.get(product_id)
+        if not product:
+            return jsonify({'success': False, 'error': 'Product not found'}), 404
+
+        try:
+            # Remove product-related image records and local files first
+            for image in product.images:
+                try:
+                    image_path = os.path.join(app.config['UPLOAD_FOLDER'], os.path.basename(image.image_url or ''))
+                    if os.path.exists(image_path):
+                        os.remove(image_path)
+                except Exception:
+                    pass
+
+            Product_Images.query.filter_by(product_id=product.id).delete()
+            Reviews.query.filter_by(product_id=product.id).delete()
+            Wishlist_Items.query.filter_by(product_id=product.id).delete()
+            SaveForLater_Items.query.filter_by(product_id=product.id).delete()
+            Cart_Items.query.filter_by(product_id=product.id).delete()
+            VendorMessages.query.filter_by(product_id=product.id).delete()
+            Order_Items.query.filter_by(product_id=product.id).delete()
+
+            db.session.delete(product)
+            db.session.commit()
+            return jsonify({'success': True, 'message': 'Product deleted successfully'}), 200
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'success': False, 'error': str(e)}), 500
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/admin/payments', methods=['GET'])
+@jwt_required()
+def admin_get_payments():
+    """Get list of all payments"""
+    try:
+        admin_id = int(get_jwt_identity())
+        admin = Users.query.get(admin_id)
+        if not admin or admin.role.name != 'super_admin':
+            return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+        
+        payment_method = request.args.get('payment_method', '')
+        payment_status = request.args.get('payment_status', '')
+        
+        query = Payments.query
+        if payment_method:
+            query = query.filter_by(payment_method=payment_method)
+        if payment_status:
+            query = query.filter_by(status=payment_status)
+        
+        payments = query.all()
+        payments_data = [
+            {
+                'transaction_id': p.transaction_id,
+                'order_id': p.order_id,
+                'amount': float(p.amount),
+                'payment_method': p.payment_method,
+                'status': p.status,
+                'created_at': p.created_at.isoformat()
+            }
+            for p in payments
+        ]
+        return jsonify({'success': True, 'payments': payments_data}), 200
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 
 @app.route('/browse-products')

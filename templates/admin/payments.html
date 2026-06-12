@@ -1,0 +1,88 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Payments - Admin Dashboard{% endblock %}
+{% block page_title %}Payment Management{% endblock %}
+
+{% block content %}
+<div class="content-card">
+    <div class="card-header">
+        <div class="card-title">
+            <span class="card-title-dot" style="background:var(--c6)"></span>
+            Payment Transactions
+        </div>
+        <div class="filters-row">
+            <select id="paymentMethodFilter" class="filter-select">
+                <option value="">All Methods</option>
+                <option value="paystack">Paystack</option>
+                <option value="transfer">Bank Transfer</option>
+            </select>
+            <select id="paymentStatusFilter" class="filter-select">
+                <option value="">All Status</option>
+                <option value="completed">Completed</option>
+                <option value="pending">Pending</option>
+                <option value="failed">Failed</option>
+            </select>
+            <button onclick="loadPayments()" class="filter-btn">
+                <i class="fas fa-filter"></i> Filter
+            </button>
+        </div>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Transaction ID</th>
+                    <th>Order ID</th>
+                    <th>Amount</th>
+                    <th>Method</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody id="paymentsTableBody">
+                <tr><td class="loading-cell" colspan="6"><div class="spinner"></div></td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    async function loadPayments() {
+        const tbody = document.getElementById('paymentsTableBody');
+        tbody.innerHTML = '<tr><td class="loading-cell" colspan="6"><div class="spinner"></div></td></tr>';
+        try {
+            const pm = document.getElementById('paymentMethodFilter').value;
+            const ps = document.getElementById('paymentStatusFilter').value;
+            const params = new URLSearchParams();
+            if (pm) params.append('payment_method', pm);
+            if (ps) params.append('payment_status', ps);
+
+            const r = await fetch('/api/admin/payments' + (params.toString() ? '?' + params : ''), { headers: authH() });
+            const d = await r.json();
+            tbody.innerHTML = '';
+
+            if (d.success && d.payments && d.payments.length) {
+                d.payments.forEach(p => {
+                    const statusBadge = p.status === 'completed' ? 'badge-green' : 
+                                       p.status === 'failed' ? 'badge-red' : 'badge-amber';
+                    tbody.insertAdjacentHTML('beforeend', `
+                    <tr>
+                        <td><span style="font-family:'DM Mono',monospace;font-size:.82rem;color:var(--c1);font-weight:600">${p.transaction_id}</span></td>
+                        <td>#${p.order_id}</td>
+                        <td style="font-weight:700">₦${parseFloat(p.amount).toLocaleString()}</td>
+                        <td style="text-transform:capitalize">${p.payment_method}</td>
+                        <td><span class="badge ${statusBadge}">${p.status}</span></td>
+                        <td style="color:var(--text2);font-size:.85rem">${new Date(p.created_at).toLocaleDateString()}</td>
+                    </tr>`);
+                });
+            } else {
+                tbody.innerHTML = '<tr><td colspan="6" class="loading-cell" style="color:var(--text3)">No transactions found</td></tr>';
+            }
+        } catch(e) { console.error(e); }
+    }
+
+    loadPayments();
+</script>
+{% endblock %}

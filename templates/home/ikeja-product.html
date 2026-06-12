@@ -11,12 +11,12 @@
   :root{
     --cream:#faf8f4;--cream2:#f2efe8;--white:#fffefb;
     --ink:#1c1916;--ink-2:#3e3830;--ink-3:#7a7168;--ink-4:#b5ada3;
-    --line:#e4dfd7;--orange:#d4500a;--orange-bg:#fdf0e8;--orange-mid:#e8946a;
+    --line:#e4dfd7;--orange:#2563eb;--orange-bg:#dbeafe;--orange-mid:#60a5fa;
     --green:#2d6a4f;--green-bg:#eaf4ef;--red:#b91c1c;--red-bg:#fef2f2;
     --hh:58px;--bnh:60px;
   }
   html{scroll-behavior:smooth;-webkit-text-size-adjust:100%;}
-  body{font-family:'Lato',Georgia,sans-serif;background:var(--cream);color:var(--ink);min-height:100vh;overflow-x:hidden;}
+  body{font-family:'Lato',Georgia,sans-serif;background:linear-gradient(180deg, rgba(37,99,235,.08) 0%, rgba(241,245,255,1) 45%, rgba(255,255,255,1) 100%);color:var(--ink);min-height:100vh;overflow-x:hidden;}
 
   /* ── HEADER ── */
   .hd{position:fixed;top:0;left:0;right:0;z-index:300;height:var(--hh);background:var(--white);border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 16px;gap:10px;}
@@ -99,7 +99,7 @@
   .qty-btn:hover{background:var(--line);}
   .qty-val{width:38px;text-align:center;font-size:15px;font-weight:700;color:var(--ink);border:none;background:white;outline:none;}
   .btn-cart-main{flex:1;font-family:'Lato',sans-serif;font-weight:700;font-size:14px;background:var(--orange);color:white;border:none;border-radius:8px;padding:13px 20px;cursor:pointer;transition:background .18s;display:flex;align-items:center;justify-content:center;gap:8px;}
-  .btn-cart-main:hover{background:#b8420a;}
+  .btn-cart-main:hover{background:#1d4ed8;}
   .btn-cart-main i{font-size:14px;}
   .btn-wish-main{width:46px;height:46px;flex-shrink:0;border-radius:8px;background:white;border:1.5px solid var(--line);font-size:18px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;color:var(--ink-4);}
   .btn-wish-main:hover{border-color:var(--red);color:var(--red);}
@@ -165,7 +165,7 @@
   .sb-info .sb-was{font-size:10.5px;color:var(--ink-4);text-decoration:line-through;}
   .sb-info .sb-price{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--ink);}
   .sb-btn{flex:1;font-family:'Lato',sans-serif;font-weight:700;font-size:13.5px;background:var(--orange);color:white;border:none;border-radius:8px;padding:11px;cursor:pointer;transition:background .15s;}
-  .sb-btn:hover{background:#b8420a;}
+  .sb-btn:hover{background:#1d4ed8;}
 
   /* ── BOTTOM NAV ── */
   .bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:300;height:var(--bnh);background:var(--white);border-top:1px solid var(--line);align-items:center;justify-content:space-around;padding:0 4px;}
@@ -204,7 +204,7 @@
   .pw-toggle{position:absolute;right:11px;top:50%;transform:translateY(-50%);color:var(--ink-4);cursor:pointer;font-size:14px;}
   .auth-forgot{text-align:right;font-size:12px;color:var(--orange);cursor:pointer;margin-top:-8px;margin-bottom:14px;}
   .auth-submit{width:100%;font-family:'Lato',sans-serif;font-weight:700;font-size:14px;background:var(--orange);color:white;border:none;border-radius:8px;padding:12px;cursor:pointer;transition:background .18s,opacity .18s;margin-top:4px;}
-  .auth-submit:hover{background:#b8420a;}
+  .auth-submit:hover{background:#1d4ed8;}
   .auth-submit.loading{background:var(--ink-2);cursor:progress;opacity:.88;}
   @media (max-width:420px){.auth-card{max-width:340px;margin:0 10px;}.auth-body{padding:18px;}.auth-field-row{grid-template-columns:1fr;}.auth-submit{padding:11px;font-size:13px;}}
   .auth-divider{display:flex;align-items:center;gap:12px;margin:16px 0;}
@@ -290,7 +290,7 @@
   .cart-summary.total .cart-summary-value{font-size:16px;color:var(--orange);}
   .cart-actions{display:grid;gap:10px;margin-top:12px;}
   .checkout-btn{width:100%;font-family:'Lato',sans-serif;font-weight:700;font-size:14px;background:var(--orange);color:white;border:none;border-radius:10px;padding:14px 16px;cursor:pointer;transition:all .18s;}
-  .checkout-btn:hover{background:#b8420a;}
+  .checkout-btn:hover{background:#1d4ed8;}
   .cart-checkout-note{font-size:12px;color:var(--ink-3);margin-top:10px;}
 </style>
 </head>
@@ -516,7 +516,7 @@
         <div class="auth-msg" id="login-msg"></div>
         <div class="auth-field"><label>Email</label><input type="email" id="li-email" placeholder="you@example.com"></div>
         <div class="auth-field"><label>Password</label><div class="auth-pw-wrap"><input type="password" id="li-pass" placeholder="Your password"><i class="fa-regular fa-eye pw-toggle" onclick="togglePw('li-pass',this)"></i></div></div>
-        <div class="auth-forgot" onclick="showToast('Reset email sent','envelope')">Forgot password?</div>
+        <div class="auth-forgot" onclick="openForgot()">Forgot password?</div>
         <button id="login-submit" class="auth-submit" onclick="doLogin()">Sign In</button>
         <!-- Social login UI removed -->
         <div class="auth-switch">No account? <a onclick="switchAuthTab('register')">Create one</a></div>
@@ -714,6 +714,9 @@ function renderProduct(p) {
     ['Battery', p.battery],
     ['Chip', p.chip],
     ['Type', p.product_type],
+    ['Screen Size', p.screen_size],
+    ['Color', p.color],
+    ['Condition', p.condition],
     ['Charging', p.charging],
     ['Weight', p.weight],
     ['Connectivity', p.connectivity]
@@ -904,12 +907,82 @@ function switchTab(tab,btn){
 /* AUTH */
 function openAuth(){document.getElementById('auth-overlay').classList.add('open');document.body.style.overflow='hidden';if(currentUser)showProfile();else showAuthForm();}
 function closeAuth(){document.getElementById('auth-overlay').classList.remove('open');document.body.style.overflow='';}
+// Ensure forgot/verify modal helpers exist on product pages (they may be defined in the home template)
+function openForgot(){
+  const email = (document.getElementById('email') || document.getElementById('li-email') || {}).value || '';
+  window.location.href = '/authentication?mode=reset' + (email ? '&email=' + encodeURIComponent(email) : '');
+}
+function closeForgot(){ }
+async function submitForgot(){
+  const email = (document.getElementById('forgot-email')||{}).value || '';
+  if(!email){ showToast('Please enter your email','x'); return; }
+  try{
+    const res = await fetch('/forgot-password', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json' },
+      body: JSON.stringify({ email })
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      showToast('If an account exists, a reset code was sent','check');
+      window.location.href = '/authentication?mode=reset&email=' + encodeURIComponent(email);
+      return;
+    } else {
+      showToast(data.message || 'Unable to send reset code','x');
+    }
+  }catch(e){ console.error(e); showToast('Error sending request','x'); }
+}
+function openVerify(email){
+  const preferredEmail = email || (document.getElementById('email') || document.getElementById('li-email') || {}).value || '';
+  window.location.href = '/authentication?mode=verify' + (preferredEmail ? '&email=' + encodeURIComponent(preferredEmail) : '');
+}
+function closeVerify(){ }
+async function submitVerify(){
+  const email = (document.getElementById('verify-email')||{}).value || '';
+  const code = (document.getElementById('verify-code')||{}).value || '';
+  if(!email || !code){ showToast('Email and code required','x'); return; }
+  try{
+    const res = await fetch('/api/verify-code', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ email, code }) });
+    const data = await res.json();
+    if(data.success){ showToast('Email verified','check'); closeVerify(); }
+    else showToast(data.message || 'Verification failed','x');
+  }catch(e){ console.error(e); showToast('Error verifying code','x'); }
+}
+async function resendCode(){
+  const email = (document.getElementById('verify-email')||{}).value || '';
+  if(!email){ showToast('Enter email to resend','x'); return; }
+  try{
+    const res = await fetch('/api/send-verification-code', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ email }) });
+    const data = await res.json();
+    if(data.success) showToast('Verification code sent if account exists','check');
+    else showToast(data.message || 'Error sending code','x');
+  }catch(e){ console.error(e); showToast('Error sending code','x'); }
+}
 function showAuthForm(){document.getElementById('auth-tabs-bar').style.display='flex';['panel-login','panel-register','panel-profile'].forEach(id=>document.getElementById(id).classList.remove('on'));document.getElementById('panel-login').classList.add('on');document.getElementById('tab-login').classList.add('on');document.getElementById('tab-register').classList.remove('on');}
 function showProfile(){document.getElementById('auth-tabs-bar').style.display='none';['panel-login','panel-register'].forEach(id=>document.getElementById(id).classList.remove('on'));document.getElementById('panel-profile').classList.add('on');document.getElementById('prof-name').textContent=currentUser.fname+' '+currentUser.lname;document.getElementById('prof-email').textContent=currentUser.email;}
 function switchAuthTab(tab){document.getElementById('tab-login').classList.toggle('on',tab==='login');document.getElementById('tab-register').classList.toggle('on',tab==='register');document.getElementById('panel-login').classList.toggle('on',tab==='login');document.getElementById('panel-register').classList.toggle('on',tab==='register');}
 function togglePw(id,el){const i=document.getElementById(id);const s=i.type==='password';i.type=s?'text':'password';el.className=`fa-regular fa-eye${s?'-slash':''} pw-toggle`;}
 function doLogin(){const e=document.getElementById('li-email').value.trim(),pw=document.getElementById('li-pass').value;if(!e||!pw){setMsg('login-msg','Please fill in all fields.','err');return;}currentUser={fname:e.split('@')[0],lname:'',email:e};onLogin();}
-function doRegister(){const fn=document.getElementById('reg-fname').value.trim(),ln=document.getElementById('reg-lname').value.trim(),em=document.getElementById('reg-email').value.trim(),ph=document.getElementById('reg-phone').value.trim(),pw=document.getElementById('reg-pass').value,cp=document.getElementById('reg-confirm-pass').value;if(!fn||!ln||!em||!pw||!cp){setMsg('reg-msg','Fill in all required fields.','err');return;}if(!em.includes('@')){setMsg('reg-msg','Please enter a valid email.','err');return;}if(pw.length<8){setMsg('reg-msg','Password must be 8+ characters.','err');return;}if(pw!==cp){setMsg('reg-msg','Passwords do not match.','err');return;}fetch('/register',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({role:'customer',firstname:fn,lastname:ln,email:em,phone:ph,password:pw,confirm_password:cp,store:'',vendor_class:''})}).then(res=>res.json()).then(data=>{if(!data.success){setMsg('reg-msg',data.error||data.message||'Registration failed.','err');return;}setMsg('reg-msg',data.message||'Registration successful. Please sign in.','ok');switchAuthTab('login');}).catch(err=>{console.error(err);setMsg('reg-msg','Registration failed. Try again later.','err');});}
+function doRegister(){
+  const fn=document.getElementById('reg-fname').value.trim(),ln=document.getElementById('reg-lname').value.trim(),em=document.getElementById('reg-email').value.trim(),ph=document.getElementById('reg-phone').value.trim(),pw=document.getElementById('reg-pass').value,cp=document.getElementById('reg-confirm-pass').value;
+  if(!fn||!ln||!em||!pw||!cp){setMsg('reg-msg','Fill in all required fields.','err');return;}if(!em.includes('@')){setMsg('reg-msg','Please enter a valid email.','err');return;}if(pw.length<8){setMsg('reg-msg','Password must be 8+ characters.','err');return;}if(pw!==cp){setMsg('reg-msg','Passwords do not match.','err');return;}
+  fetch('/register',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({role:'customer',firstname:fn,lastname:ln,email:em,phone:ph,password:pw,confirm_password:cp,store:'',vendor_class:''})})
+    .then(res=>res.json())
+    .then(data=>{
+      if(!data.success){ setMsg('reg-msg', data.error||data.message||'Registration failed.','err'); return; }
+      setMsg('reg-msg', data.message||'Registration successful. Please verify your email.', 'ok');
+      switchAuthTab('login');
+      try {
+        // Backend sends the verification code during registration; no need to resend here.
+        if (typeof openVerify === 'function') {
+          openVerify(em);
+        }
+      } catch (e) {
+        console.error('openVerify failed', e);
+      }
+    })
+    .catch(err=>{ console.error(err); setMsg('reg-msg','Registration failed. Try again later.','err'); });
+}
 function socialAuth(p){currentUser={fname:'Guest',lname:'',email:'guest@'+p.toLowerCase()+'.com'};onLogin();}
 function onLogin(){const btn=document.getElementById('hd-user-btn');btn.classList.add('active');btn.innerHTML='<i class="fa-solid fa-user"></i>';closeAuth();showToast('Welcome, '+currentUser.fname+'!','hand-wave');}
 function doLogout(){

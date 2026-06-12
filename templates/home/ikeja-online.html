@@ -13,18 +13,19 @@
   :root{
     --cream:#faf8f4;--cream2:#f2efe8;--white:#fffefb;
     --ink:#1c1916;--ink-2:#3e3830;--ink-3:#7a7168;--ink-4:#b5ada3;
-    --line:#e4dfd7;--orange:#d4500a;--orange-bg:#fdf0e8;--orange-mid:#e8946a;
+    --line:#e4dfd7;--orange:#2563eb;--orange-bg:#dbeafe;--orange-mid:#60a5fa;
     --green:#2d6a4f;--green-bg:#eaf4ef;--red:#b91c1c;--red-bg:#fef2f2;
     --hh:58px;--bnh:60px;--sb:240px;
   }
-  html{scroll-behavior:smooth;-webkit-text-size-adjust:100%;}
-  body{font-family:'Lato',Georgia,sans-serif;background:var(--cream);color:var(--ink);min-height:100vh;overflow-x:hidden;}
+  html{scroll-behavior:smooth;-webkit-text-size-adjust:100%;
+  body{font-family:'Lato',Georgia,sans-serif;background:linear-gradient(180deg, rgba(37,99,235,.08) 0%, rgba(241,245,255,1) 45%, rgba(255,255,255,1) 100%);color:var(--ink);min-height:100vh;overflow-x:hidden;}
 
   /* ── HEADER ── */
   .hd{position:fixed;top:0;left:0;right:0;z-index:300;height:var(--hh);background:var(--white);border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 16px;gap:10px;}
   .logo{font-family:'Playfair Display',serif;font-weight:800;font-size:18px;color:var(--ink);cursor:pointer;white-space:nowrap;flex-shrink:0;text-decoration:none;border:none;background:none;}
   .logo .dot{color:var(--orange);}
   .hd-search{flex:1;position:relative;min-width:0;}
+  .hd-actions{margin-left:auto;display:flex;align-items:center;gap:10px;}
   .hd-search input{width:100%;font-family:'Lato',sans-serif;font-size:14px;background:var(--cream2);border:1px solid var(--line);border-radius:8px;padding:9px 12px 9px 36px;color:var(--ink);outline:none;transition:border-color .18s;-webkit-appearance:none;}
   .hd-search input:focus{border-color:var(--orange);background:white;}
   .hd-search input::placeholder{color:var(--ink-4);}
@@ -39,56 +40,262 @@
   .wish-cnt{position:absolute;top:-4px;right:-4px;background:var(--red);color:white;font-size:9px;font-weight:900;min-width:16px;height:16px;border-radius:8px;display:none;align-items:center;justify-content:center;padding:0 3px;}
   .wish-cnt.show{display:flex;}
   .hd-cart{flex-shrink:0;position:relative;width:40px;height:40px;background:var(--orange);border:none;border-radius:9px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:white;transition:background .15s;}
-  .hd-cart:hover{background:#b8420a;}
+  .hd-cart:hover{background:#1d4ed8;}
   .hd-cart i{font-size:15px;}
   .cart-badge{position:absolute;top:-4px;right:-4px;background:var(--ink);color:white;font-size:9px;font-weight:900;min-width:16px;height:16px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 3px;}
 
   /* ── DRAWER OVERLAY ── */
-  .drawer-overlay{display:none;position:fixed;inset:0;z-index:400;background:rgba(28,25,22,.5);backdrop-filter:blur(2px);}
+  .drawer-overlay{
+    display:none;
+    position:fixed;
+    inset:0;
+    z-index:400;
+    background:rgba(28,25,22,.5);
+    backdrop-filter:blur(2px);
+  }
   .drawer-overlay.open{display:block;}
-  .drawer{position:fixed;top:0;left:0;bottom:0;z-index:500;width:min(300px,85vw);background:var(--white);transform:translateX(-100%);transition:transform .28s cubic-bezier(.4,0,.2,1);overflow-y:auto;padding:0 0 80px;-webkit-overflow-scrolling:touch;}
+  .drawer{
+    position:fixed;
+    top:0;
+    left:0;
+    bottom:0;
+    z-index:500;
+    width:min(300px,85vw);
+    background: linear-gradient(135deg, rgba(255,255,255,0.98), rgba(255,255,255,0.92));
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    transform:translateX(-100%);
+    transition:transform .28s cubic-bezier(.4,0,.2,1);
+    overflow-y:auto;
+    padding:0 0 80px;
+    -webkit-overflow-scrolling:touch;
+    box-shadow: 2px 0 16px rgba(0,0,0,0.1);
+  }
   .drawer.open{transform:translateX(0);}
-  .drawer-head{display:flex;align-items:center;justify-content:space-between;padding:18px 18px 14px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--white);z-index:1;}
-  .drawer-head h2{font-family:'Playfair Display',serif;font-size:17px;font-weight:700;color:var(--ink);}
-  .drawer-close{width:30px;height:30px;border-radius:6px;background:var(--cream2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ink-3);font-size:13px;}
+  .drawer-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:18px 18px 14px;
+    border-bottom:1px solid rgba(37,99,235,0.1);
+    position:sticky;
+    top:0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.95), rgba(255,255,255,0.90));
+    z-index:1;
+    backdrop-filter: blur(8px);
+  }
+  .drawer-head h2{
+    font-family:'Playfair Display',serif;
+    font-size:17px;
+    font-weight:700;
+    color:var(--ink);
+    background: linear-gradient(135deg, var(--ink), var(--orange));
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .drawer-close{
+    width:30px;
+    height:30px;
+    border-radius:8px;
+    background: linear-gradient(135deg, rgba(37,99,235,0.08), rgba(37,99,235,0.04));
+    border:1px solid rgba(37,99,235,0.2);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    color:var(--orange);
+    font-size:13px;
+    transition: all 0.2s ease;
+  }
+  .drawer-close:hover{
+    background: rgba(37,99,235,0.12);
+    border-color: var(--orange);
+    transform: rotate(90deg);
+  }
 
   /* ── LAYOUT ── */
   .shell{display:flex;padding-top:var(--hh);min-height:100vh;}
   .page-body{padding-bottom:calc(var(--bnh) + 20px);}
 
   /* ── SIDEBAR ── */
-  .sidebar{width:var(--sb);flex-shrink:0;background:var(--white);border-right:1px solid var(--line);position:sticky;top:var(--hh);height:calc(100vh - var(--hh));overflow-y:auto;overflow-x:hidden;padding:22px 0 32px;}
-  .sidebar::-webkit-scrollbar{width:3px;}
-  .sidebar::-webkit-scrollbar-thumb{background:var(--line);}
-  .sb-label{font-size:9px;font-weight:900;letter-spacing:2.5px;text-transform:uppercase;color:var(--ink-4);padding:0 18px;margin-bottom:5px;display:block;}
+  .sidebar{
+    width:var(--sb);
+    flex-shrink:0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.95), rgba(255,255,255,0.88));
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-right: 1px solid rgba(255,255,255,0.6);
+    position:sticky;
+    top:var(--hh);
+    height:calc(100vh - var(--hh));
+    overflow-y:auto;
+    overflow-x:hidden;
+    padding:22px 0 32px;
+    box-shadow: inset -1px 0 0 0 rgba(0,0,0,0.05);
+  }
+  .sidebar::-webkit-scrollbar{width:6px;}
+  .sidebar::-webkit-scrollbar-track{background: transparent;}
+  .sidebar::-webkit-scrollbar-thumb{
+    background: linear-gradient(180deg, rgba(37,99,235,0.3), rgba(37,99,235,0.1));
+    border-radius: 3px;
+    transition: background 0.3s ease;
+  }
+  .sidebar::-webkit-scrollbar-thumb:hover{
+    background: linear-gradient(180deg, rgba(37,99,235,0.5), rgba(37,99,235,0.3));
+  }
+  .sb-label{
+    font-size:10px;
+    font-weight:900;
+    letter-spacing:2.5px;
+    text-transform:uppercase;
+    color: rgba(122,113,104,0.65);
+    padding:0 18px;
+    margin-bottom:8px;
+    display:block;
+  }
   .cat-list{list-style:none;margin-bottom:6px;}
-  .cat-li{display:flex;align-items:center;gap:10px;padding:9px 18px;cursor:pointer;font-size:13.5px;color:var(--ink-2);border-left:2.5px solid transparent;transition:all .15s;user-select:none;}
-  .cat-li:hover{background:var(--cream);}
-  .cat-li.on{background:var(--orange-bg);border-left-color:var(--orange);color:var(--orange);font-weight:700;}
-  .cat-li .ico{width:20px;text-align:center;flex-shrink:0;color:inherit;}
+  .cat-li{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:10px 14px;
+    margin:4px 12px;
+    cursor:pointer;
+    font-size:13.5px;
+    color:var(--ink-2);
+    border-left:3px solid transparent;
+    border-radius: 10px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    user-select:none;
+    background: rgba(255,255,255,0.4);
+  }
+  .cat-li:hover{
+    background: rgba(37,99,235,0.08);
+    color: var(--ink);
+    transform: translateX(4px);
+    border-left-color: rgba(37,99,235,0.3);
+  }
+  .cat-li.on{
+    background: linear-gradient(135deg, rgba(37,99,235,0.15), rgba(37,99,235,0.08));
+    border-left-color: var(--orange);
+    color: var(--orange);
+    font-weight: 700;
+    box-shadow: 0 4px 12px rgba(37,99,235,0.12), inset 0 1px 0 rgba(255,255,255,0.5);
+  }
+  .cat-li .ico{
+    width:20px;
+    text-align:center;
+    flex-shrink:0;
+    color:inherit;
+    transition: transform 0.3s ease;
+  }
+  .cat-li:hover .ico{
+    transform: scale(1.1) rotate(5deg);
+  }
   .cat-li .ico i{font-size:13px;}
   .cat-li .lbl{flex:1;}
-  .cat-li .num{font-size:10.5px;font-weight:700;color:var(--ink-4);background:var(--cream2);padding:1px 7px;border-radius:10px;}
-  .cat-li.on .num{background:var(--orange);color:white;}
+  .cat-li .num{
+    font-size:10px;
+    font-weight:800;
+    color:var(--ink-4);
+    background: rgba(37,99,235,0.12);
+    padding:2px 8px;
+    border-radius:12px;
+    min-width: 26px;
+    text-align: center;
+    transition: all 0.2s ease;
+  }
+  .cat-li:hover .num{
+    background: rgba(37,99,235,0.2);
+    color: var(--orange);
+  }
+  .cat-li.on .num{
+    background: var(--orange);
+    color:white;
+    transform: scale(1.05);
+  }
   .cat-extra{display:none;}
   .cat-extra.open{display:block;}
-  .vm-btn{display:flex;align-items:center;gap:7px;margin:4px 18px 0;background:var(--cream2);border:1px solid var(--line);border-radius:7px;padding:7px 11px;font-family:'Lato',sans-serif;font-size:12px;color:var(--ink-3);cursor:pointer;transition:all .18s;width:calc(100% - 36px);}
-  .vm-btn:hover{border-color:var(--orange);color:var(--orange);}
-  .vm-chev{margin-left:auto;font-size:10px;transition:transform .22s;}
+  .vm-btn{
+    display:flex;
+    align-items:center;
+    gap:7px;
+    margin:8px 14px 0;
+    background: linear-gradient(135deg, rgba(37,99,235,0.08), rgba(37,99,235,0.04));
+    border:1px solid rgba(37,99,235,0.2);
+    border-radius:10px;
+    padding:9px 12px;
+    font-family:'Lato',sans-serif;
+    font-size:12px;
+    color:var(--ink-3);
+    cursor:pointer;
+    transition:all .22s cubic-bezier(0.4, 0, 0.2, 1);
+    width:calc(100% - 36px);
+    backdrop-filter: blur(4px);
+  }
+  .vm-btn:hover{
+    border-color:var(--orange);
+    color:var(--orange);
+    background: linear-gradient(135deg, rgba(37,99,235,0.12), rgba(37,99,235,0.08));
+    box-shadow: 0 4px 12px rgba(37,99,235,0.1);
+  }
+  .vm-chev{
+    margin-left:auto;
+    font-size:10px;
+    transition:transform .22s;
+  }
   .vm-btn.exp .vm-chev{transform:rotate(180deg);}
-  .sb-rule{height:1px;background:var(--line);margin:18px 18px;}
+  .sb-rule{
+    height:1px;
+    background: linear-gradient(90deg, transparent, rgba(37,99,235,0.1), transparent);
+    margin:18px 18px;
+  }
   .sb-sec{padding:0 18px;margin-bottom:16px;}
   .price-row{display:flex;align-items:center;gap:7px;margin-bottom:8px;}
-  .price-in{flex:1;font-family:'Lato',sans-serif;font-size:13px;background:var(--cream2);border:1px solid var(--line);border-radius:6px;padding:7px 9px;color:var(--ink);outline:none;transition:border-color .15s;-webkit-appearance:none;width:100%;}
-  .price-in:focus{border-color:var(--orange);background:white;}
+  .price-in{
+    flex:1;
+    font-family:'Lato',sans-serif;
+    font-size:13px;
+    background: rgba(255,255,255,0.7);
+    border:1px solid rgba(37,99,235,0.15);
+    border-radius:8px;
+    padding:8px 10px;
+    color:var(--ink);
+    outline:none;
+    transition: all 0.2s ease;
+    -webkit-appearance:none;
+    width:100%;
+    backdrop-filter: blur(4px);
+  }
+  .price-in:focus{
+    border-color:var(--orange);
+    background:rgba(255,255,255,0.95);
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+  }
   .price-sep{font-size:11px;color:var(--ink-4);flex-shrink:0;}
-  .apply-btn{width:100%;font-family:'Lato',sans-serif;font-size:13px;font-weight:700;background:var(--cream2);border:1px solid var(--line);border-radius:6px;padding:8px;color:var(--ink-3);cursor:pointer;transition:all .15s;}
-  .apply-btn:hover{background:var(--orange);border-color:var(--orange);color:white;}
-  .brand-list{display:flex;flex-direction:column;gap:6px;}
-  .brand-row{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-2);cursor:pointer;padding:2px 0;}
-  .brand-row input{accent-color:var(--orange);width:14px;height:14px;cursor:pointer;}
-  .brand-row span{flex:1;}
-  .brand-n{font-size:11px;color:var(--ink-4);}
+  .apply-btn{
+    width:100%;
+    font-family:'Lato',sans-serif;
+    font-size:13px;
+    font-weight:700;
+    background: linear-gradient(135deg, rgba(37,99,235,0.1), rgba(37,99,235,0.05));
+    border:1px solid rgba(37,99,235,0.2);
+    border-radius:8px;
+    padding:9px 12px;
+    color:var(--orange);
+    cursor:pointer;
+    transition:all .2s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(4px);
+  }
+  .apply-btn:hover{
+    background: var(--orange);
+    border-color:var(--orange);
+    color:white;
+    box-shadow: 0 6px 16px rgba(37,99,235,0.2);
+    transform: translateY(-2px);
+  }
+  .apply-btn:active{transform: translateY(0);}
 
   /* ── MAIN ── */
   main{flex:1;min-width:0;padding:24px 20px;padding-bottom:calc(var(--bnh)+16px);}
@@ -103,7 +310,7 @@
   .hero p{font-size:13.5px;color:rgba(255,255,255,.55);line-height:1.65;margin-bottom:20px;}
   .hero-btns{display:flex;gap:9px;flex-wrap:wrap;}
   .btn-hp{font-family:'Lato',sans-serif;font-weight:700;font-size:13px;background:var(--orange);color:white;border:none;border-radius:7px;padding:10px 18px;cursor:pointer;transition:background .15s;}
-  .btn-hp:hover,.btn-hp:active{background:#b8420a;}
+  .btn-hp:hover,.btn-hp:active{background:#1d4ed8;}
   .btn-hg{font-family:'Lato',sans-serif;font-size:13px;background:transparent;color:rgba(255,255,255,.65);border:1px solid rgba(255,255,255,.2);border-radius:7px;padding:10px 18px;cursor:pointer;transition:all .15s;}
   .btn-hg:hover{color:white;border-color:rgba(255,255,255,.5);}
   .hero-stats{display:flex;gap:10px;margin-top:20px;flex-wrap:wrap;}
@@ -160,7 +367,7 @@
   .pcard-was{font-size:10px;color:var(--ink-4);text-decoration:line-through;}
   .pcard-now{font-size:15px;font-weight:900;color:var(--ink);line-height:1;}
   .pcard-add{flex-shrink:0;width:28px;height:28px;border-radius:6px;background:var(--orange);color:white;border:none;font-size:15px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .13s;}
-  .pcard-add:active{background:#b8420a;}
+  .pcard-add:active{background:#1d4ed8;}
 
   /* ── EMPTY ── */
   .no-res{grid-column:1/-1;text-align:center;padding:56px 16px;color:var(--ink-3);}
@@ -177,9 +384,32 @@
   .bn-item:active{background:var(--cream2);}
 
   /* ── TOAST ── */
-  .toast{position:fixed;z-index:999;bottom:calc(var(--bnh)+12px);left:50%;transform:translateX(-50%) translateY(30px);background:var(--ink);color:white;border-radius:8px;padding:10px 18px;font-size:13px;white-space:nowrap;display:flex;align-items:center;gap:8px;box-shadow:0 4px 20px rgba(0,0,0,.2);opacity:0;transition:opacity .22s,transform .22s;pointer-events:none;max-width:90vw;overflow:hidden;text-overflow:ellipsis;}
+  .toast{position:fixed;z-index:999;bottom:calc(var(--bnh)+12px);left:50%;transform:translateX(-50%) translateY(30px);background:var(--orange);color:white;border-radius:8px;padding:10px 18px;font-size:13px;white-space:nowrap;display:flex;align-items:center;gap:8px;box-shadow:0 6px 24px rgba(37,99,235,.25);opacity:0;transition:opacity .22s,transform .22s;pointer-events:none;max-width:90vw;overflow:hidden;text-overflow:ellipsis;}
   .toast.on{opacity:1;transform:translateX(-50%) translateY(0);}
-  .t-i{color:#6ee7b7;flex-shrink:0;}
+  .t-i{color:#ffffff;flex-shrink:0;}
+
+  .search-active .ticker-wrap,
+  .search-active .promo-strip,
+  .search-active .brand-trust,
+  .search-active .cat-showcase,
+  .search-active .deals-head,
+  .search-active .recent-viewed,
+  .search-active .ad-leaderboard,
+  .search-active .filter-bar,
+  .search-active .sidebar,
+  .search-active .drawer,
+  .search-active .cookie-banner-home {
+    display:none !important;
+  }
+  body:not(.home-page) .sidebar,
+  body:not(.home-page) .drawer,
+  body:not(.home-page) .drawer-overlay {
+    display: none !important;
+  }
+
+  .search-active main {
+    padding-top: 18px;
+  }
 
   /* ── AUTH MODAL ── */
   .auth-overlay{display:none;position:fixed;inset:0;z-index:800;background:rgba(28,25,22,.55);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:16px;}
@@ -190,11 +420,11 @@
   .cookie-banner-copy strong{color:var(--ink);}
   .cookie-banner-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end;}
   .cookie-banner-btn{min-width:120px;border:none;border-radius:12px;padding:11px 18px;font-family:'Lato',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all .18s ease,transform .18s ease;}
-  .cookie-banner-primary{background:var(--orange);color:white;box-shadow:0 12px 24px rgba(212,80,10,.18);}
-  .cookie-banner-primary:hover{background:#b8420a;transform:translateY(-1px);}
+  .cookie-banner-primary{background:var(--orange);color:white;box-shadow:0 12px 24px rgba(37,99,235,.18);}
+  .cookie-banner-primary:hover{background:#1d4ed8;transform:translateY(-1px);}
   .cookie-banner-secondary{background:rgba(255,255,255,.86);color:var(--ink-2);border:1px solid rgba(28,25,22,.12);backdrop-filter:blur(10px);}
   .cookie-banner-secondary:hover{background:rgba(255,255,255,.96);transform:translateY(-1px);}
-  .cookie-banner-home button:focus{outline:none;box-shadow:0 0 0 4px rgba(212,80,10,.16);}
+  .cookie-banner-home button:focus{outline:none;box-shadow:0 0 0 4px rgba(37,99,235,.16);}
   @media(max-width:720px){.cookie-banner-home{grid-template-columns:1fr;row-gap:14px;left:50%;width:min(96vw,680px);padding:18px 16px;} .cookie-banner-actions{justify-content:flex-start;}}
   .auth-card{background:var(--white);border-radius:14px;width:100%;max-width:400px;box-shadow:0 24px 60px rgba(28,25,22,.18);overflow:hidden;animation:authPop .22s cubic-bezier(.34,1.3,.64,1);}
   @keyframes authPop{from{opacity:0;transform:scale(.94) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}
@@ -227,7 +457,7 @@
   .pw-toggle:hover{color:var(--ink);}
   .auth-forgot{text-align:right;font-size:12px;color:var(--orange);cursor:pointer;margin-top:-8px;margin-bottom:14px;}
   .auth-submit{width:100%;font-family:'Lato',sans-serif;font-weight:700;font-size:14px;background:var(--orange);color:white;border:none;border-radius:8px;padding:12px;cursor:pointer;transition:background .18s;margin-top:4px;}
-  .auth-submit:hover{background:#b8420a;}
+  .auth-submit:hover{background:#1d4ed8;}
   .auth-divider{display:flex;align-items:center;gap:12px;margin:16px 0;}
   .auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:var(--line);}
   .auth-divider span{font-size:11.5px;color:var(--ink-4);white-space:nowrap;}
@@ -294,7 +524,7 @@
   #cart-item-count{font-size:12px;color:var(--ink-3);}
   .cart-actions{display:grid;gap:10px;margin-top:12px;}
   .checkout-btn{width:100%;background:var(--orange);color:white;border:none;border-radius:8px;padding:12px;font-family:'Lato',sans-serif;font-weight:700;font-size:14px;cursor:pointer;transition:background .18s;}
-  .checkout-btn:hover{background:#b8420a;}
+  .checkout-btn:hover{background:#1d4ed8;}
   
   /* ── CHECKOUT MODAL ── */
   .checkout-overlay{display:none;position:fixed;inset:0;z-index:800;background:rgba(28,25,22,.55);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:16px;}
@@ -325,7 +555,7 @@
   .checkout-actions{display:grid;gap:10px;margin-top:20px;}
   .confirm-btn,.cancel-btn{width:100%;border:none;border-radius:8px;padding:12px;font-family:'Lato',sans-serif;font-weight:700;font-size:14px;cursor:pointer;transition:all .18s;}
   .confirm-btn{background:var(--orange);color:white;}
-  .confirm-btn:hover{background:#b8420a;}
+  .confirm-btn:hover{background:#1d4ed8;}
   .confirm-btn:disabled{background:var(--ink-4);cursor:not-allowed;opacity:.6;}
   .cancel-btn{background:var(--cream2);color:var(--ink-3);border:1px solid var(--line);}
   .cancel-btn:hover{border-color:var(--orange);color:var(--orange);background:var(--orange-bg);}
@@ -366,9 +596,73 @@
     .pcard-name{font-size:12px;}
     .pcard-now{font-size:14px;}
   }
+
+  /* ── IKM SUB-MODALS (forgot / reset-code / verify-email) ── */
+  .ikm-card{background:var(--white);border-radius:16px;width:100%;max-width:400px;box-shadow:0 24px 60px rgba(28,25,22,.18);overflow:hidden;animation:authPop .22s cubic-bezier(.34,1.3,.64,1);position:relative;}
+  .ikm-strip{height:4px;width:100%;}
+  .ikm-strip--blue{background:linear-gradient(90deg,var(--orange),var(--orange-mid));}
+  .ikm-strip--green{background:linear-gradient(90deg,#2d6a4f,#52b788);}
+  .ikm-inner{padding:22px 22px 24px;}
+  .ikm-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;}
+  .ikm-icon-wrap{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+  .ikm-icon-wrap--blue{background:var(--orange-bg);color:var(--orange);}
+  .ikm-icon-wrap--green{background:#eaf4ef;color:#2d6a4f;}
+  .ikm-close-btn{width:30px;height:30px;border-radius:6px;background:var(--cream2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ink-3);font-size:12px;transition:all .15s;flex-shrink:0;}
+  .ikm-close-btn:hover{background:var(--red-bg);border-color:var(--red);color:var(--red);}
+  .ikm-title{font-family:'Playfair Display',serif;font-weight:700;font-size:19px;color:var(--ink);margin-bottom:6px;line-height:1.25;}
+  .ikm-desc{font-size:13px;color:var(--ink-3);line-height:1.6;margin-bottom:18px;font-family:'Source Serif 4',serif;font-style:italic;}
+  .ikm-email-badge{display:inline-block;background:var(--orange-bg);color:var(--orange);border-radius:5px;padding:1px 7px;font-style:normal;font-family:'Lato',sans-serif;font-size:12.5px;font-weight:700;}
+  .ikm-email-badge--green{background:#eaf4ef;color:#2d6a4f;}
+  .ikm-field{margin-bottom:14px;}
+  .ikm-label{display:block;font-size:10.5px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-3);margin-bottom:5px;}
+  .ikm-input-wrap{position:relative;}
+  .ikm-input-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-4);font-size:13px;pointer-events:none;}
+  .ikm-input{width:100%;font-family:'Lato',sans-serif;font-size:14px;background:var(--cream2);border:1.5px solid var(--line);border-radius:9px;padding:11px 12px 11px 36px;color:var(--ink);outline:none;transition:border-color .18s,background .18s,box-shadow .18s;-webkit-appearance:none;}
+  .ikm-input:focus{border-color:var(--orange);background:var(--white);box-shadow:0 0 0 3px rgba(37,99,235,.1);}
+  .ikm-input::placeholder{color:var(--ink-4);}
+  .ikm-otp-wrap{display:grid;grid-template-columns:repeat(6,1fr);gap:clamp(5px,2vw,10px);margin-bottom:6px;width:100%;}
+  .ikm-otp-cell{aspect-ratio:1/1;width:100%;min-width:0;font-family:'Playfair Display',serif;font-size:clamp(16px,4vw,22px);font-weight:700;text-align:center;background:var(--cream2);border:2px solid var(--line);border-radius:10px;color:var(--ink);outline:none;caret-color:var(--orange);transition:border-color .18s,background .18s,box-shadow .18s,transform .15s;-webkit-appearance:none;padding:0;}
+  .ikm-otp-cell:focus{border-color:var(--orange);background:var(--white);box-shadow:0 0 0 3px rgba(37,99,235,.12);transform:scale(1.06);z-index:1;position:relative;}
+  .ikm-otp-cell.filled{border-color:var(--orange);background:var(--orange-bg);color:var(--orange);}
+  .ikm-otp-cell--green:focus{border-color:#2d6a4f;box-shadow:0 0 0 3px rgba(45,106,79,.12);}
+  .ikm-otp-cell--green.filled{border-color:#2d6a4f;background:#eaf4ef;color:#2d6a4f;caret-color:#2d6a4f;}
+  .ikm-otp-cell.otp-err{border-color:var(--red);background:var(--red-bg);animation:ikmShake .4s ease;}
+  @keyframes ikmShake{0%,100%{transform:translateX(0)}20%{transform:translateX(-4px)}40%{transform:translateX(4px)}60%{transform:translateX(-3px)}80%{transform:translateX(3px)}}
+  .ikm-resend-row{display:flex;align-items:center;justify-content:space-between;margin-top:12px;margin-bottom:16px;gap:8px;flex-wrap:wrap;}
+  .ikm-timer-text{font-size:12px;color:var(--ink-4);}
+  .ikm-timer-text strong{color:var(--ink-2);}
+  .ikm-resend-btn{font-family:'Lato',sans-serif;font-size:12px;font-weight:700;color:var(--orange);background:none;border:none;cursor:pointer;padding:0;transition:opacity .15s;}
+  .ikm-resend-btn:disabled{color:var(--ink-4);cursor:default;opacity:.6;}
+  .ikm-resend-btn--green:not(:disabled){color:#2d6a4f;}
+  .ikm-btn-primary{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;font-family:'Lato',sans-serif;font-weight:700;font-size:14px;background:var(--orange);color:white;border:none;border-radius:9px;padding:12px;cursor:pointer;transition:background .18s,transform .15s,box-shadow .18s;margin-top:2px;}
+  .ikm-btn-primary:hover{background:#1d4ed8;transform:translateY(-1px);box-shadow:0 4px 14px rgba(37,99,235,.3);}
+  .ikm-btn-primary:active{transform:translateY(0);}
+  .ikm-btn-primary--green{background:#2d6a4f;}
+  .ikm-btn-primary--green:hover{background:#245c41 !important;box-shadow:0 4px 14px rgba(45,106,79,.3) !important;}
+  .ikm-btn-primary.ikm-loading{pointer-events:none;opacity:.8;}
+  .ikm-btn-ghost{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;font-family:'Lato',sans-serif;font-size:13px;background:transparent;border:1.5px solid var(--line);border-radius:9px;padding:10px;color:var(--ink-3);cursor:pointer;transition:all .18s;margin-top:10px;}
+  .ikm-btn-ghost:hover{border-color:var(--orange);color:var(--orange);background:var(--orange-bg);}
+  .ikm-hint{font-size:11.5px;color:var(--ink-4);text-align:center;margin-top:14px;line-height:1.5;}
+  .ikm-link-btn{background:none;border:none;font-family:'Lato',sans-serif;font-size:11.5px;font-weight:700;cursor:pointer;padding:0;color:var(--orange);text-decoration:underline;transition:opacity .15s;}
+  .ikm-link-btn--green{color:#2d6a4f;}
+  .ikm-link-btn:hover{opacity:.75;}
+  .ikm-steps{display:flex;align-items:center;justify-content:space-between;gap:4px;margin-bottom:18px;background:var(--cream2);border:1px solid var(--line);border-radius:10px;padding:9px 12px;}
+  .ikm-step{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:9.5px;color:var(--ink-4);font-weight:700;letter-spacing:.3px;text-transform:uppercase;text-align:center;flex:1;}
+  .ikm-step i{font-size:14px;color:var(--ink-4);}
+  .ikm-step--done,.ikm-step--done i{color:#2d6a4f;}
+  .ikm-step--active,.ikm-step--active i{color:var(--orange);}
+  .ikm-step-arrow{color:var(--line);font-size:10px;flex-shrink:0;}
+  @media(max-width:440px){
+    .ikm-inner{padding:18px 16px 20px;}
+    .ikm-title{font-size:17px;}
+    .ikm-otp-cell{font-size:clamp(14px,5vw,19px);border-radius:8px;}
+    .ikm-steps{padding:7px 8px;}
+    .ikm-step{font-size:8.5px;}
+    .ikm-step i{font-size:12px;}
+  }
 </style>
 </head>
-<body>
+<body class="{% if request.path == '/' %}home-page{% endif %}">
 
 <div class="cookie-banner-home" id="cookieConsentBannerHome">
   <div class="cookie-banner-copy">
@@ -383,21 +677,26 @@
 <!-- HEADER -->
 <header class="hd" >
   <a class="logo" href="/">Ikeja<span class="dot">.</span>Online</a>
+  {% if request.path == '/' %}
   <div class="hd-search">
     <i class="fa-solid fa-magnifying-glass s-ic"></i>
+    
     <input type="text" id="q" placeholder="Search laptops, phones…" oninput="doSearch()">
   </div>
-  <a class="hd-wish-btn" href="/wishlist" title="Wishlist" id="hd-wish-btn" onclick="openWishlist(event)">
-    <i class="fa-regular fa-heart"></i>
-    <div class="wish-cnt" id="wish-cnt" data-wishlist-badge>0</div>
-  </a>
-  <button class="hd-icon-btn" id="hd-user-btn" onclick="openAuth()" aria-label="Account" title="Account">
-    <i class="fa-regular fa-user"></i>
-  </button>
-  <button class="hd-cart" onclick="openCartDrawer()" aria-label="Cart" title="Cart">
-    <i class="fa-solid fa-cart-shopping"></i>
-    <div class="cart-badge" id="cart-badge">0</div>
-  </button>
+  {% endif %}
+  <div class="hd-actions">
+    <a class="hd-wish-btn" href="/wishlist" title="Wishlist" id="hd-wish-btn" onclick="openWishlist(event)">
+      <i class="fa-regular fa-heart"></i>
+      <div class="wish-cnt" id="wish-cnt" data-wishlist-badge>0</div>
+    </a>
+    <button class="hd-icon-btn" id="hd-user-btn" onclick="openAuth()" aria-label="Account" title="Account">
+      <i class="fa-regular fa-user"></i>
+    </button>
+    <button class="hd-cart" onclick="openCartDrawer()" aria-label="Cart" title="Cart">
+      <i class="fa-solid fa-cart-shopping"></i>
+      <div class="cart-badge" id="cart-badge">0</div>
+    </button>
+  </div>
 </header>
 
 <!-- DRAWER OVERLAY -->
@@ -427,21 +726,6 @@
       <input type="number" class="price-in" placeholder="Max ₦" id="d-pmax">
     </div>
     <button class="apply-btn" onclick="doFilter()">Apply Filter</button>
-  </div>
-  <div class="sb-rule"></div>
-  <div class="sb-sec">
-    <span class="sb-label" style="padding:0;display:block;margin-bottom:10px;">Brands</span>
-    <div class="brand-list">
-      <label class="brand-row"><input type="checkbox" value="Apple" onchange="doFilter()"><span>Apple</span><span class="brand-n">4</span></label>
-      <label class="brand-row"><input type="checkbox" value="Samsung" onchange="doFilter()"><span>Samsung</span><span class="brand-n">4</span></label>
-      <label class="brand-row"><input type="checkbox" value="Sony" onchange="doFilter()"><span>Sony</span><span class="brand-n">3</span></label>
-      <label class="brand-row"><input type="checkbox" value="Dell" onchange="doFilter()"><span>Dell</span><span class="brand-n">1</span></label>
-      <label class="brand-row"><input type="checkbox" value="Google" onchange="doFilter()"><span>Google</span><span class="brand-n">1</span></label>
-      <label class="brand-row"><input type="checkbox" value="Bose" onchange="doFilter()"><span>Bose</span><span class="brand-n">1</span></label>
-      <label class="brand-row"><input type="checkbox" value="LG" onchange="doFilter()"><span>LG</span><span class="brand-n">1</span></label>
-      <label class="brand-row"><input type="checkbox" value="Tecno" onchange="doFilter()"><span>Tecno</span><span class="brand-n">1</span></label>
-      <label class="brand-row"><input type="checkbox" value="Infinix" onchange="doFilter()"><span>Infinix</span><span class="brand-n">1</span></label>
-    </div>
   </div>
 </div>
 
@@ -508,15 +792,17 @@
 <!-- BOTTOM NAV -->
 <nav class="bottom-nav">
   <a class="bn-item on" href="/"><i class="fa-solid fa-house"></i><span class="bl">Home</span></a>
+  {% if request.path == '/' %}
   <button class="bn-item" onclick="openDrawer()"><i class="fa-solid fa-bars"></i><span class="bl">Categories</span></button>
-  <button class="bn-item" onclick="document.getElementById('q').focus()"><i class="fa-solid fa-magnifying-glass"></i><span class="bl">Search</span></button>
+  {% endif %}
+  <button class="bn-item" id="bn-search-btn" onclick="window.location.href='/search'"><i class="fa-solid fa-magnifying-glass"></i><span class="bl">Search</span></button>
   <a class="bn-item" href="/wishlist" onclick="openWishlist(event)"><i class="fa-regular fa-heart"></i><span class="bl">Wishlist</span></a>
   <button class="bn-item" onclick="openCartDrawer()"><i class="fa-solid fa-cart-shopping"></i><span class="bl">Cart</span></button>
 </nav>
 
 <!-- AUTH MODAL -->
 <div class="auth-overlay" id="auth-overlay" onclick="if(event.target===this)closeAuth()">
-  <div class="auth-card">
+  <div class="auth-card" id="auth-main-card">
     <div class="auth-top">
       <div class="auth-logo">Ikeja<span class="dot">.</span>Online</div>
       <button class="auth-close" onclick="closeAuth()"><i class="fa-solid fa-xmark"></i></button>
@@ -533,7 +819,7 @@
         <div class="auth-msg" id="login-msg"></div>
         <div class="auth-field"><label>Email address</label><input type="email" id="li-email" placeholder="you@example.com" autocomplete="email"></div>
         <div class="auth-field"><label>Password</label><div class="auth-pw-wrap"><input type="password" id="li-pass" placeholder="Your password" autocomplete="current-password"><i class="fa-regular fa-eye pw-toggle" onclick="togglePw('li-pass',this)"></i></div></div>
-        <div class="auth-forgot" onclick="showToast('Reset email sent','envelope')">Forgot password?</div>
+        <div class="auth-forgot" onclick="openForgot()">Forgot password?</div>
         <button id="login-submit" class="auth-submit" onclick="doLogin()">Sign In</button>
         <!-- Social login UI removed -->
         <div class="auth-switch">No account? <a onclick="switchAuthTab('register')">Create one</a></div>
@@ -562,14 +848,175 @@
         <div class="profile-name" id="prof-name">—</div>
         <div class="profile-email" id="prof-email">—</div>
         <div class="profile-actions">
-          <div class="profile-action-btn" onclick="showToast('Orders coming soon','box');closeAuth()"><i class="fa-solid fa-box"></i><span>My Orders</span><i class="fa-solid fa-chevron-right" style="font-size:11px;margin-left:auto;color:var(--ink-4);"></i></div>
+          <div class="profile-action-btn" onclick="goOrders()"><i class="fa-solid fa-box"></i><span>My Orders</span><i class="fa-solid fa-chevron-right" style="font-size:11px;margin-left:auto;color:var(--ink-4);"></i></div>
           <div class="profile-action-btn" onclick="goDashboard()"><i class="fa-solid fa-chart-line"></i><span>Go to Dashboard</span><i class="fa-solid fa-chevron-right" style="font-size:11px;margin-left:auto;color:var(--ink-4);"></i></div>
-          <a class="profile-action-btn" href="ikeja-wishlist.html"><i class="fa-regular fa-heart"></i><span>Saved Items</span><i class="fa-solid fa-chevron-right" style="font-size:11px;margin-left:auto;color:var(--ink-4);"></i></a>
-          <div class="profile-action-btn" onclick="showToast('Settings coming soon','gear');closeAuth()"><i class="fa-solid fa-gear"></i><span>Account Settings</span><i class="fa-solid fa-chevron-right" style="font-size:11px;margin-left:auto;color:var(--ink-4);"></i></div>
-          <div class="profile-action-btn" onclick="showAuthForm()" style="margin-top:12px;"><i class="fa-solid fa-arrow-right-arrow-left"></i><span>Switch Account</span><i class="fa-solid fa-chevron-right" style="font-size:11px;margin-left:auto;color:var(--ink-4);"></i></div>
+          <div class="profile-action-btn" onclick="goWishlist()"><i class="fa-regular fa-heart"></i><span>Saved Items</span><i class="fa-solid fa-chevron-right" style="font-size:11px;margin-left:auto;color:var(--ink-4);"></i></div>
+          <div class="profile-action-btn" onclick="goSettings()"><i class="fa-solid fa-gear"></i><span>Account Settings</span><i class="fa-solid fa-chevron-right" style="font-size:11px;margin-left:auto;color:var(--ink-4);"></i></div>
         </div>
         <button class="profile-logout" onclick="doLogout()"><i class="fa-solid fa-right-from-bracket"></i> Sign Out</button>
       </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!--  SUB-MODAL 1: FORGOT PASSWORD (enter email)  -->
+  <!-- ══════════════════════════════════════════════ -->
+  <div class="ikm-card" id="forgot-panel" style="display:none;" role="dialog" aria-modal="true" aria-label="Forgot Password">
+    <!-- accent strip -->
+    <div class="ikm-strip ikm-strip--blue"></div>
+    <div class="ikm-inner">
+      <!-- header -->
+      <div class="ikm-head">
+        <div class="ikm-icon-wrap ikm-icon-wrap--blue">
+          <i class="fa-solid fa-lock-open"></i>
+        </div>
+        <button class="auth-close ikm-close-btn" onclick="closeForgot()" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <!-- body -->
+      <div class="ikm-title">Forgot your password?</div>
+      <p class="ikm-desc">No worries — enter the email linked to your Ikeja account and we'll send a reset code straight to your inbox.</p>
+      <!-- email field -->
+      <div class="ikm-field">
+        <label class="ikm-label">Email address</label>
+        <div class="ikm-input-wrap">
+          <i class="fa-solid fa-envelope ikm-input-icon"></i>
+          <input type="email" id="forgot-email" class="ikm-input" placeholder="you@example.com" autocomplete="email">
+        </div>
+      </div>
+      <div id="forgot-msg" class="auth-msg" style="margin-bottom:10px;"></div>
+      <!-- actions -->
+      <button class="ikm-btn-primary" id="forgot-submit-btn" onclick="submitForgot()">
+        <span class="ikm-btn-label"><i class="fa-solid fa-paper-plane"></i> Send reset code</span>
+        <span class="ikm-btn-loader" style="display:none;"><i class="fa-solid fa-circle-notch fa-spin"></i></span>
+      </button>
+      <button class="ikm-btn-ghost" onclick="closeForgot()">
+        <i class="fa-solid fa-arrow-left"></i> Back to sign in
+      </button>
+      <p class="ikm-hint">Check your spam folder if it doesn't arrive within a minute.</p>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════ -->
+  <!--  SUB-MODAL 2: RESET CODE (6-digit, after forgot pw) -->
+  <!-- ════════════════════════════════════════════════════ -->
+  <div class="ikm-card" id="reset-code-panel" style="display:none;" role="dialog" aria-modal="true" aria-label="Enter Reset Code">
+    <div class="ikm-strip ikm-strip--blue"></div>
+    <div class="ikm-inner">
+      <div class="ikm-head">
+        <div class="ikm-icon-wrap ikm-icon-wrap--blue">
+          <i class="fa-solid fa-shield-halved"></i>
+        </div>
+        <button class="auth-close ikm-close-btn" onclick="closeResetCode()" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="ikm-title">Enter reset code</div>
+      <p class="ikm-desc">We sent a 6-digit code to <strong id="rc-email-display" class="ikm-email-badge"></strong>. It expires in 10 minutes.</p>
+      <!-- OTP grid -->
+      <div class="ikm-otp-wrap" id="rc-otp-wrap" aria-label="6-digit code input">
+        <input class="ikm-otp-cell" type="text" inputmode="numeric" maxlength="1" id="rc0" autocomplete="one-time-code" aria-label="Digit 1">
+        <input class="ikm-otp-cell" type="text" inputmode="numeric" maxlength="1" id="rc1" aria-label="Digit 2">
+        <input class="ikm-otp-cell" type="text" inputmode="numeric" maxlength="1" id="rc2" aria-label="Digit 3">
+        <input class="ikm-otp-cell" type="text" inputmode="numeric" maxlength="1" id="rc3" aria-label="Digit 4">
+        <input class="ikm-otp-cell" type="text" inputmode="numeric" maxlength="1" id="rc4" aria-label="Digit 5">
+        <input class="ikm-otp-cell" type="text" inputmode="numeric" maxlength="1" id="rc5" aria-label="Digit 6">
+      </div>
+      <div id="rc-msg" class="auth-msg" style="margin-bottom:8px;"></div>
+      <!-- timer + resend -->
+      <div class="ikm-resend-row">
+        <span class="ikm-timer-text">Expires in <strong id="rc-countdown">09:58</strong></span>
+        <button class="ikm-resend-btn" id="rc-resend-btn" disabled onclick="rcResend()">Resend code</button>
+      </div>
+      <button class="ikm-btn-primary" id="rc-submit-btn" onclick="submitResetCode()">
+        <span class="ikm-btn-label"><i class="fa-solid fa-circle-check"></i> Verify code</span>
+        <span class="ikm-btn-loader" style="display:none;"><i class="fa-solid fa-circle-notch fa-spin"></i></span>
+      </button>
+      <button class="ikm-btn-ghost" onclick="backToForgot()">
+        <i class="fa-solid fa-arrow-left"></i> Use a different email
+      </button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!--  SUB-MODAL 3: EMAIL VERIFY (6-digit, after register)  -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <div class="ikm-card" id="verify-panel" style="display:none;" role="dialog" aria-modal="true" aria-label="Verify Email">
+    <div class="ikm-strip ikm-strip--green"></div>
+    <div class="ikm-inner">
+      <div class="ikm-head">
+        <div class="ikm-icon-wrap ikm-icon-wrap--green">
+          <i class="fa-solid fa-envelope-circle-check"></i>
+        </div>
+        <button class="auth-close ikm-close-btn" onclick="closeVerify()" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="ikm-title">Verify your email</div>
+      <p class="ikm-desc">Almost there! We sent a 6-digit code to <strong id="ve-email-display" class="ikm-email-badge ikm-email-badge--green"></strong> — enter it below to activate your account.</p>
+      <!-- progress dots -->
+      <div class="ikm-steps">
+        <div class="ikm-step ikm-step--done"><i class="fa-solid fa-check"></i><span>Account created</span></div>
+        <div class="ikm-step-arrow"><i class="fa-solid fa-chevron-right"></i></div>
+        <div class="ikm-step ikm-step--active"><i class="fa-solid fa-envelope"></i><span>Verify email</span></div>
+        <div class="ikm-step-arrow"><i class="fa-solid fa-chevron-right"></i></div>
+        <div class="ikm-step"><i class="fa-solid fa-bag-shopping"></i><span>Start shopping</span></div>
+      </div>
+      <!-- OTP grid -->
+      <div class="ikm-otp-wrap" id="ve-otp-wrap" aria-label="6-digit verification code">
+        <input class="ikm-otp-cell ikm-otp-cell--green" type="text" inputmode="numeric" maxlength="1" id="ve0" autocomplete="one-time-code" aria-label="Digit 1">
+        <input class="ikm-otp-cell ikm-otp-cell--green" type="text" inputmode="numeric" maxlength="1" id="ve1" aria-label="Digit 2">
+        <input class="ikm-otp-cell ikm-otp-cell--green" type="text" inputmode="numeric" maxlength="1" id="ve2" aria-label="Digit 3">
+        <input class="ikm-otp-cell ikm-otp-cell--green" type="text" inputmode="numeric" maxlength="1" id="ve3" aria-label="Digit 4">
+        <input class="ikm-otp-cell ikm-otp-cell--green" type="text" inputmode="numeric" maxlength="1" id="ve4" aria-label="Digit 5">
+        <input class="ikm-otp-cell ikm-otp-cell--green" type="text" inputmode="numeric" maxlength="1" id="ve5" aria-label="Digit 6">
+      </div>
+      <div id="verify-msg" class="auth-msg" style="margin-bottom:8px;"></div>
+      <!-- timer + resend -->
+      <div class="ikm-resend-row">
+        <span class="ikm-timer-text">Expires in <strong id="ve-countdown">09:58</strong></span>
+        <button class="ikm-resend-btn ikm-resend-btn--green" id="ve-resend-btn" disabled onclick="veResend()">Resend code</button>
+      </div>
+      <button class="ikm-btn-primary ikm-btn-primary--green" id="verify-submit-btn" onclick="submitVerify()">
+        <span class="ikm-btn-label"><i class="fa-solid fa-circle-check"></i> Activate my account</span>
+        <span class="ikm-btn-loader" style="display:none;"><i class="fa-solid fa-circle-notch fa-spin"></i></span>
+      </button>
+      <p class="ikm-hint">Can't find the email? Check your spam folder or <button class="ikm-link-btn ikm-link-btn--green" onclick="veResend()">resend the code</button>.</p>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!--  SUB-MODAL 4: NEW PASSWORD (after reset code verification)  -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <div class="ikm-card" id="new-password-panel" style="display:none;" role="dialog" aria-modal="true" aria-label="Set New Password">
+    <div class="ikm-strip ikm-strip--blue"></div>
+    <div class="ikm-inner">
+      <div class="ikm-head">
+        <div class="ikm-icon-wrap ikm-icon-wrap--blue">
+          <i class="fa-solid fa-key"></i>
+        </div>
+        <button class="auth-close ikm-close-btn" onclick="closeNewPasswordPanel()" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="ikm-title">Create a new password</div>
+      <p class="ikm-desc">Set a new password for <strong id="np-email-display" class="ikm-email-badge"></strong>.</p>
+      <div class="ikm-field">
+        <label class="ikm-label">New password</label>
+        <div class="ikm-input-wrap">
+          <i class="fa-solid fa-lock ikm-input-icon"></i>
+          <input type="password" id="np-password" class="ikm-input" placeholder="New password" autocomplete="new-password">
+        </div>
+      </div>
+      <div class="ikm-field">
+        <label class="ikm-label">Confirm password</label>
+        <div class="ikm-input-wrap">
+          <i class="fa-solid fa-lock ikm-input-icon"></i>
+          <input type="password" id="np-confirm-password" class="ikm-input" placeholder="Confirm password" autocomplete="new-password">
+        </div>
+      </div>
+      <div id="np-msg" class="auth-msg" style="margin-bottom:10px;"></div>
+      <button class="ikm-btn-primary" id="np-submit-btn" onclick="submitNewPassword()">
+        <span class="ikm-btn-label"><i class="fa-solid fa-circle-check"></i> Save new password</span>
+        <span class="ikm-btn-loader" style="display:none;"><i class="fa-solid fa-circle-notch fa-spin"></i></span>
+      </button>
+      <button class="ikm-btn-ghost" onclick="backToResetCode()">
+        <i class="fa-solid fa-arrow-left"></i> Back to code entry
+      </button>
+      <p class="ikm-hint">Make sure passwords match and are at least 8 characters long.</p>
     </div>
   </div>
 </div>
@@ -586,6 +1033,7 @@
       <div class="cart-empty">Your cart is empty. Add products to get started.</div>
     </div>
   </div>
+
   <div class="cart-footer">
     <div class="cart-summary">
       <span class="cart-summary-label">Subtotal</span>
@@ -786,6 +1234,313 @@ async function loadProducts(categoryId = null, page = 1, append = false) {
   }
 }
 
+/* ── AUTH HELPERS: Forgot password & verification modals ── */
+function openForgot(){
+  openAuth();
+  const mainCard = document.getElementById('auth-main-card');
+  if(mainCard) mainCard.style.display = 'none';
+  const verify = document.getElementById('verify-panel'); if(verify) verify.style.display='none';
+  const reset = document.getElementById('reset-code-panel'); if(reset) reset.style.display='none';
+  const el = document.getElementById('forgot-panel');
+  if(el) el.style.display = 'block';
+  const prefEmail = (document.getElementById('li-email') || {}).value || '';
+  if(prefEmail) document.getElementById('forgot-email').value = prefEmail;
+}
+function closeForgot(){
+  const el = document.getElementById('forgot-panel'); if(!el) return; el.style.display='none';
+  const mainCard = document.getElementById('auth-main-card');
+  if(mainCard) mainCard.style.display = 'block';
+}
+async function submitForgot(){
+  const email = (document.getElementById('forgot-email')||{}).value.trim() || '';
+  if(!email) { showToast('Please enter your email','x'); return; }
+  const submit = document.getElementById('forgot-submit-btn');
+  setButtonLoading(submit, true, 'Sending code...');
+  try{
+    const res = await fetch('/api/password-reset-code', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json' },
+      body: JSON.stringify({ email })
+    });
+    const text = await res.text();
+    let data = {};
+    try{ data = text ? JSON.parse(text) : {}; }catch(_){ data = { message: text || '' }; }
+    if (res.ok && data.success) {
+      showToast('Reset code sent. Check your email.','check');
+      openResetCode(email);
+      return;
+    }
+    showToast(data.message || `Unable to send reset code${res.status ? ' (' + res.status + ')' : ''}`,'x');
+  }catch(e){ console.error(e); showToast('Error sending request','x'); }
+  finally { setButtonLoading(submit, false); }
+}
+function openResetCode(email){
+  openAuth();
+  const mainCard = document.getElementById('auth-main-card');
+  if(mainCard) mainCard.style.display = 'none';
+  const forgot = document.getElementById('forgot-panel'); if(forgot) forgot.style.display = 'none';
+  const verify = document.getElementById('verify-panel'); if(verify) verify.style.display = 'none';
+  const reset = document.getElementById('reset-code-panel'); if(reset) reset.style.display = 'block';
+  const emailDisplay = document.getElementById('rc-email-display');
+  if(emailDisplay) emailDisplay.textContent = email;
+  clearOtpInputs('rc', 6);
+  setupOtpInputs('rc', 6, 'submitResetCode');
+  startRcCountdown();
+}
+function closeResetCode(){
+  const el = document.getElementById('reset-code-panel'); if(!el) return; el.style.display = 'none';
+  const mainCard = document.getElementById('auth-main-card'); if(mainCard) mainCard.style.display = 'block';
+}
+function backToForgot(){
+  const reset = document.getElementById('reset-code-panel'); if(reset) reset.style.display = 'none';
+  openForgot();
+}
+async function submitResetCode(){
+  const email = document.getElementById('rc-email-display')?.textContent.trim() || '';
+  const code = getOtpValue('rc', 6);
+  if(!email || code.length !== 6){ showToast('Please enter the full reset code.','x'); return; }
+  const submit = document.getElementById('rc-submit-btn');
+  setButtonLoading(submit, true, 'Verifying...');
+  try{
+    const res = await fetch('/api/password-reset-verify', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json' },
+      body: JSON.stringify({ email, code })
+    });
+    const text = await res.text();
+    let data = {};
+    try{ data = text ? JSON.parse(text) : {}; }catch(_){ data = { message: text || '' }; }
+    if (res.ok && data.success) {
+      window.passwordResetContext = { email, code };
+      showToast('Reset code verified. You can now update your password.','check');
+      openNewPasswordPanel(email, code);
+      return;
+    }
+    showToast(data.message || 'Invalid reset code','x');
+  }catch(e){ console.error(e); showToast('Error verifying reset code','x'); }
+  finally { setButtonLoading(submit, false); }
+}
+function openNewPasswordPanel(email, code){
+  openAuth();
+  const mainCard = document.getElementById('auth-main-card'); if(mainCard) mainCard.style.display = 'none';
+  const forgot = document.getElementById('forgot-panel'); if(forgot) forgot.style.display = 'none';
+  const reset = document.getElementById('reset-code-panel'); if(reset) reset.style.display = 'none';
+  const verify = document.getElementById('verify-panel'); if(verify) verify.style.display = 'none';
+  const panel = document.getElementById('new-password-panel'); if(panel) panel.style.display = 'block';
+  const emailDisplay = document.getElementById('np-email-display'); if(emailDisplay) emailDisplay.textContent = email;
+  window.passwordResetContext = { email, code };
+  const passwordField = document.getElementById('np-password'); if(passwordField) passwordField.value = '';
+  const confirmField = document.getElementById('np-confirm-password'); if(confirmField) confirmField.value = '';
+  const msg = document.getElementById('np-msg'); if(msg) msg.textContent = '';
+}
+function closeNewPasswordPanel(){
+  const panel = document.getElementById('new-password-panel'); if(!panel) return; panel.style.display = 'none';
+  const mainCard = document.getElementById('auth-main-card'); if(mainCard) mainCard.style.display = 'block';
+}
+function backToResetCode(){
+  const panel = document.getElementById('new-password-panel'); if(panel) panel.style.display = 'none';
+  const email = window.passwordResetContext?.email || document.getElementById('rc-email-display')?.textContent.trim() || '';
+  openResetCode(email);
+}
+async function submitNewPassword(){
+  const context = window.passwordResetContext || {};
+  const email = context.email || document.getElementById('np-email-display')?.textContent.trim() || '';
+  const code = context.code || '';
+  const password = (document.getElementById('np-password')||{}).value.trim();
+  const confirmPassword = (document.getElementById('np-confirm-password')||{}).value.trim();
+  if(!email || !code || !password || !confirmPassword){ showToast('Please fill both password fields.','x'); return; }
+  const submit = document.getElementById('np-submit-btn');
+  setButtonLoading(submit, true, 'Saving password...');
+  try{
+    const res = await fetch('/api/password-reset', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json' },
+      body: JSON.stringify({ email, code, password, confirm_password: confirmPassword })
+    });
+    const text = await res.text();
+    let data = {};
+    try{ data = text ? JSON.parse(text) : {}; }catch(_){ data = { message: text || '' }; }
+    if(res.ok && data.success){
+      showToast('Password reset successfully. Please sign in with your new password.','check');
+      closeNewPasswordPanel();
+      return;
+    }
+    showToast(data.message || 'Unable to reset password','x');
+  }catch(e){ console.error(e); showToast('Error resetting password','x'); }
+  finally { setButtonLoading(submit, false); }
+}
+async function rcResend(){
+  const email = document.getElementById('rc-email-display')?.textContent.trim() || '';
+  if(!email){ showToast('A valid email is required to resend the code.','x'); return; }
+  const submit = document.getElementById('rc-resend-btn');
+  setButtonLoading(submit, true, 'Resending...');
+  try{
+    const res = await fetch('/api/password-reset-code', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json' },
+      body: JSON.stringify({ email })
+    });
+    const text = await res.text();
+    let data = {};
+    try{ data = text ? JSON.parse(text) : {}; }catch(_){ data = { message: text || '' }; }
+    if (res.ok && data.success) {
+      showToast('Reset code resent. Check your email.','check');
+      clearOtpInputs('rc', 6);
+      startRcCountdown();
+      return;
+    }
+    showToast(data.message || `Unable to resend code${res.status ? ' (' + res.status + ')' : ''}`,'x');
+  }catch(e){ console.error(e); showToast('Error resending code','x'); }
+  finally { setButtonLoading(submit, false); }
+}
+function openVerify(email){
+  openAuth();
+  const mainCard = document.getElementById('auth-main-card');
+  if(mainCard) mainCard.style.display = 'none';
+  const forgot = document.getElementById('forgot-panel'); if(forgot) forgot.style.display = 'none';
+  const reset = document.getElementById('reset-code-panel'); if(reset) reset.style.display = 'none';
+  const el = document.getElementById('verify-panel');
+  if(el) el.style.display = 'block';
+  const preferredEmail = email || (document.getElementById('li-email') || {}).value || (document.getElementById('reg-email') || {}).value || '';
+  const emailDisplay = document.getElementById('ve-email-display');
+  if(emailDisplay) emailDisplay.textContent = preferredEmail;
+  clearOtpInputs('ve', 6);
+  setupOtpInputs('ve', 6, 'submitVerify');
+  startVeCountdown();
+}
+function closeVerify(){
+  const el = document.getElementById('verify-panel'); if(!el) return; el.style.display = 'none';
+  const mainCard = document.getElementById('auth-main-card'); if(mainCard) mainCard.style.display = 'block';
+}
+async function submitVerify(){
+  const email = document.getElementById('ve-email-display')?.textContent.trim() || '';
+  const code = getOtpValue('ve', 6);
+  if(!email || code.length !== 6){ showToast('Please enter the full verification code.','x'); return; }
+  const submit = document.getElementById('verify-submit-btn');
+  setButtonLoading(submit, true, 'Verifying...');
+  try{
+    const res = await fetch('/api/verify-code',{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email, code }) });
+    const text = await res.text();
+    let data = {};
+    try{ data = text ? JSON.parse(text) : {}; }catch(_){ data = { message: text || '' }; }
+    if(res.ok && data.success){ showToast('Email verified successfully','check'); closeVerify(); return; }
+    showToast(data.message || 'Verification failed','x');
+  }catch(e){ console.error(e); showToast('Error verifying code','x'); }
+  finally { setButtonLoading(submit, false); }
+}
+async function veResend(){
+  const email = document.getElementById('ve-email-display')?.textContent.trim() || '';
+  if(!email){ showToast('Enter email to resend','x'); return; }
+  const submit = document.getElementById('ve-resend-btn');
+  setButtonLoading(submit, true, 'Sending...');
+  try{
+    const res = await fetch('/api/send-verification-code',{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email }) });
+    const text = await res.text();
+    let data = {};
+    try{ data = text ? JSON.parse(text) : {}; }catch(_){ data = { message: text || '' }; }
+    if(res.ok && data.success){ showToast('Verification code sent if account exists','check'); clearOtpInputs('ve',6); startVeCountdown(); return; }
+    showToast(data.message || `Error sending code${res.status ? ' (' + res.status + ')' : ''}`,'x');
+  }catch(e){ console.error(e); showToast('Error sending code','x'); }
+  finally { setButtonLoading(submit, false); }
+}
+function getOtpValue(prefix, length){
+  return Array.from({ length }, (_, idx) => document.getElementById(prefix + idx)?.value.trim() || '').join('');
+}
+function clearOtpInputs(prefix, length){
+  for(let i=0;i<length;i++){
+    const input = document.getElementById(prefix + i);
+    if(input){ input.value=''; input.classList.remove('filled','otp-err'); }
+  }
+  const first = document.getElementById(prefix + '0');
+  if(first) first.focus();
+}
+function setupOtpInputs(prefix, length, submitFunctionName){
+  for(let i=0;i<length;i++){
+    const input = document.getElementById(prefix + i);
+    if(!input) continue;
+    input.addEventListener('input', (e) => {
+      let val = e.target.value.replace(/[^0-9]/g, '');
+      e.target.value = val;
+      if(val){
+        e.target.classList.add('filled');
+        if(i < length - 1){
+          const nextInput = document.getElementById(prefix + (i+1));
+          if(nextInput) nextInput.focus();
+        } else if(i === length - 1){
+          e.target.classList.remove('otp-err');
+          if(typeof window[submitFunctionName] === 'function'){
+            setTimeout(() => window[submitFunctionName](), 200);
+          }
+        }
+      } else {
+        e.target.classList.remove('filled');
+      }
+    });
+    input.addEventListener('keydown', (e) => {
+      if(e.key === 'Backspace' && !e.target.value && i > 0){
+        const prevInput = document.getElementById(prefix + (i-1));
+        if(prevInput){ prevInput.focus(); prevInput.value=''; prevInput.classList.remove('filled'); }
+      }
+    });
+    input.addEventListener('paste', (e) => {
+      e.preventDefault();
+      const paste = (e.clipboardData || window.clipboardData).getData('text');
+      const digits = paste.replace(/[^0-9]/g, '').split('').slice(0, length - i);
+      for(let j=0;j<digits.length;j++){
+        const idx = i + j;
+        const inp = document.getElementById(prefix + idx);
+        if(inp){ inp.value = digits[j]; inp.classList.add('filled'); }
+      }
+      if(digits.length > 0){
+        const lastIdx = Math.min(i + digits.length - 1, length - 1);
+        const lastInput = document.getElementById(prefix + lastIdx);
+        if(lastInput) lastInput.focus();
+        if(lastIdx === length - 1 && typeof window[submitFunctionName] === 'function'){
+          setTimeout(() => window[submitFunctionName](), 200);
+        }
+      }
+    });
+  }
+}
+function startRcCountdown(){
+  const countdown = document.getElementById('rc-countdown');
+  const resend = document.getElementById('rc-resend-btn');
+  if(!countdown || !resend) return;
+  if(rcCountdownInterval) clearInterval(rcCountdownInterval);
+  let remaining = 10 * 60;
+  resend.disabled = true;
+  rcCountdownInterval = setInterval(() => {
+    remaining -= 1;
+    const minutes = String(Math.floor(remaining / 60)).padStart(2, '0');
+    const seconds = String(remaining % 60).padStart(2, '0');
+    countdown.textContent = `${minutes}:${seconds}`;
+    if(remaining <= 0){
+      clearInterval(rcCountdownInterval);
+      countdown.textContent = '00:00';
+      resend.disabled = false;
+    }
+  }, 1000);
+}
+function startVeCountdown(){
+  const countdown = document.getElementById('ve-countdown');
+  const resend = document.getElementById('ve-resend-btn');
+  if(!countdown || !resend) return;
+  if(veCountdownInterval) clearInterval(veCountdownInterval);
+  let remaining = 10 * 60;
+  resend.disabled = true;
+  veCountdownInterval = setInterval(() => {
+    remaining -= 1;
+    const minutes = String(Math.floor(remaining / 60)).padStart(2, '0');
+    const seconds = String(remaining % 60).padStart(2, '0');
+    countdown.textContent = `${minutes}:${seconds}`;
+    if(remaining <= 0){
+      clearInterval(veCountdownInterval);
+      countdown.textContent = '00:00';
+      resend.disabled = false;
+    }
+  }, 1000);
+}
+
 function updateCategoryUI() {
   const totalCount = totalProductsCount || categories.reduce((sum, cat) => sum + cat.product_count, 0);
   const getCategoryIcon = (slug) => CAT_ICON_LOOKUP[normalizeSlug(slug)] || 'fa-layer-group';
@@ -959,20 +1714,56 @@ function updateHeading(cat){
 
 /* ── SEARCH ── */
 function doSearch(){
-  aCat='all';
-  const q=document.getElementById('q').value.trim();
-  document.getElementById('hero-banner').style.display=q?'none':'';
-  const h=document.getElementById('sec-h2'),cr=document.getElementById('sec-crumb');
-  if(q){h.textContent='Results for';cr.textContent='"'+q+'"';cr.style.display='';}
-  else{h.textContent='All Products';cr.style.display='none';}
+  const q = document.getElementById('q').value.trim();
+  const active = !!q;
+  toggleSearchMode(active);
   filterAndSort();
 }
+
+function toggleSearchMode(active){
+  document.body.classList.toggle('search-active', active);
+  const heading = document.getElementById('sec-h2');
+  const crumb = document.getElementById('sec-crumb');
+  const query = document.getElementById('q')?.value.trim();
+
+  if(!heading) return;
+  if(active){
+    heading.textContent = 'Search results';
+    if(crumb){
+      crumb.textContent = query ? `for “${query}”` : '';
+      crumb.style.display = query ? 'block' : 'none';
+    }
+  } else {
+    updateHeading(aCat || 'all');
+    if(crumb) crumb.style.display = 'none';
+  }
+}
+
+/* When Enter key is pressed in search */
+document.addEventListener('DOMContentLoaded', function(){
+  const searchInput = document.getElementById('q');
+  if(searchInput){
+    searchInput.addEventListener('keypress', function(e){
+      if(e.key === 'Enter'){
+        e.preventDefault();
+        doSearch();
+      }
+    });
+  }
+  // Make header search icon navigate to homepage and keep bottom search available on all pages
+  const sIcon = document.querySelector('.s-ic');
+  if(sIcon){
+    sIcon.style.cursor = 'pointer';
+    sIcon.addEventListener('click', function(){ window.location.href = '/'; });
+  }
+});
 
 /* ── FILTER / SORT ── */
 function doFilter(){
   aBrands=[...document.querySelectorAll('input[type=checkbox]:checked')].map(i=>i.value);filterAndSort();
 }
 function filterAndSort(){
+  if(!Array.isArray(aList)) return;
   let list=[...aList];
   if(aBrands.length)list=list.filter(p=>aBrands.includes(p.brand));
   const mn=+(document.getElementById('sb-pmin')||{}).value||+(document.getElementById('d-pmin')||{}).value||0;
@@ -1159,13 +1950,69 @@ function goHome(){
 }
 
 /* ── AUTH ── */
-function openAuth(){document.getElementById('auth-overlay').classList.add('open');document.body.style.overflow='hidden';if(currentUser)showProfile();else showAuthForm();}
-function closeAuth(){document.getElementById('auth-overlay').classList.remove('open');document.body.style.overflow='';}
+function openAuth(){
+  document.getElementById('auth-overlay').classList.add('open');
+  document.body.style.overflow='hidden';
+  const mainCard = document.getElementById('auth-main-card');
+  if(mainCard) mainCard.style.display = 'block';
+  const forgot = document.getElementById('forgot-panel'); if(forgot) forgot.style.display = 'none';
+  const reset = document.getElementById('reset-code-panel'); if(reset) reset.style.display = 'none';
+  const verify = document.getElementById('verify-panel'); if(verify) verify.style.display = 'none';
+  const newPassword = document.getElementById('new-password-panel'); if(newPassword) newPassword.style.display = 'none';
+  if(currentUser) showProfile(); else showAuthForm();
+}
+function closeAuth(){
+  document.getElementById('auth-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+  const forgot = document.getElementById('forgot-panel'); if(forgot) forgot.style.display = 'none';
+  const reset = document.getElementById('reset-code-panel'); if(reset) reset.style.display = 'none';
+  const verify = document.getElementById('verify-panel'); if(verify) verify.style.display = 'none';
+  const newPassword = document.getElementById('new-password-panel'); if(newPassword) newPassword.style.display = 'none';
+  const mainCard = document.getElementById('auth-main-card'); if(mainCard) mainCard.style.display = 'block';
+}
 function showAuthForm(){document.getElementById('auth-tabs-bar').style.display='flex';['panel-login','panel-register','panel-profile'].forEach(id=>document.getElementById(id).classList.remove('on'));document.getElementById('panel-login').classList.add('on');document.getElementById('tab-login').classList.add('on');document.getElementById('tab-register').classList.remove('on');}
 function showProfile(){document.getElementById('auth-tabs-bar').style.display='none';['panel-login','panel-register'].forEach(id=>document.getElementById(id).classList.remove('on'));document.getElementById('panel-profile').classList.add('on');document.getElementById('prof-name').textContent=currentUser.fname+' '+currentUser.lname;document.getElementById('prof-email').textContent=currentUser.email;}
 function goDashboard(){
   const role = currentUser?.role || localStorage.getItem('user_role') || 'customer';
-  const url = role === 'vendor' ? '/vendor/dashboard/home' : '/customer/dashboard/home';
+  let url = '/customer/dashboard/home';
+  if (role === 'vendor') {
+    url = '/testingdashboard';
+  } else if (role === 'super_admin') {
+    url = '/admin/dashboard';
+  }
+  window.location.href = url;
+}
+
+function goOrders(){
+  const role = currentUser?.role || localStorage.getItem('user_role') || 'customer';
+  let url = '/customer/dashboard/orders';
+  if (role === 'vendor') {
+    url = '/vendor/orders';
+  } else if (role === 'super_admin') {
+    url = '/admin/dashboard';
+  }
+  window.location.href = url;
+}
+
+function goWishlist(){
+  const role = currentUser?.role || localStorage.getItem('user_role') || 'customer';
+  let url = '/customer/dashboard/wishlist';
+  if (role === 'vendor') {
+    url = '/vendor/orders';
+    showToast('Settings coming soon','gear');closeAuth()
+  } else if (role === 'super_admin') {
+    url = '/admin/dashboard';
+  }
+  window.location.href = url;
+}
+function goSettings(){
+  const role = currentUser?.role || localStorage.getItem('user_role') || 'customer';
+  let url = '/customer/dashboard/profile-info';
+  if (role === 'vendor') {
+    url = '/vendor/store-profile';
+  } else if (role === 'super_admin') {
+    url = '/admin/dashboard';
+  }
   window.location.href = url;
 }
 function switchAuthTab(tab){document.getElementById('tab-login').classList.toggle('on',tab==='login');document.getElementById('tab-register').classList.toggle('on',tab==='register');document.getElementById('panel-login').classList.toggle('on',tab==='login');document.getElementById('panel-register').classList.toggle('on',tab==='register');}
@@ -1202,6 +2049,10 @@ function doLogin(){
     .then(res => res.json())
     .then(data => {
       if(!data.success){
+        if(data.needs_verification){
+          openVerify(email);
+          return;
+        }
         setMsg('login-msg', data.message || 'Invalid credentials.', 'err');
         return;
       }
@@ -1273,8 +2124,17 @@ function doRegister(){
         setMsg('reg-msg', data.error || data.message || 'Registration failed.', 'err');
         return;
       }
-      setMsg('reg-msg', data.message || 'Registration successful. Please sign in.', 'ok');
+      setMsg('reg-msg', data.message || 'Registration successful. Please verify your email.', 'ok');
+      // switch to login tab and open verification flow
       switchAuthTab('login');
+      try {
+        // Backend already sends the code during registration, so just open the verification dialog
+        if (typeof openVerify === 'function') {
+          openVerify(email);
+        }
+      } catch (e) {
+        console.error('openVerify failed', e);
+      }
     })
     .catch(err => {
       console.error(err);
@@ -1285,6 +2145,18 @@ function doRegister(){
 function socialAuth(p){currentUser={fname:'Guest',lname:'',email:'guest@'+p.toLowerCase()+'.com'};onLoginSuccess();}
 function onLoginSuccess(){
   updateAuthButton();
+  const role = currentUser?.role || localStorage.getItem('user_role') || 'customer';
+  
+  // Auto-redirect super_admin to dashboard
+  if (role === 'super_admin') {
+    showToast('Welcome, ' + currentUser.fname + '!', '👋');
+    setTimeout(() => {
+      window.location.href = '/admin/dashboard';
+    }, 500);
+    return;
+  }
+  
+  // For other users, show profile
   showProfile();
   showToast('Welcome, ' + currentUser.fname + '!', '👋');
 }
@@ -1354,6 +2226,8 @@ window.showToast = showToast;
 window.addCart = addCart;
 window.openCartDrawer = openCartDrawer;
 window.closeCartDrawer = closeCartDrawer;
+window.openForgot = openForgot;
+window.openVerify = openVerify;
 
 /* ── CHECKOUT ── */
 let selectedPaymentMethod = 'wallet';

@@ -1,0 +1,74 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Dashboard - Admin{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem; margin-bottom: 2rem; }
+    .stat-card { background: var(--surface); border-radius: var(--radius); padding: 1.5rem;
+        box-shadow: var(--shadow); border-left: 4px solid var(--c1); }
+    .stat-card:nth-child(2) { border-left-color: var(--c2); }
+    .stat-card:nth-child(3) { border-left-color: var(--c3); }
+    .stat-card:nth-child(4) { border-left-color: var(--c4); }
+    .stat-label { color: var(--text2); font-size: .85rem; font-weight: 600;
+        text-transform: uppercase; letter-spacing: .5px; margin-bottom: .5rem; }
+    .stat-value { font-size: 2rem; font-weight: 800; color: var(--text); }
+    .stat-change { font-size: .75rem; color: var(--text2); margin-top: .5rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-label">Total Users</div>
+        <div class="stat-value" id="stat-users">–</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Total Vendors</div>
+        <div class="stat-value" id="stat-vendors">–</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Total Orders</div>
+        <div class="stat-value" id="stat-orders">–</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Total Revenue</div>
+        <div class="stat-value" id="stat-revenue">–</div>
+    </div>
+</div>
+
+<div class="content-card">
+    <div class="card-header">
+        <div class="card-title">
+            <span class="card-title-dot" style="background:var(--c1)"></span>
+            Recent Activity
+        </div>
+    </div>
+    <div style="text-align: center; padding: 2rem; color: var(--text2);">
+        <p style="font-size: .95rem">Dashboard overview loaded successfully.</p>
+        <p style="font-size: .85rem; margin-top: 1rem">Use the sidebar navigation to manage orders, customers, vendors, products, and categories.</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    async function loadStats() {
+        try {
+            const r = await fetch('/api/admin/stats', { headers: authH() });
+            const d = await r.json();
+            if (d.success) {
+                const s = d.stats;
+                document.getElementById('stat-users').textContent = s.total_users || 0;
+                document.getElementById('stat-vendors').textContent = s.total_vendors || 0;
+                document.getElementById('stat-orders').textContent = s.total_orders || 0;
+                document.getElementById('stat-revenue').textContent = '₦' + parseFloat(s.total_revenue || 0).toLocaleString();
+            }
+        } catch(e) { console.error(e); }
+    }
+
+    loadStats();
+</script>
+{% endblock %}

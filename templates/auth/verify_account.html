@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Your Email - Ikeja Online</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.2/css/bootstrap.min.css" integrity="sha512-8rzlferDg10E0pjRkwKLtD6nHxlrMKs9x4NYss+v+KAtVnYxt3dMbS4mM2S1K55j2i6u+4AyncDw2cYmvyf/w==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+        body {
+            background: linear-gradient(135deg, #0f2d28 0%, #1a3a2e 50%, #0d5a52 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1rem;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #1f2937;
+        }
+        .verify-container {
+            width: 100%;
+            max-width: 520px;
+        }
+        .verify-card {
+            background: rgba(255,255,255,0.97);
+            border-radius: 24px;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.22);
+            padding: 2.5rem;
+            border: 1px solid rgba(255,255,255,0.65);
+        }
+        .brand-header {
+            text-align: center;
+            margin-bottom: 1.8rem;
+        }
+        .brand-icon {
+            width: 78px;
+            height: 78px;
+            border-radius: 18px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            color: white;
+            margin-bottom: 1rem;
+            box-shadow: 0 18px 42px rgba(37,99,235,0.28);
+        }
+        .brand-icon i { font-size: 2rem; }
+        .brand-header h1 {
+            margin: 0;
+            font-size: 2rem;
+            letter-spacing: -0.5px;
+            color: #111827;
+        }
+        .brand-header p {
+            margin: 0.75rem auto 0;
+            color: #475569;
+            max-width: 360px;
+            line-height: 1.7;
+        }
+        .form-group { margin-bottom: 1.25rem; }
+        .form-label {
+            display: block;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: #2563eb;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 0.08em;
+        }
+        .form-control {
+            width: 100%;
+            border-radius: 14px;
+            border: 1px solid #d1d5db;
+            padding: 0.95rem 1rem;
+            background: #f8fafc;
+            color: #111827;
+            transition: border-color 0.2s ease;
+        }
+        .form-control:focus {
+            outline: none;
+            border-color: #2563eb;
+            background: #ffffff;
+            box-shadow: 0 0 0 6px rgba(37,99,235,0.08);
+        }
+        .btn-primary, .btn-secondary {
+            border-radius: 14px;
+            padding: 0.95rem 1.25rem;
+            min-width: 140px;
+            font-weight: 700;
+        }
+        .btn.loading {
+            opacity: 0.8;
+            pointer-events: none;
+        }
+        .verify-note {
+            margin: 1rem 0 0;
+            color: #475569;
+            font-size: 0.95rem;
+            line-height: 1.7;
+        }
+        .card-footer {
+            margin-top: 1.75rem;
+            text-align: center;
+            color: #64748b;
+            font-size: 0.95rem;
+        }
+        .card-footer a { color: #2563eb; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="verify-container">
+        <div class="verify-card">
+            <div class="brand-header">
+                <div class="brand-icon"><i class="fas fa-shield-check"></i></div>
+                <h1>Verify your email</h1>
+                <p>Enter the email and 6-digit code sent to your inbox. You must verify before signing in.</p>
+            </div>
+
+            <div id="alertContainer"></div>
+
+            {% if is_verified %}
+            <div class="alert alert-success alert-flash" role="alert">
+                <i class="fas fa-check-circle"></i>
+                <span>Your email is already verified. You may sign in now.</span>
+            </div>
+            {% endif %}
+
+            <div class="form-group">
+                <label for="email" class="form-label">Email address</label>
+                <input type="email" id="email" class="form-control" placeholder="you@example.com" value="{{ email|e }}" autocomplete="email">
+            </div>
+
+            <div class="form-group">
+                <label for="code" class="form-label">Verification code</label>
+                <input type="text" id="code" class="form-control" placeholder="123456" maxlength="6" autocomplete="one-time-code">
+            </div>
+
+            <div class="d-flex flex-wrap gap-2" style="margin-top:1rem;">
+                <button id="send-code-btn" type="button" class="btn btn-secondary flex-grow-1" onclick="sendVerificationCode()">Send verification code</button>
+                <button id="verify-account-btn" type="button" class="btn btn-primary flex-grow-1" onclick="submitVerifyCode()">Verify code</button>
+            </div>
+
+            <p class="verify-note">If you already received a code, enter it above and click Verify. If you do not see the email, check your spam folder.</p>
+
+            <div class="card-footer">
+                <p>Already verified? <a href="{{ url_for('login') }}">Sign in</a></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function setButtonLoading(btn, loading, text) {
+            if (!btn) return;
+            if (loading) {
+                btn.disabled = true;
+                btn.dataset.origText = btn.dataset.origText || btn.textContent;
+                btn.textContent = text;
+                btn.classList.add('loading');
+            } else {
+                btn.disabled = false;
+                btn.classList.remove('loading');
+                if (btn.dataset.origText) {
+                    btn.textContent = btn.dataset.origText;
+                }
+            }
+        }
+
+        function showAlert(message, type) {
+            const alertContainer = document.getElementById('alertContainer');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type} alert-dismissible fade show`;
+            alert.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            alertContainer.appendChild(alert);
+            setTimeout(() => alert.remove(), 5000);
+        }
+
+        async function sendVerificationCode() {
+            const email = document.getElementById('email').value.trim();
+            const button = document.getElementById('send-code-btn');
+            if (!email) {
+                showAlert('Please enter your email address.', 'danger');
+                return;
+            }
+            setButtonLoading(button, true, 'Sending...');
+            try {
+                const response = await fetch('/api/send-verification-code', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    showAlert('Verification code sent. Check your email.', 'success');
+                } else {
+                    showAlert(data.message || 'Unable to send code.', 'danger');
+                }
+            } catch (error) {
+                console.error(error);
+                showAlert('Unable to send verification code.', 'danger');
+            } finally {
+                setButtonLoading(button, false);
+            }
+        }
+
+        async function submitVerifyCode() {
+            const email = document.getElementById('email').value.trim();
+            const code = document.getElementById('code').value.trim();
+            const button = document.getElementById('verify-account-btn');
+            if (!email || !code) {
+                showAlert('Please enter email and verification code.', 'danger');
+                return;
+            }
+            setButtonLoading(button, true, 'Verifying...');
+            try {
+                const response = await fetch('/api/verify-code', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, code })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    showAlert('Email verified successfully. You may now sign in.', 'success');
+                } else {
+                    showAlert(data.message || 'Verification failed.', 'danger');
+                }
+            } catch (error) {
+                console.error(error);
+                showAlert('Unable to verify code.', 'danger');
+            } finally {
+                setButtonLoading(button, false);
+            }
+        }
+    </script>
+</body>
+</html>

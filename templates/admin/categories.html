@@ -1,0 +1,101 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Categories - Admin Dashboard{% endblock %}
+{% block page_title %}Category Management{% endblock %}
+
+{% block content %}
+<div class="content-card">
+    <div class="card-header">
+        <div class="card-title">
+            <span class="card-title-dot" style="background:var(--c5)"></span>
+            Categories
+        </div>
+        <div class="header-actions" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+            <input type="text" id="newCategoryName" placeholder="New category name" class="filter-select" style="min-width:220px;">
+            <button onclick="addCategory()" class="filter-btn" style="background:var(--c2);color:#fff;">
+                <i class="fas fa-plus"></i> Add Category
+            </button>
+            <button onclick="loadCategories()" class="filter-btn">
+                <i class="fas fa-sync"></i> Refresh
+            </button>
+        </div>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Category ID</th>
+                    <th>Name</th>
+                    <th>Products</th>
+                    <th>Status</th>
+                    <th>Created</th>
+                </tr>
+            </thead>
+            <tbody id="categoriesTableBody">
+                <tr><td class="loading-cell" colspan="5"><div class="spinner"></div></td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    async function loadCategories() {
+        const tbody = document.getElementById('categoriesTableBody');
+        tbody.innerHTML = '<tr><td class="loading-cell" colspan="5"><div class="spinner"></div></td></tr>';
+        try {
+            const r = await fetch('/api/admin/categories', { headers: authH() });
+            const d = await r.json();
+            tbody.innerHTML = '';
+
+            if (d.success && d.categories && d.categories.length) {
+                d.categories.forEach(c => {
+                    tbody.insertAdjacentHTML('beforeend', `
+                    <tr>
+                        <td><span style="font-family:'DM Mono',monospace;font-size:.82rem;color:var(--c1);font-weight:600">#${c.id}</span></td>
+                        <td><strong>${c.name}</strong></td>
+                        <td style="text-align:center;font-weight:600">${c.product_count}</td>
+                        <td><span class="badge badge-green">Active</span></td>
+                        <td style="color:var(--text2);font-size:.85rem">${new Date(c.created_at).toLocaleDateString()}</td>
+                    </tr>`);
+                });
+            } else {
+                tbody.innerHTML = '<tr><td colspan="5" class="loading-cell" style="color:var(--text3)">No categories found</td></tr>';
+            }
+        } catch(e) { console.error(e); }
+    }
+
+    async function addCategory() {
+        const name = document.getElementById('newCategoryName').value.trim();
+        if (!name) {
+            alert('Please enter a category name');
+            return;
+        }
+
+        try {
+            const r = await fetch('/api/admin/categories', {
+                method: 'POST',
+                headers: {
+                    ...authH(),
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ name })
+            });
+            const d = await r.json();
+            if (d.success) {
+                document.getElementById('newCategoryName').value = '';
+                loadCategories();
+                alert('Category added successfully');
+            } else {
+                alert('Error: ' + (d.message || d.error || 'Unable to add category'));
+            }
+        } catch (e) {
+            console.error(e);
+            alert('An unexpected error occurred while adding the category');
+        }
+    }
+
+    loadCategories();
+</script>
+{% endblock %}

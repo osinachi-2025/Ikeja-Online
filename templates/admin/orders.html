@@ -1,0 +1,223 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Orders - Admin Dashboard{% endblock %}
+{% block page_title %}Order Management{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .detail-modal { background: var(--surface); border-radius: var(--radius); }
+    .address-block { background: var(--surface2); padding: 1rem; border-radius: 8px;
+        margin-bottom: 1rem; border-left: 3px solid var(--c3); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content-card">
+    <div class="card-header">
+        <div class="card-title">
+            <span class="card-title-dot" style="background:var(--c4)"></span>
+            Orders
+        </div>
+        <div class="filters-row">
+            <select id="paymentStatusFilter" class="filter-select">
+                <option value="">All Payment</option>
+                <option value="paid">Paid</option>
+                <option value="pending">Pending</option>
+                <option value="failed">Failed</option>
+            </select>
+            <select id="shippingStatusFilter" class="filter-select">
+                <option value="">All Shipping</option>
+                <option value="pending">Pending</option>
+                <option value="en_route">En Route</option>
+                <option value="delivered">Delivered</option>
+            </select>
+            <button onclick="loadOrders()" class="filter-btn">
+                <i class="fas fa-filter"></i> Filter
+            </button>
+        </div>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Order ID</th>
+                    <th>Customer</th>
+                    <th>Vendor</th>
+                    <th>Total</th>
+                    <th>Payment</th>
+                    <th>Shipping</th>
+                    <th>Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="ordersTableBody">
+                <tr><td class="loading-cell" colspan="8"><div class="spinner"></div></td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    async function loadOrders() {
+        const tbody = document.getElementById('ordersTableBody');
+        tbody.innerHTML = '<tr><td class="loading-cell" colspan="8"><div class="spinner"></div></td></tr>';
+        try {
+            const ps = document.getElementById('paymentStatusFilter').value;
+            const ss = document.getElementById('shippingStatusFilter').value;
+            const params = new URLSearchParams();
+            if (ps) params.append('payment_status', ps);
+            if (ss) params.append('shipping_status', ss);
+
+            const r = await fetch('/api/admin/orders' + (params.toString() ? '?' + params : ''), { headers: authH() });
+            const d = await r.json();
+            tbody.innerHTML = '';
+
+            if (d.success && d.orders.length) {
+                d.orders.forEach(o => {
+                    const ss = o.shipping_status || 'pending';
+                    const ssLabel = ss === 'en_route' ? 'En Route' : ss.charAt(0).toUpperCase() + ss.slice(1);
+                    const ssBadge = ss === 'delivered' ? 'badge-green' : ss === 'en_route' ? 'badge-blue' : 'badge-amber';
+                    const pBadge  = o.payment_status === 'paid' ? 'badge-green' : o.payment_status === 'failed' ? 'badge-red' : 'badge-amber';
+
+                    tbody.insertAdjacentHTML('beforeend', `
+                    <tr>
+                        <td><span style="font-family:'DM Mono',monospace;font-size:.82rem;color:var(--c1);font-weight:600">#${o.id}</span></td>
+                        <td><strong>${o.customer_name}</strong></td>
+                        <td style="color:var(--text2)">${o.vendor_name}</td>
+                        <td style="font-weight:700">₦${parseFloat(o.total_amount).toLocaleString()}</td>
+                        <td><span class="badge ${pBadge}">${o.payment_status}</span></td>
+                        <td><span class="badge ${ssBadge}">${ssLabel}</span></td>
+                        <td style="color:var(--text2)">${new Date(o.created_at).toLocaleDateString()}</td>
+                        <td style="display:flex;gap:.5rem;align-items:center">
+                            <button class="action-btn view-btn" onclick="viewOrderDetails(${o.id})" title="View Details">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <select class="status-select" onchange="updateShippingStatus(${o.id}, this.value)" title="Update Status" style="padding:.35rem .65rem;border:1.5px solid var(--border);border-radius:8px;background:var(--surface2);color:var(--text);font-family:inherit;font-size:.78rem;cursor:pointer;outline:none">
+                                <option value="pending"   ${o.shipping_status==='pending'   ? 'selected':''}>Pending</option>
+                                <option value="en_route"  ${o.shipping_status==='en_route'  ? 'selected':''}>En Route</option>
+                                <option value="delivered" ${o.shipping_status==='delivered' ? 'selected':''}>Delivered</option>
+                            </select>
+                        </td>
+                    </tr>`);
+                });
+            } else {
+                tbody.innerHTML = '<tr><td colspan="8" class="loading-cell" style="color:var(--text3)">No orders found</td></tr>';
+            }
+        } catch(e) { console.error(e); }
+    }
+
+    async function viewOrderDetails(orderId) {
+        try {
+            const r = await fetch(`/api/admin/orders/${orderId}`, { headers: authH() });
+            const d = await r.json();
+            if (!d.success) { alert('Failed to fetch order details'); return; }
+            
+            const o = d.order;
+            const c = o.customer;
+            const addr = o.delivery_address;
+            
+            // Format address properly
+            let addressText = 'No address provided';
+            if (typeof addr === 'object' && addr) {
+                const parts = [];
+                if (addr.address_line1) parts.push(addr.address_line1);
+                if (addr.address_line2) parts.push(addr.address_line2);
+                if (addr.city) parts.push(addr.city);
+                if (addr.state) parts.push(addr.state);
+                if (addr.postal_code) parts.push(addr.postal_code);
+                if (addr.country) parts.push(addr.country);
+                addressText = parts.join(', ') || 'No address provided';
+            } else if (typeof addr === 'string') {
+                addressText = addr;
+            }
+            
+            let itemsHtml = o.items.map(item => `
+                <div class="detail-item">
+                    <div style="display:flex;justify-content:space-between;margin-bottom:.25rem">
+                        <strong>${item.product_name}</strong>
+                        <strong>₦${parseFloat(item.price_at_purchase).toLocaleString()}</strong>
+                    </div>
+                    <div style="color:var(--text2);font-size:.85rem">
+                        Vendor: ${item.vendor_name} | Qty: ${item.quantity} | Total: ₦${parseFloat(item.total).toLocaleString()}
+                    </div>
+                </div>
+            `).join('');
+            
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            modal.innerHTML = `
+            <div class="modal detail-modal">
+                <div class="modal-header">
+                    <h2 style="margin:0">Order #${o.reference_number}</h2>
+                    <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">×</button>
+                </div>
+                
+                <div class="address-block">
+                    <h3 style="margin:0 0 1rem 0;font-size:.95rem;color:var(--text2);text-transform:uppercase;letter-spacing:.5px">Customer Information</h3>
+                    <div style="display:grid;gap:.75rem">
+                        <div><strong style="color:var(--text2);font-size:.85rem">Name:</strong> ${c.full_name}</div>
+                        <div><strong style="color:var(--text2);font-size:.85rem">Email:</strong> ${c.email}</div>
+                        <div><strong style="color:var(--text2);font-size:.85rem">Phone:</strong> ${c.phone}</div>
+                    </div>
+                </div>
+                
+                <div class="address-block" style="border-left-color:var(--c5)">
+                    <h3 style="margin:0 0 1rem 0;font-size:.95rem;color:var(--text2);text-transform:uppercase;letter-spacing:.5px">Delivery Address</h3>
+                    <div style="line-height:1.7;color:var(--text);font-weight:500">${addressText}</div>
+                </div>
+                
+                <div class="address-block" style="border-left-color:var(--c2)">
+                    <h3 style="margin:0 0 1rem 0;font-size:.95rem;color:var(--text2);text-transform:uppercase;letter-spacing:.5px">Order Items</h3>
+                    <div style="display:flex;flex-direction:column;gap:.75rem">${itemsHtml}</div>
+                </div>
+                
+                <div class="address-block" style="border-left-color:var(--c6)">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+                        <div>
+                            <div style="color:var(--text2);font-size:.85rem;margin-bottom:.5rem;font-weight:600">Payment Status</div>
+                            <div><span class="badge ${o.payment_status === 'completed' ? 'badge-green' : 'badge-amber'}">${o.payment_status}</span></div>
+                        </div>
+                        <div>
+                            <div style="color:var(--text2);font-size:.85rem;margin-bottom:.5rem;font-weight:600">Shipping Status</div>
+                            <div><span class="badge ${o.shipping_status === 'delivered' ? 'badge-green' : o.shipping_status === 'en_route' ? 'badge-blue' : 'badge-amber'}">${o.shipping_status}</span></div>
+                        </div>
+                        <div>
+                            <div style="color:var(--text2);font-size:.85rem;margin-bottom:.5rem;font-weight:600">Total Amount</div>
+                            <div style="font-weight:700;font-size:1.1rem">₦${parseFloat(o.total_amount).toLocaleString()}</div>
+                        </div>
+                        <div>
+                            <div style="color:var(--text2);font-size:.85rem;margin-bottom:.5rem;font-weight:600">Payment Method</div>
+                            <div>${o.payment_method || 'N/A'}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+            
+            document.body.appendChild(modal);
+            modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+        } catch(e) { console.error(e); alert('Error loading order details'); }
+    }
+
+    async function updateShippingStatus(id, status) {
+        try {
+            const r = await fetch(`/api/admin/orders/${id}/shipping-status`, {
+                method: 'PUT',
+                headers: authH(),
+                body: JSON.stringify({ shipping_status: status })
+            });
+            const d = await r.json();
+            if (d.success) {
+                alert('✓ ' + (d.message || 'Status updated successfully'));
+                loadOrders();
+            } else {
+                alert('Error: ' + (d.message || 'Unknown error'));
+            }
+        } catch(e) { console.error(e); alert('Error updating status'); }
+    }
+
+    // Load on page load
+    loadOrders();
+</script>
+{% endblock %}

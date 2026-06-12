@@ -1,0 +1,90 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Vendors - Admin Dashboard{% endblock %}
+{% block page_title %}Vendor Management{% endblock %}
+
+{% block content %}
+<div class="content-card">
+    <div class="card-header">
+        <div class="card-title">
+            <span class="card-title-dot" style="background:var(--c3)"></span>
+            Vendors
+        </div>
+        <button onclick="loadVendors()" class="filter-btn">
+            <i class="fas fa-sync"></i> Refresh
+        </button>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Vendor ID</th>
+                    <th>Store Name</th>
+                    <th>Owner</th>
+                    <th>Email</th>
+                    <th>Status</th>
+                    <th>Products</th>
+                    <th>Joined</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="vendorsTableBody">
+                <tr><td class="loading-cell" colspan="8"><div class="spinner"></div></td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    async function loadVendors() {
+        const tbody = document.getElementById('vendorsTableBody');
+        tbody.innerHTML = '<tr><td class="loading-cell" colspan="8"><div class="spinner"></div></td></tr>';
+        try {
+            const r = await fetch('/api/admin/vendors', { headers: authH() });
+            const d = await r.json();
+            tbody.innerHTML = '';
+
+            if (d.success && d.vendors && d.vendors.length) {
+                d.vendors.forEach(v => {
+                    tbody.insertAdjacentHTML('beforeend', `
+                    <tr>
+                        <td><span style="font-family:'DM Mono',monospace;font-size:.82rem;color:var(--c1);font-weight:600">#${v.id}</span></td>
+                        <td><strong>${v.store_name}</strong></td>
+                        <td>${v.owner_name}</td>
+                        <td style="color:var(--text2);font-size:.85rem">${v.email}</td>
+                        <td><span class="badge ${v.is_active ? 'badge-green' : 'badge-red'}">${v.is_active ? 'Active' : 'Inactive'}</span></td>
+                        <td style="text-align:center;font-weight:600">${v.product_count}</td>
+                        <td style="color:var(--text2);font-size:.85rem">${new Date(v.created_at).toLocaleDateString()}</td>
+                        <td>
+                            <button class="action-btn" onclick="toggleVendorStatus(${v.user_id})" style="color:var(--c6);border-color:var(--c6)">
+                                ${v.is_active ? '<i class="fas fa-ban"></i> Deactivate' : '<i class="fas fa-check"></i> Activate'}
+                            </button>
+                        </td>
+                    </tr>`);
+                });
+            } else {
+                tbody.innerHTML = '<tr><td colspan="8" class="loading-cell" style="color:var(--text3)">No vendors found</td></tr>';
+            }
+        } catch(e) { console.error(e); }
+    }
+
+    async function toggleVendorStatus(userId) {
+        try {
+            const r = await fetch(`/api/admin/users/${userId}/toggle-status`, {
+                method: 'POST',
+                headers: authH()
+            });
+            const d = await r.json();
+            if (d.success) {
+                loadVendors();
+            } else {
+                alert('Error: ' + (d.message || 'Unknown error'));
+            }
+        } catch(e) { console.error(e); alert('Error toggling status'); }
+    }
+
+    loadVendors();
+</script>
+{% endblock %}

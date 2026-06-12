@@ -6,12 +6,12 @@
   :root{
     --cream:#faf8f4;--cream2:#f2efe8;--white:#fffefb;
     --ink:#1c1916;--ink-2:#3e3830;--ink-3:#7a7168;--ink-4:#b5ada3;
-    --line:#e4dfd7;--orange:#d4500a;--orange-bg:#fdf0e8;--orange-mid:#e8946a;
+    --line:#e4dfd7;--orange:#2563eb;--orange-bg:#dbeafe;--orange-mid:#60a5fa;
     --green:#2d6a4f;--green-bg:#eaf4ef;--red:#b91c1c;--red-bg:#fef2f2;
     --hh:58px;--bnh:60px;
   }
   html{scroll-behavior:smooth;-webkit-text-size-adjust:100%;}
-  body{font-family:'Lato',Georgia,sans-serif;background:var(--cream);color:var(--ink);min-height:100vh;overflow-x:hidden;}
+  body{font-family:'Lato',Georgia,sans-serif;background:linear-gradient(180deg, rgba(37,99,235,.08) 0%, rgba(241,245,255,1) 45%, rgba(255,255,255,1) 100%);color:var(--ink);min-height:100vh;overflow-x:hidden;}
 
   /* ── HEADER ── */
   .hd{position:fixed;top:0;left:0;right:0;z-index:300;height:var(--hh);background:var(--white);border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 16px;gap:10px;}
@@ -54,7 +54,7 @@
   .shell{grid-template-columns:1fr!important;}
 
   /* Gallery */
-  .gallery{background:var(--white);border:1px solid var(--line);border-radius:14px;overflow:hidden;}
+  .gallery{background:linear-gradient(180deg, #fff 0%, #fbfaf7 100%);border:1px solid rgba(37,99,235,.12);border-radius:18px;overflow:hidden;box-shadow:0 18px 40px rgba(28,25,22,.06);}
   .gallery-main{display:flex;align-items:center;justify-content:center;aspect-ratio:1;background:var(--cream);position:relative;}
   .gallery-main img{width:100%;height:100%;max-width:100%;max-height:100%;object-fit:contain;display:block;}
   .g-icon{font-size:clamp(72px,18vw,130px);color:var(--ink-3);opacity:.5;}
@@ -72,8 +72,12 @@
   /* Info */
   .info-panel{}
   .prod-brand{font-size:10px;font-weight:900;letter-spacing:2.5px;text-transform:uppercase;color:var(--orange);margin-bottom:8px;}
-  .prod-category{display:inline-flex;align-items:center;gap:8px;font-size:12px;color:var(--ink-3);background:var(--cream2);border:1px solid var(--line);border-radius:999px;padding:6px 12px;margin-bottom:10px;}
+  .prod-category{display:inline-flex;align-items:center;gap:8px;font-size:12px;color:var(--ink-3);background:rgba(255,255,255,.86);border:1px solid rgba(37,99,235,.14);border-radius:999px;padding:8px 14px;margin-bottom:12px;box-shadow:0 10px 24px rgba(37,99,235,.06);}
   .prod-category i{color:var(--orange);font-size:12px;}
+  .vendor-link-card{margin-bottom:14px;}
+  .vendor-link{display:inline-flex;align-items:center;gap:10px;font-size:13px;font-weight:700;color:var(--orange);text-decoration:none;background:rgba(37,99,235,.08);border:1px solid rgba(37,99,235,.2);border-radius:999px;padding:10px 16px;transition:background .18s,transform .18s;}
+  .vendor-link:hover{background:rgba(37,99,235,.14);transform:translateY(-1px);}
+  .vendor-link i{font-size:12px;}
   .prod-name{font-family:'Playfair Display',serif;font-weight:700;font-size:clamp(20px,4vw,28px);line-height:1.18;color:var(--ink);margin-bottom:14px;}
   .prod-rating{display:flex;align-items:center;gap:10px;margin-bottom:18px;flex-wrap:wrap;}
   .stars{font-size:14px;color:#c87941;letter-spacing:.5px;}
@@ -100,8 +104,8 @@
   .qty-btn{width:36px;height:46px;background:var(--cream2);border:none;font-size:16px;cursor:pointer;color:var(--ink-2);display:flex;align-items:center;justify-content:center;}
   .qty-btn:hover{background:var(--line);}
   .qty-val{width:38px;text-align:center;font-size:15px;font-weight:700;color:var(--ink);border:none;background:white;outline:none;}
-  .btn-cart-main{flex:1;font-family:'Lato',sans-serif;font-weight:700;font-size:14px;background:var(--orange);color:white;border:none;border-radius:8px;padding:13px 20px;cursor:pointer;transition:background .18s;display:flex;align-items:center;justify-content:center;gap:8px;}
-  .btn-cart-main:hover{background:#b8420a;}
+  .btn-cart-main{flex:1;font-family:'Lato',sans-serif;font-weight:700;font-size:14px;background:linear-gradient(135deg, var(--orange), #1d4ed8);color:white;border:none;border-radius:12px;padding:13px 20px;cursor:pointer;transition:background .18s, transform .18s, box-shadow .18s;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 16px 34px rgba(37,99,235,.22);}
+  .btn-cart-main:hover{background:linear-gradient(135deg, #1d4ed8, #2563eb);transform:translateY(-1px);}
   .btn-cart-main i{font-size:14px;}
   .btn-wish-main{width:46px;height:46px;flex-shrink:0;border-radius:8px;background:white;border:1.5px solid var(--line);font-size:18px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;color:var(--ink-4);}
   .btn-wish-main:hover{border-color:var(--red);color:var(--red);}
@@ -167,7 +171,7 @@
   .sb-info .sb-was{font-size:10.5px;color:var(--ink-4);text-decoration:line-through;}
   .sb-info .sb-price{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--ink);}
   .sb-btn{flex:1;font-family:'Lato',sans-serif;font-weight:700;font-size:13.5px;background:var(--orange);color:white;border:none;border-radius:8px;padding:11px;cursor:pointer;transition:background .15s;}
-  .sb-btn:hover{background:#b8420a;}
+  .sb-btn:hover{background:#1d4ed8;}
 
   /* ── BOTTOM NAV ── */
   .bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:300;height:var(--bnh);background:var(--white);border-top:1px solid var(--line);align-items:center;justify-content:space-around;padding:0 4px;}
@@ -235,6 +239,9 @@
       <div class="info-panel">
         <div class="prod-category" id="p-category"><i class="fa-solid fa-tag"></i><span>Category</span></div>
         <div class="prod-brand" id="p-brand"></div>
+        <div class="vendor-link-card" id="vendor-link-card" style="display:none;">
+          <a class="vendor-link" id="vendor-link" href="#"><i class="fa-solid fa-store"></i><span id="vendor-link-name">More from this vendor</span></a>
+        </div>
         <h1 class="prod-name" id="p-name"></h1>
         <div class="prod-rating">
           <span class="stars" id="p-stars"></span>
@@ -432,6 +439,15 @@ function renderProduct(p) {
   `).join('') || `<div class="thumb active"><i class="fa-solid fa-box"></i></div>`;
 
   document.getElementById('p-brand').textContent = p.store_name || p.vendor_name || 'Vendor';
+  const vendorLinkCard = document.getElementById('vendor-link-card');
+  const vendorLink = document.getElementById('vendor-link');
+  if (p.vendor_slug) {
+    vendorLinkCard.style.display = 'block';
+    vendorLink.setAttribute('href', `/${encodeURIComponent(p.vendor_slug)}`);
+    document.getElementById('vendor-link-name').textContent = `More from ${p.store_name || p.vendor_name || 'this vendor'}`;
+  } else {
+    vendorLinkCard.style.display = 'none';
+  }
   document.getElementById('p-name').textContent = p.name;
   document.getElementById('p-stars').textContent = renderStars(p.avg_rating);
   document.getElementById('p-rcount').textContent = `${p.review_count || 0} review${(p.review_count || 0)===1?'':'s'}`;
@@ -462,6 +478,9 @@ function renderProduct(p) {
     ['Battery', p.battery],
     ['Chip', p.chip],
     ['Type', p.product_type],
+    ['Screen Size', p.screen_size],
+    ['Color', p.color],
+    ['Condition', p.condition],
     ['Charging', p.charging],
     ['Weight', p.weight],
     ['Connectivity', p.connectivity]
@@ -476,7 +495,8 @@ function renderProduct(p) {
 
   const storageVariants = p.storage ? p.storage.split('/').map(item => item.trim()).filter(Boolean) : [];
   document.getElementById('v-storage').innerHTML = storageVariants.length ? storageVariants.map(item => `<div class="vchip${item===storageVariants[0]?' on':''}" onclick="pickVariant(this,'storage')">${item}</div>`).join('') : '<div class="vchip on">Standard</div>';
-  document.getElementById('v-colour').innerHTML = '<div class="vchip on">Default</div>';
+  const colorVariants = p.color ? p.color.split('/').map(item => item.trim()).filter(Boolean) : [];
+  document.getElementById('v-colour').innerHTML = colorVariants.length ? colorVariants.map(item => `<div class="vchip${item===colorVariants[0]?' on':''}" onclick="pickVariant(this,'colour')">${item}</div>`).join('') : '<div class="vchip on">Default</div>';
 
   updateWishBtn();
   document.getElementById('btn-add-cart').onclick = doCart;

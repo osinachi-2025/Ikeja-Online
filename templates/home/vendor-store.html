@@ -1,0 +1,529 @@
+{% extends "home/ikeja-online.html" %}
+
+{% block title %}{{ vendor.store_name }} | Storefront | Ikeja Online{% endblock title %}
+
+{% block Content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TechHub Lagos — Storefront | Ikeja Online</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" rel="stylesheet">
+  <style>
+    /* ─────────────────────────────────────────────────────
+       IKEJA ONLINE — DESIGN TOKENS
+    ───────────────────────────────────────────────────── */
+    :root {
+      --orange:       #2563eb;
+      --orange-dim:   #1d4ed8;
+      --orange-soft:  rgba(37,99,235,.09);
+      --cream:        #EFF6FF;
+      --cream-2:      #DBEAFE;
+      --ink:          #0F172A;
+      --ink-2:        #334155;
+      --ink-3:        #475569;
+      --ink-4:        #64748B;
+      --line:         rgba(37,99,235,.16);
+      --white:        #FFFFFF;
+      --green:        #2D6A4F;
+      --green-soft:   rgba(45,106,79,.09);
+      --shadow-sm:    0 2px 10px rgba(37,99,235,.08);
+      --shadow-md:    0 8px 32px rgba(37,99,235,.10);
+      --r-sm:         8px;
+      --r-md:         14px;
+      --r-lg:         20px;
+      --r-pill:       999px;
+      --font-display: 'Playfair Display', Georgia, serif;
+      --font-body:    'DM Sans', system-ui, sans-serif;
+      --transition:   .2s cubic-bezier(.4,0,.2,1);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: var(--font-body);
+      background: linear-gradient(180deg, rgba(37,99,235,.08) 0%, rgba(241,245,255,1) 45%, rgba(255,255,255,1) 100%);
+      color: var(--ink);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── PAGE WRAPPER ─────────────────────────────────── */
+    .store-page {
+      max-width: 1260px;
+      margin: 0 auto;
+      padding: 28px 20px 72px;
+    }
+
+    /* ── BREADCRUMB ───────────────────────────────────── */
+    .breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: .78rem;
+      color: var(--ink-4);
+      margin-bottom: 22px;
+      flex-wrap: wrap;
+    }
+    .breadcrumb a { color: var(--ink-3); text-decoration: none; transition: color var(--transition); }
+    .breadcrumb a:hover { color: var(--orange); }
+    .breadcrumb .sep { color: var(--ink-4); font-size: .7rem; }
+    .breadcrumb .current { color: var(--ink-2); font-weight: 500; }
+
+    /* ── STORE HERO ───────────────────────────────────── */
+    .store-hero {
+      background: var(--white);
+      border: 1px solid var(--line);
+      border-radius: var(--r-lg);
+      padding: 28px 26px;
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 28px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Subtle orange accent line at top */
+    .store-hero::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--orange), var(--orange-dim));
+      border-radius: var(--r-lg) var(--r-lg) 0 0;
+    }
+
+    .store-hero-card {
+      display: grid;
+      grid-template-columns: 96px 1fr auto;
+      gap: 24px;
+      align-items: center;
+    }
+
+    .store-avatar {
+      width: 96px; height: 96px;
+      border-radius: 22px;
+      display: flex; align-items: center; justify-content: center;
+      background: linear-gradient(135deg, var(--orange-soft), rgba(37,99,235,.03));
+      border: 1px solid rgba(37,99,235,.15);
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .store-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .store-avatar .avatar-initials {
+      font-family: var(--font-display);
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--orange);
+      line-height: 1;
+    }
+
+    .store-info {}
+    .store-eyebrow {
+      display: inline-flex; align-items: center; gap: 7px;
+      font-size: .72rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .14em;
+      color: var(--orange);
+      margin-bottom: 8px;
+    }
+
+    .store-title {
+      font-family: var(--font-display);
+      font-size: clamp(1.5rem, 3.5vw, 2rem);
+      font-weight: 700;
+      color: var(--ink);
+      line-height: 1.1;
+      margin-bottom: 10px;
+    }
+
+    .store-desc {
+      font-size: .9rem;
+      color: var(--ink-3);
+      line-height: 1.7;
+      max-width: 620px;
+      margin-bottom: 14px;
+    }
+
+    .store-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .store-pill {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 6px 14px;
+      border-radius: var(--r-pill);
+      font-size: .78rem; font-weight: 600;
+      border: 1px solid var(--line);
+      background: var(--cream);
+      color: var(--ink-3);
+      white-space: nowrap;
+    }
+    .store-pill.verified {
+      color: var(--green);
+      border-color: rgba(45,106,79,.2);
+      background: var(--green-soft);
+    }
+    .store-pill i { font-size: .75rem; }
+
+    /* Stats block */
+    .store-stats {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      flex-shrink: 0;
+      min-width: 180px;
+    }
+    .stat-card {
+      background: var(--cream);
+      border: 1px solid var(--line);
+      border-radius: var(--r-md);
+      padding: 14px 16px;
+      text-align: center;
+      transition: border-color var(--transition), background var(--transition);
+    }
+    .stat-card:hover {
+      border-color: rgba(37,99,235,.2);
+      background: var(--white);
+    }
+    .stat-num {
+      font-family: var(--font-display);
+      font-size: 1.5rem; font-weight: 700;
+      color: var(--ink); line-height: 1; margin-bottom: 4px;
+    }
+    .stat-label {
+      font-size: .68rem; color: var(--ink-4);
+      text-transform: uppercase; letter-spacing: .12em; font-weight: 600;
+      line-height: 1.3;
+    }
+
+    /* ── SECTION BAR ──────────────────────────────────── */
+    .sec-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 22px;
+    }
+    .sec-bar-left {}
+    .section-heading {
+      font-family: var(--font-display);
+      font-size: 1.35rem; font-weight: 700;
+      color: var(--ink); line-height: 1.2;
+      margin-bottom: 3px;
+    }
+    .section-note {
+      font-size: .8rem; color: var(--ink-4); font-weight: 500;
+    }
+
+    /* Sort + filter toolbar for products */
+    .products-toolbar {
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    }
+    .toolbar-sort {
+      background: var(--white);
+      border: 1px solid var(--line);
+      border-radius: var(--r-sm);
+      padding: 7px 28px 7px 12px;
+      font-family: var(--font-body);
+      font-size: .82rem; color: var(--ink);
+      outline: none; cursor: pointer; appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' fill='%239C9890' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 9px center;
+      transition: border-color var(--transition);
+    }
+    .toolbar-sort:focus { border-color: var(--orange); outline: none; }
+
+    /* ── PRODUCT GRID ─────────────────────────────────── */
+    .store-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .store-card {
+      background: var(--white);
+      border: 1px solid var(--line);
+      border-radius: var(--r-md);
+      overflow: hidden;
+      text-decoration: none;
+      color: inherit;
+      display: flex; flex-direction: column;
+      transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
+    }
+    .store-card:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-md);
+      border-color: rgba(37,99,235,.22);
+    }
+
+    .store-card-media {
+      background: var(--cream);
+      aspect-ratio: 4 / 3;
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+    .store-card-media img {
+      width: 100%; height: 100%;
+      object-fit: cover; display: block;
+      transition: transform .4s ease;
+    }
+    .store-card:hover .store-card-media img { transform: scale(1.05); }
+
+    .img-fallback {
+      width: 100%; height: 100%;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--ink-4); font-size: 2.5rem;
+    }
+
+    .card-stock-badge {
+      position: absolute; bottom: 10px; right: 10px;
+      font-size: .68rem; font-weight: 700;
+      padding: 3px 9px; border-radius: var(--r-pill);
+      background: rgba(26,25,23,.55);
+      color: #fff;
+      backdrop-filter: blur(6px);
+    }
+    .card-stock-badge.low { background: rgba(198,40,40,.75); }
+
+    .store-card-body {
+      padding: 15px 16px 17px;
+      display: flex; flex-direction: column; gap: 8px;
+      flex: 1;
+    }
+    .store-card-brand {
+      font-size: .68rem; letter-spacing: .15em;
+      text-transform: uppercase; color: var(--ink-4); font-weight: 700;
+    }
+    .store-card-title {
+      font-family: var(--font-display);
+      font-size: .95rem; font-weight: 700;
+      color: var(--ink); line-height: 1.3;
+      display: -webkit-box; -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .store-card-footer {
+      display: flex; align-items: center;
+      justify-content: space-between; gap: 10px;
+      margin-top: auto; padding-top: 8px;
+      border-top: 1px solid var(--line);
+    }
+    .store-card-price {
+      font-family: var(--font-display);
+      font-size: 1rem; font-weight: 700; color: var(--ink);
+    }
+    .store-card-stock {
+      font-size: .72rem; color: var(--ink-4);
+      background: var(--cream); padding: 3px 8px;
+      border-radius: var(--r-pill); border: 1px solid var(--line);
+      white-space: nowrap;
+    }
+    .store-card-stock.low-stock { color: #C62828; background: #FEF2F2; border-color: rgba(198,40,40,.15); }
+
+    /* ── EMPTY STATE ──────────────────────────────────── */
+    .no-res {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 72px 24px;
+      color: var(--ink-3);
+    }
+    .no-res-icon { font-size: 3rem; opacity: .22; margin-bottom: 16px; display: block; }
+    .no-res h3 {
+      font-family: var(--font-display);
+      font-size: 1.25rem; color: var(--ink); margin-bottom: 10px;
+    }
+    .no-res p { font-size: .9rem; line-height: 1.7; max-width: 400px; margin: 0 auto; }
+
+    /* ── RESPONSIVE ───────────────────────────────────── */
+    @media (max-width: 1024px) {
+      .store-hero-card {
+        grid-template-columns: 86px 1fr;
+        gap: 18px;
+      }
+      .store-stats {
+        grid-column: 1 / -1;
+        grid-template-columns: repeat(2, 1fr);
+        min-width: unset;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .store-page { padding: 20px 14px 56px; }
+      .store-hero { padding: 22px 18px; }
+      .store-hero-card {
+        grid-template-columns: 72px 1fr;
+        gap: 16px;
+      }
+      .store-avatar { width: 72px; height: 72px; border-radius: 18px; }
+      .avatar-initials { font-size: 22px !important; }
+      .store-title { font-size: clamp(1.3rem, 5.5vw, 1.65rem); }
+      .store-desc { font-size: .875rem; }
+      .store-stats {
+        grid-column: 1 / -1;
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .store-grid { grid-template-columns: repeat(2, 1fr); gap: 14px; }
+      .sec-bar { flex-direction: column; align-items: flex-start; gap: 12px; }
+    }
+
+    @media (max-width: 520px) {
+      .store-hero-card {
+        grid-template-columns: 1fr;
+        gap: 14px;
+      }
+      .store-hero-top {
+        display: flex; align-items: center; gap: 14px;
+      }
+      .store-stats { grid-template-columns: repeat(2, 1fr); }
+      .products-toolbar { width: 100%; }
+      .products-toolbar .toolbar-sort { flex: 1; }
+      .store-grid { grid-template-columns: 1fr; gap: 14px; }
+    }
+
+    @media (max-width: 400px) {
+      .store-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+
+<div class="store-page">
+
+  <!-- Breadcrumb -->
+  <nav class="breadcrumb" aria-label="Breadcrumb">
+    <a href="/">Home</a>
+    <span class="sep"><i class="fa-solid fa-chevron-right" style="font-size:.6rem;"></i></span>
+    <a href="/vendors">Vendors</a>
+    <span class="sep"><i class="fa-solid fa-chevron-right" style="font-size:.6rem;"></i></span>
+    <span class="current">{{ vendor.store_name }}</span>
+  </nav>
+
+  <!-- ── STORE HERO ──────────────────────────────────── -->
+  <section class="store-hero">
+    <div class="store-hero-card">
+
+      <!-- Avatar — kept in normal flow on mobile via flex wrapper -->
+      <div class="store-avatar">
+        {% if vendor.logo_url %}
+          <img src="{{ vendor.logo_url }}" alt="{{ vendor.store_name }} logo">
+        {% else %}
+          <span class="avatar-initials">{{ vendor.store_name[:2] | upper }}</span>
+        {% endif %}
+      </div>
+
+      <div class="store-info">
+        <div class="store-eyebrow">
+          <i class="fa-solid fa-store"></i> Vendor Storefront
+        </div>
+        <h1 class="store-title">{{ vendor.store_name }}</h1>
+        <p class="store-desc">{{ vendor.store_description or 'Explore curated products and the latest deals from this vendor.' }}</p>
+
+        <div class="store-pills">
+          <span class="store-pill {% if verified %}verified{% endif %}">
+            <i class="fa-solid fa-shield-check"></i>
+            {% if verified %}Verified Seller{% else %}Verification Pending{% endif %}
+          </span>
+          {% if vendor.address %}
+          <span class="store-pill">
+            <i class="fa-solid fa-location-dot"></i>{{ vendor.address }}
+          </span>
+          {% endif %}
+          {% if vendor.phone %}
+          <span class="store-pill">
+            <i class="fa-solid fa-phone"></i>{{ vendor.phone }}
+          </span>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="store-stats">
+        <div class="stat-card">
+          <div class="stat-num">{{ products|length }}</div>
+          <div class="stat-label">Products</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num">4.8</div>
+          <div class="stat-label">Avg Rating</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num">2.1k</div>
+          <div class="stat-label">Sales</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num">99%</div>
+          <div class="stat-label">Response</div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── PRODUCTS SECTION ────────────────────────────── -->
+  <section class="store-grid-section">
+    <div class="sec-bar">
+      <div class="sec-bar-left">
+        <h2 class="section-heading">Products by {{ vendor.store_name }}</h2>
+        <p class="section-note">{{ products|length }} item{{ 's' if products|length != 1 else '' }} available</p>
+      </div>
+
+      <div class="products-toolbar">
+        <select class="toolbar-sort" aria-label="Sort products">
+          <option>Most Popular</option>
+          <option>Price: Low → High</option>
+          <option>Price: High → Low</option>
+          <option>Newest First</option>
+        </select>
+      </div>
+    </div>
+
+    {% if products %}
+    <div class="store-grid">
+      {% for product in products %}
+        <a href="/product/{{ product.id }}" class="store-card">
+          <div class="store-card-media">
+            {% set primary = product.images|selectattr('is_primary')|first %}
+            {% if not primary %}
+              {% set primary = product.images|first %}
+            {% endif %}
+            {% if primary and primary.image_url %}
+              <img src="{{ primary.image_url }}" alt="{{ product.name }}">
+            {% else %}
+              <div class="img-fallback"><i class="fa-solid fa-box-open"></i></div>
+            {% endif %}
+            {% if product.stock_quantity <= 5 and product.stock_quantity > 0 %}
+              <span class="card-stock-badge low">Only {{ product.stock_quantity }} left</span>
+            {% endif %}
+          </div>
+          <div class="store-card-body">
+            <div class="store-card-brand">{{ product.category.name if product.category else 'Uncategorized' }}</div>
+            <div class="store-card-title">{{ product.name }}</div>
+            <div class="store-card-footer">
+              <span class="store-card-price">₦{{ "{:,.0f}".format(product.price) }}</span>
+              <span class="store-card-stock {% if product.stock_quantity <= 5 %}low-stock{% endif %}">
+                {{ product.stock_quantity }} in stock
+              </span>
+            </div>
+          </div>
+        </a>
+      {% endfor %}
+    </div>
+
+    {% else %}
+    <div class="store-grid">
+      <div class="no-res">
+        <i class="fa-solid fa-store no-res-icon"></i>
+        <h3>No products yet</h3>
+        <p>This vendor is setting up their storefront. Check back soon for new arrivals.</p>
+      </div>
+    </div>
+    {% endif %}
+
+  </section>
+</div>
+
+{% endblock Content %}
+</html>

@@ -1,0 +1,88 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Customers - Admin Dashboard{% endblock %}
+{% block page_title %}Customer Management{% endblock %}
+
+{% block content %}
+<div class="content-card">
+    <div class="card-header">
+        <div class="card-title">
+            <span class="card-title-dot" style="background:var(--c2)"></span>
+            Customers
+        </div>
+        <button onclick="loadCustomers()" class="filter-btn">
+            <i class="fas fa-sync"></i> Refresh
+        </button>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Customer ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Status</th>
+                    <th>Joined</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="customersTableBody">
+                <tr><td class="loading-cell" colspan="7"><div class="spinner"></div></td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    async function loadCustomers() {
+        const tbody = document.getElementById('customersTableBody');
+        tbody.innerHTML = '<tr><td class="loading-cell" colspan="7"><div class="spinner"></div></td></tr>';
+        try {
+            const r = await fetch('/api/admin/customers', { headers: authH() });
+            const d = await r.json();
+            tbody.innerHTML = '';
+
+            if (d.success && d.customers && d.customers.length) {
+                d.customers.forEach(c => {
+                    tbody.insertAdjacentHTML('beforeend', `
+                    <tr>
+                        <td><span style="font-family:'DM Mono',monospace;font-size:.82rem;color:var(--c1);font-weight:600">#${c.id}</span></td>
+                        <td><strong>${c.first_name} ${c.last_name}</strong></td>
+                        <td style="color:var(--text2)">${c.email}</td>
+                        <td>${c.phone || 'N/A'}</td>
+                        <td><span class="badge ${c.is_active ? 'badge-green' : 'badge-red'}">${c.is_active ? 'Active' : 'Inactive'}</span></td>
+                        <td style="color:var(--text2);font-size:.85rem">${new Date(c.created_at).toLocaleDateString()}</td>
+                        <td>
+                            <button class="action-btn" onclick="toggleCustomerStatus(${c.user_id})" style="color:var(--c6);border-color:var(--c6)">
+                                ${c.is_active ? '<i class="fas fa-ban"></i> Deactivate' : '<i class="fas fa-check"></i> Activate'}
+                            </button>
+                        </td>
+                    </tr>`);
+                });
+            } else {
+                tbody.innerHTML = '<tr><td colspan="7" class="loading-cell" style="color:var(--text3)">No customers found</td></tr>';
+            }
+        } catch(e) { console.error(e); }
+    }
+
+    async function toggleCustomerStatus(userId) {
+        try {
+            const r = await fetch(`/api/admin/users/${userId}/toggle-status`, {
+                method: 'POST',
+                headers: authH()
+            });
+            const d = await r.json();
+            if (d.success) {
+                loadCustomers();
+            } else {
+                alert('Error: ' + (d.message || 'Unknown error'));
+            }
+        } catch(e) { console.error(e); alert('Error toggling status'); }
+    }
+
+    loadCustomers();
+</script>
+{% endblock %}
