@@ -17,8 +17,6 @@ except ImportError:
 from datetime import datetime, timedelta
 import json
 import os
-import threading
-import queue
 try:
     from dotenv import load_dotenv
 except ImportError:
@@ -272,51 +270,6 @@ def send_email(to_email, subject, html_content):
         }
 
 
-EMAIL_QUEUE_MAX_SIZE = int(os.getenv('EMAIL_QUEUE_MAX_SIZE', '100'))
-EMAIL_QUEUE = queue.Queue(maxsize=EMAIL_QUEUE_MAX_SIZE)
-EMAIL_WORKER_STARTED = False
-EMAIL_WORKER_LOCK = threading.Lock()
-
-
-def email_worker():
-    print(f"[EMAIL-WORKER] Background email worker started (queue max={EMAIL_QUEUE_MAX_SIZE})")
-    while True:
-        to_email, subject, html_content = EMAIL_QUEUE.get()
-        try:
-            print(f"[EMAIL-WORKER] Dispatching queued email to {to_email}")
-            result = send_email(to_email, subject, html_content)
-            if not result.get('success'):
-                print(f"[EMAIL-WORKER] Email delivery failed for {to_email}: {result.get('message')}")
-        except Exception as e:
-            print(f"[EMAIL-WORKER] Unexpected error sending email to {to_email}: {type(e).__name__}: {e}")
-        finally:
-            EMAIL_QUEUE.task_done()
-
-
-def start_email_worker():
-    global EMAIL_WORKER_STARTED
-    with EMAIL_WORKER_LOCK:
-        if EMAIL_WORKER_STARTED:
-            return
-        worker_thread = threading.Thread(target=email_worker, daemon=True)
-        worker_thread.start()
-        EMAIL_WORKER_STARTED = True
-
-
-def enqueue_email(to_email, subject, html_content):
-    try:
-        EMAIL_QUEUE.put_nowait((to_email, subject, html_content))
-        print(f"[EMAIL-QUEUE] Email queued for {to_email}")
-        return {"success": True, "message": "Email queued for background sending."}
-    except queue.Full:
-        print(f"[EMAIL-QUEUE] Queue full, failed to enqueue email to {to_email}")
-        return {"success": False, "message": "Email queue is full. Try again later."}
-
-
-def send_email_background(to_email, subject, html_content):
-    return enqueue_email(to_email, subject, html_content)
-
-
 def generate_email_verification_token(user_id):
     """Generate a JWT token for email verification (valid for 24 hours)"""
     try:
@@ -368,7 +321,7 @@ def send_verification_email(user_email, user_name, verification_token):
         </html>
         """
         
-        return send_email_background(user_email, "Confirm Your Email Address - Ikeja Online", html_content)
+        return send_email(user_email, "Confirm Your Email Address - Ikeja Online", html_content)
     
     except Exception as e:
         print(f"[EMAIL-VERIFICATION] Error sending verification email: {str(e)}")
@@ -405,7 +358,7 @@ def send_password_reset_email(user_email, user_name, reset_code):
             </body>
         </html>
         """
-        return send_email_background(user_email, "Your password reset code - Ikeja Online", html_content)
+        return send_email(user_email, "Your password reset code - Ikeja Online", html_content)
     except Exception as e:
         print(f"[PASSWORD-RESET] Error sending password reset email: {str(e)}")
         return None
@@ -437,10 +390,10 @@ def send_verification_code_email(user_email, user_name, code):
             </body>
         </html>
         """
-        result = send_email_background(user_email, "Your verification code - Ikeja Online", html_content)
+        result = send_email(user_email, "Your verification code - Ikeja Online", html_content)
         if not result or not isinstance(result, dict):
-            print(f"[EMAIL-VERIFICATION-CODE] Unexpected enqueue result for {user_email}: {result}")
-            return {"success": False, "message": "Unable to queue verification code email."}
+            print(f"[EMAIL-VERIFICATION-CODE] Unexpected send result for {user_email}: {result}")
+            return {"success": False, "message": "Unable to send verification code email."}
         return result
     except Exception as e:
         print(f"[EMAIL-VERIFICATION-CODE] Error sending code email: {str(e)}")
@@ -576,7 +529,7 @@ def send_order_confirmation_email(customer_email, customer_name, order_ref, item
         </html>
         """
         
-        return send_email_background(customer_email, f"Order Confirmation - {order_ref}", html_content)
+        return send_email(customer_email, f"Order Confirmation - {order_ref}", html_content)
     
     except Exception as e:
         print(f"[ORDER-CONFIRMATION] Error sending order confirmation email: {str(e)}")
@@ -675,7 +628,7 @@ def send_order_shipped_email(customer_email, customer_name, order_ref, tracking_
         </html>
         """
         
-        return send_email_background(customer_email, f"{config['heading']} - {order_ref}", html_content)
+        return send_email(customer_email, f"{config['heading']} - {order_ref}", html_content)
     
     except Exception as e:
         print(f"[ORDER-STATUS] Error sending order status email: {str(e)}")
@@ -718,7 +671,7 @@ def send_payment_confirmation_email(customer_email, customer_name, order_ref, am
         </html>
         """
         
-        return send_email_background(customer_email, f"Payment Confirmation - {order_ref}", html_content)
+        return send_email(customer_email, f"Payment Confirmation - {order_ref}", html_content)
     
     except Exception as e:
         print(f"[PAYMENT-CONFIRMATION] Error sending payment confirmation email: {str(e)}")
@@ -761,7 +714,7 @@ def send_vendor_payout_email(vendor_email, vendor_name, payout_amount, payout_me
         </html>
         """
         
-        return send_email_background(vendor_email, "Payout Processed - Ikeja Online", html_content)
+        return send_email(vendor_email, "Payout Processed - Ikeja Online", html_content)
     
     except Exception as e:
         print(f"[VENDOR-PAYOUT] Error sending vendor payout email: {str(e)}")
@@ -817,7 +770,7 @@ def send_account_confirmation_email(user_email, user_name, action_type, confirma
         </html>
         """
         
-        return send_email_background(user_email, f"Confirm {action_desc} - Ikeja Online", html_content)
+        return send_email(user_email, f"Confirm {action_desc} - Ikeja Online", html_content)
     
     except Exception as e:
         print(f"[ACCOUNT-CONFIRMATION] Error sending account confirmation email: {str(e)}")
@@ -907,7 +860,7 @@ def send_product_ordered_email(vendor_email, vendor_name, store_name, products_i
         </html>
         """
         
-        return send_email_background(vendor_email, f"New Order Notification - {order_ref}", html_content)
+        return send_email(vendor_email, f"New Order Notification - {order_ref}", html_content)
     
     except Exception as e:
         print(f"[VENDOR-ORDER] Error sending vendor product ordered email: {str(e)}")
@@ -990,7 +943,7 @@ def send_low_stock_alert_email(vendor_email, vendor_name, store_name, low_stock_
         </html>
         """
         
-        return send_email_background(vendor_email, f"Low Stock Alert - {store_name if store_name else vendor_name}", html_content)
+        return send_email(vendor_email, f"Low Stock Alert - {store_name if store_name else vendor_name}", html_content)
     
     except Exception as e:
         print(f"[LOW-STOCK] Error sending low stock alert email: {str(e)}")
@@ -1912,12 +1865,12 @@ def register():
                     subject = "Welcome to Ikeja Online - Registration Complete"
                 
                 # Send the welcome email
-                email_result = send_email_background(email, subject, html_content)
+                email_result = send_email(email, subject, html_content)
                 if email_result and email_result.get('success'):
                     email_sent_status = True
-                    print(f"✓ Welcome email queued to {email}")
+                    print(f"✓ Welcome email sent to {email}")
                 else:
-                    print(f"✗ Welcome email failed to queue for {email}: {email_result}")
+                    print(f"✗ Welcome email failed for {email}: {email_result}")
                 
             except Exception as email_error:
                 print(f"[REGISTRATION-EMAIL] Error sending welcome email: {str(email_error)}")
@@ -8822,5 +8775,4 @@ def testdashboard3():
     return render_template('dist/marketplace-dashboard.html')
 
 if __name__ == '__main__':
-    start_email_worker()
     app.run(debug=True)
