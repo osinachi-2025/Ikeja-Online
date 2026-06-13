@@ -42,6 +42,14 @@ services:
         value: ${SUPER_ADMIN_FIRST_NAME}
       - key: SUPER_ADMIN_LAST_NAME
         value: ${SUPER_ADMIN_LAST_NAME}
+      - key: SENDGRID_API_KEY
+        value: ${SENDGRID_API_KEY}
+      - key: SENDGRID_FROM_EMAIL
+        value: ${SENDGRID_FROM_EMAIL}
+      - key: RESEND_API_KEY
+        value: ${RESEND_API_KEY}
+      - key: RESEND_FROM_EMAIL
+        value: ${RESEND_FROM_EMAIL}
       - key: DATABASE_URL
         value: ${DATABASE_URL}
       - key: WEB_CONCURRENCY

@@ -13,7 +13,7 @@ if os.path.exists(env_path):
     load_dotenv(env_path)
 
 # Import the Flask app
-from app import app, db, init_db
+from app import app, db, init_db, start_email_worker
 
 # Initialize database on app startup
 with app.app_context():
@@ -23,6 +23,13 @@ with app.app_context():
         print("[WSGI] Database tables initialized successfully")
     except Exception as e:
         print(f"[WSGI] Error initializing database: {str(e)}")
+
+# Start the background email worker in each gunicorn worker process
+try:
+    start_email_worker()
+    print("[WSGI] Background email worker started")
+except Exception as e:
+    print(f"[WSGI] Error starting email worker: {str(e)}")
 
 if __name__ == "__main__":
     # Get port from environment or use default

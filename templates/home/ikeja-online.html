@@ -1422,9 +1422,9 @@ async function submitVerify(){
     const res = await fetch('/api/verify-code',{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email, code }) });
     const text = await res.text();
     let data = {};
-    try{ data = text ? JSON.parse(text) : {}; }catch(_){ data = { message: text || '' }; }
+    try{ data = text ? JSON.parse(text) : {}; }catch(_){ data = { message: text || res.statusText }; }
     if(res.ok && data.success){ showToast('Email verified successfully','check'); closeVerify(); return; }
-    showToast(data.message || 'Verification failed','x');
+    showToast(data.message || `Verification failed${res.status ? ' (' + res.status + ')' : ''}`,'x');
   }catch(e){ console.error(e); showToast('Error verifying code','x'); }
   finally { setButtonLoading(submit, false); }
 }
@@ -1437,7 +1437,7 @@ async function veResend(){
     const res = await fetch('/api/send-verification-code',{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email }) });
     const text = await res.text();
     let data = {};
-    try{ data = text ? JSON.parse(text) : {}; }catch(_){ data = { message: text || '' }; }
+    try{ data = text ? JSON.parse(text) : {}; }catch(_){ data = { message: text || res.statusText }; }
     if(res.ok && data.success){ showToast('Verification code sent if account exists','check'); clearOtpInputs('ve',6); startVeCountdown(); return; }
     showToast(data.message || `Error sending code${res.status ? ' (' + res.status + ')' : ''}`,'x');
   }catch(e){ console.error(e); showToast('Error sending code','x'); }

@@ -943,9 +943,11 @@ async function submitVerify(){
   if(!email || !code){ showToast('Email and code required','x'); return; }
   try{
     const res = await fetch('/api/verify-code', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ email, code }) });
-    const data = await res.json();
+    const text = await res.text();
+    let data = {};
+    try{ data = text ? JSON.parse(text) : {}; }catch(_){ data = { message: text || res.statusText }; }
     if(data.success){ showToast('Email verified','check'); closeVerify(); }
-    else showToast(data.message || 'Verification failed','x');
+    else showToast(data.message || `Verification failed${res.status ? ' (' + res.status + ')' : ''}`,'x');
   }catch(e){ console.error(e); showToast('Error verifying code','x'); }
 }
 async function resendCode(){

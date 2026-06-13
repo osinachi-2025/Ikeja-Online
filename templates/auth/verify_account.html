@@ -191,7 +191,9 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email })
                 });
-                const data = await response.json();
+                const text = await response.text();
+                let data = {};
+                try { data = text ? JSON.parse(text) : {}; } catch (_){ data = { message: text || response.statusText }; }
                 if (data.success) {
                     showAlert('Verification code sent. Check your email.', 'success');
                 } else {
@@ -220,7 +222,9 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, code })
                 });
-                const data = await response.json();
+                const text = await response.text();
+                let data = {};
+                try { data = text ? JSON.parse(text) : {}; } catch (_){ data = { message: text || response.statusText }; }
                 if (data.success) {
                     showAlert('Email verified successfully. You may now sign in.', 'success');
                 } else {

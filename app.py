@@ -8,12 +8,17 @@ from models import db, Roles, Users, Vendors, Customers, Categories, Products, P
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity, decode_token
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail
+try:
+    from python_http_client.exceptions import HTTPError
+except ImportError:
+    HTTPError = Exception
 from datetime import datetime, timedelta
 import json
 import os
+import threading
+import queue
 try:
     from dotenv import load_dotenv
 except ImportError:
@@ -76,9 +81,11 @@ app.config['CLOUDINARY_CLOUD_NAME'] = os.getenv('CLOUDINARY_CLOUD_NAME')
 app.config['CLOUDINARY_API_KEY'] = os.getenv('CLOUDINARY_API_KEY')
 app.config['CLOUDINARY_API_SECRET'] = os.getenv('CLOUDINARY_API_SECRET')
 
-# Gmail SMTP Configuration
+# Email configuration
 app.config['GMAIL_EMAIL'] = os.getenv('GMAIL_EMAIL')
 app.config['GMAIL_PASSWORD'] = os.getenv('GMAIL_PASSWORD')  # Use Gmail App Password, not regular password
+app.config['SENDGRID_API_KEY'] = os.getenv('SENDGRID_API_KEY')
+app.config['SENDGRID_FROM_EMAIL'] = os.getenv('SENDGRID_FROM_EMAIL', app.config['GMAIL_EMAIL'])
 
 # Enable CORS
 CORS(app, supports_credentials=True)
@@ -162,81 +169,152 @@ def upload_to_cloudinary(file, folder="ikeja_online", public_id=None):
         traceback.print_exc()
         return None
 
-print(f"[STARTUP] Gmail Configuration:")
-print(f"[STARTUP] Email: {app.config['GMAIL_EMAIL']}")
-print(f"[STARTUP] Password configured: {'Yes' if app.config['GMAIL_PASSWORD'] != 'your-app-password-here' else 'No (Using default placeholder)'}")
+print(f"[STARTUP] SendGrid Configuration:")
+print(f"[STARTUP] SendGrid API Key configured: {'Yes' if app.config['SENDGRID_API_KEY'] else 'No'}")
+print(f"[STARTUP] SendGrid from email: {app.config['SENDGRID_FROM_EMAIL'] or 'Not configured'}")
+print(f"[STARTUP] Gmail Email (fallback from): {app.config['GMAIL_EMAIL'] or 'Not configured'}")
+
 
 def send_email(to_email, subject, html_content):
-    """Send email using Gmail SMTP"""
+    """Send email using SendGrid Email API"""
     try:
         print(f"\n{'='*80}")
-        print(f"[EMAIL] ===== ATTEMPTING TO SEND EMAIL VIA GMAIL SMTP =====")
+        print(f"[EMAIL] ===== ATTEMPTING TO SEND EMAIL VIA SENDGRID =====")
         print(f"[EMAIL] To: {to_email}")
         print(f"[EMAIL] Subject: {subject}")
         print(f"[EMAIL] Recipient email valid: {bool(to_email and '@' in to_email)}")
-        
-        # Validate email
+
+        # Validate recipient
         if not to_email or '@' not in to_email:
             print(f"[EMAIL] ✗ ERROR: Invalid email address: {to_email}")
             print(f"{'='*80}\n")
-            return None
-        
-        # Get Gmail credentials
-        gmail_email = app.config.get('GMAIL_EMAIL')
-        gmail_password = app.config.get('GMAIL_PASSWORD')
-        
-        if not gmail_email or not gmail_password:
-            print(f"[EMAIL] ✗ ERROR: Gmail credentials not configured")
+            return {"success": False, "message": "Invalid recipient email address"}
+
+        # Get SendGrid configuration
+        sendgrid_api_key = app.config.get('SENDGRID_API_KEY')
+        from_email = app.config.get('SENDGRID_FROM_EMAIL') or app.config.get('GMAIL_EMAIL')
+
+        if not sendgrid_api_key:
+            print(f"[EMAIL] ✗ ERROR: SendGrid API key is not configured")
             print(f"{'='*80}\n")
-            return None
-        
-        if gmail_password == 'your-app-password-here':
-            print(f"[EMAIL] ✗ ERROR: Please set GMAIL_PASSWORD environment variable")
-            print(f"[EMAIL] Note: Use Gmail App Password (not your regular password)")
+            return {"success": False, "message": "SendGrid API key is not configured"}
+
+        if not from_email or '@' not in from_email:
+            print(f"[EMAIL] ✗ ERROR: SendGrid from email is not configured or invalid: {from_email}")
             print(f"{'='*80}\n")
-            return None
-        
-        print(f"[EMAIL] Gmail Email: {gmail_email}")
-        print(f"[EMAIL] Password configured: Yes")
-        
-        # Create email message
-        message = MIMEMultipart('alternative')
-        message['Subject'] = subject
-        message['From'] = f"Ikeja Online <{gmail_email}>"
-        message['To'] = to_email
-        
-        # Attach HTML content
-        html_part = MIMEText(html_content, 'html')
-        message.attach(html_part)
-        
-        print(f"[EMAIL] ✓ Message object created successfully")
-        
-        # Send via Gmail SMTP
-        print(f"[EMAIL] Connecting to Gmail SMTP server...")
-        server = smtplib.SMTP_SSL('smtp.gmail.com', 465, timeout=10)
-        print(f"[EMAIL] ✓ Connected to Gmail SMTP server")
-        
-        print(f"[EMAIL] Logging in with Gmail credentials...")
-        server.login(gmail_email, gmail_password)
-        print(f"[EMAIL] ✓ Logged in successfully")
-        
-        print(f"[EMAIL] Sending email...")
-        server.sendmail(gmail_email, to_email, message.as_string())
-        server.quit()
-        
+            return {"success": False, "message": "SendGrid from email is not configured or invalid", "from_email": from_email}
+
+        client = SendGridAPIClient(sendgrid_api_key)
+        to_addresses = [to_email] if isinstance(to_email, str) else list(to_email)
+        message = Mail(
+            from_email=f"Ikeja Online <{from_email}>",
+            to_emails=to_addresses,
+            subject=subject,
+            html_content=html_content,
+        )
+
+        print(f"[EMAIL] SendGrid client ready, from_email={from_email}, to={to_addresses}")
+        response = client.send(message)
+
+        message_id = None
+        try:
+            message_id = response.headers.get('X-Message-Id') if response and hasattr(response, 'headers') else None
+        except Exception:
+            message_id = None
+
+        status_code = getattr(response, 'status_code', None)
+        if status_code is None or status_code >= 300:
+            body = None
+            try:
+                body = response.body if hasattr(response, 'body') else None
+            except Exception:
+                body = None
+            print(f"[EMAIL] ✗ ERROR: SendGrid returned non-success status {status_code}")
+            print(f"[EMAIL] Response body: {body}")
+            print(f"{'='*80}\n")
+            return {
+                "success": False,
+                "message": "SendGrid failed to send email.",
+                "status_code": status_code,
+                "body": body,
+            }
+
         print(f"[EMAIL] ✓✓✓ EMAIL SENT SUCCESSFULLY TO {to_email}")
+        print(f"[EMAIL] SendGrid status code: {status_code}")
+        print(f"[EMAIL] SendGrid message ID: {message_id}")
         print(f"{'='*80}\n")
-        return {"success": True, "message": "Email sent successfully"}
-    
+        return {"success": True, "message": "Email sent successfully", "id": message_id, "status_code": status_code}
+
     except Exception as e:
+        status_code = getattr(e, 'status_code', None)
+        body = getattr(e, 'body', None) or getattr(e, 'message', None)
+        if isinstance(body, bytes):
+            try:
+                body = body.decode('utf-8')
+            except Exception:
+                body = str(body)
+
         print(f"[EMAIL] ✗✗✗ EXCEPTION OCCURRED!")
         print(f"[EMAIL] Exception Type: {type(e).__name__}")
         print(f"[EMAIL] Exception Message: {str(e)}")
+        print(f"[EMAIL] HTTP status code: {status_code}")
+        print(f"[EMAIL] Response body: {body}")
         import traceback
         print(f"[EMAIL] Full Traceback:")
         traceback.print_exc()
         print(f"{'='*80}\n")
-        return None
+        return {
+            "success": False,
+            "message": str(e),
+            "error_type": type(e).__name__,
+            "status_code": status_code,
+            "body": body,
+        }
+
+
+EMAIL_QUEUE_MAX_SIZE = int(os.getenv('EMAIL_QUEUE_MAX_SIZE', '100'))
+EMAIL_QUEUE = queue.Queue(maxsize=EMAIL_QUEUE_MAX_SIZE)
+EMAIL_WORKER_STARTED = False
+EMAIL_WORKER_LOCK = threading.Lock()
+
+
+def email_worker():
+    print(f"[EMAIL-WORKER] Background email worker started (queue max={EMAIL_QUEUE_MAX_SIZE})")
+    while True:
+        to_email, subject, html_content = EMAIL_QUEUE.get()
+        try:
+            print(f"[EMAIL-WORKER] Dispatching queued email to {to_email}")
+            result = send_email(to_email, subject, html_content)
+            if not result.get('success'):
+                print(f"[EMAIL-WORKER] Email delivery failed for {to_email}: {result.get('message')}")
+        except Exception as e:
+            print(f"[EMAIL-WORKER] Unexpected error sending email to {to_email}: {type(e).__name__}: {e}")
+        finally:
+            EMAIL_QUEUE.task_done()
+
+
+def start_email_worker():
+    global EMAIL_WORKER_STARTED
+    with EMAIL_WORKER_LOCK:
+        if EMAIL_WORKER_STARTED:
+            return
+        worker_thread = threading.Thread(target=email_worker, daemon=True)
+        worker_thread.start()
+        EMAIL_WORKER_STARTED = True
+
+
+def enqueue_email(to_email, subject, html_content):
+    try:
+        EMAIL_QUEUE.put_nowait((to_email, subject, html_content))
+        print(f"[EMAIL-QUEUE] Email queued for {to_email}")
+        return {"success": True, "message": "Email queued for background sending."}
+    except queue.Full:
+        print(f"[EMAIL-QUEUE] Queue full, failed to enqueue email to {to_email}")
+        return {"success": False, "message": "Email queue is full. Try again later."}
+
+
+def send_email_background(to_email, subject, html_content):
+    return enqueue_email(to_email, subject, html_content)
 
 
 def generate_email_verification_token(user_id):
@@ -290,7 +368,7 @@ def send_verification_email(user_email, user_name, verification_token):
         </html>
         """
         
-        return send_email(user_email, "Confirm Your Email Address - Ikeja Online", html_content)
+        return send_email_background(user_email, "Confirm Your Email Address - Ikeja Online", html_content)
     
     except Exception as e:
         print(f"[EMAIL-VERIFICATION] Error sending verification email: {str(e)}")
@@ -327,7 +405,7 @@ def send_password_reset_email(user_email, user_name, reset_code):
             </body>
         </html>
         """
-        return send_email(user_email, "Your password reset code - Ikeja Online", html_content)
+        return send_email_background(user_email, "Your password reset code - Ikeja Online", html_content)
     except Exception as e:
         print(f"[PASSWORD-RESET] Error sending password reset email: {str(e)}")
         return None
@@ -359,10 +437,16 @@ def send_verification_code_email(user_email, user_name, code):
             </body>
         </html>
         """
-        return send_email(user_email, "Your verification code - Ikeja Online", html_content)
+        result = send_email_background(user_email, "Your verification code - Ikeja Online", html_content)
+        if not result or not isinstance(result, dict):
+            print(f"[EMAIL-VERIFICATION-CODE] Unexpected enqueue result for {user_email}: {result}")
+            return {"success": False, "message": "Unable to queue verification code email."}
+        return result
     except Exception as e:
         print(f"[EMAIL-VERIFICATION-CODE] Error sending code email: {str(e)}")
-        return None
+        import traceback
+        traceback.print_exc()
+        return {"success": False, "message": "Unable to send verification code."}
 
 
 @app.route('/api/send-verification-code', methods=['POST'])
@@ -381,11 +465,17 @@ def api_send_verification_code():
             user.verification_code = code
             user.verification_expires = expires
             db.session.commit()
-            send_verification_code_email(user.email, user.first_name, code)
+            send_result = send_verification_code_email(user.email, user.first_name, code)
+            if not send_result or not send_result.get('success'):
+                db.session.rollback()
+                error_message = send_result.get('message') if isinstance(send_result, dict) else 'Unable to send verification code.'
+                print(f"[VERIFICATION-CODE] Send failed for {email}: {error_message}")
+                return jsonify({'success': False, 'message': error_message}), 500
             print(f"[VERIFICATION-CODE] Sent code to {email}")
         except Exception as e:
             db.session.rollback()
-            print(f"[VERIFICATION-CODE] Error: {str(e)}")
+            print(f"[VERIFICATION-CODE] Error sending verification code for {email}: {str(e)}")
+            return jsonify({'success': False, 'message': 'Unable to send verification code.'}), 500
 
     # Always return success to avoid revealing whether account exists
     return jsonify({'success': True, 'message': 'If an account exists with that email, a verification code was sent.'}), 200
@@ -486,7 +576,7 @@ def send_order_confirmation_email(customer_email, customer_name, order_ref, item
         </html>
         """
         
-        return send_email(customer_email, f"Order Confirmation - {order_ref}", html_content)
+        return send_email_background(customer_email, f"Order Confirmation - {order_ref}", html_content)
     
     except Exception as e:
         print(f"[ORDER-CONFIRMATION] Error sending order confirmation email: {str(e)}")
@@ -585,7 +675,7 @@ def send_order_shipped_email(customer_email, customer_name, order_ref, tracking_
         </html>
         """
         
-        return send_email(customer_email, f"{config['heading']} - {order_ref}", html_content)
+        return send_email_background(customer_email, f"{config['heading']} - {order_ref}", html_content)
     
     except Exception as e:
         print(f"[ORDER-STATUS] Error sending order status email: {str(e)}")
@@ -628,7 +718,7 @@ def send_payment_confirmation_email(customer_email, customer_name, order_ref, am
         </html>
         """
         
-        return send_email(customer_email, f"Payment Confirmation - {order_ref}", html_content)
+        return send_email_background(customer_email, f"Payment Confirmation - {order_ref}", html_content)
     
     except Exception as e:
         print(f"[PAYMENT-CONFIRMATION] Error sending payment confirmation email: {str(e)}")
@@ -671,7 +761,7 @@ def send_vendor_payout_email(vendor_email, vendor_name, payout_amount, payout_me
         </html>
         """
         
-        return send_email(vendor_email, "Payout Processed - Ikeja Online", html_content)
+        return send_email_background(vendor_email, "Payout Processed - Ikeja Online", html_content)
     
     except Exception as e:
         print(f"[VENDOR-PAYOUT] Error sending vendor payout email: {str(e)}")
@@ -727,7 +817,7 @@ def send_account_confirmation_email(user_email, user_name, action_type, confirma
         </html>
         """
         
-        return send_email(user_email, f"Confirm {action_desc} - Ikeja Online", html_content)
+        return send_email_background(user_email, f"Confirm {action_desc} - Ikeja Online", html_content)
     
     except Exception as e:
         print(f"[ACCOUNT-CONFIRMATION] Error sending account confirmation email: {str(e)}")
@@ -817,7 +907,7 @@ def send_product_ordered_email(vendor_email, vendor_name, store_name, products_i
         </html>
         """
         
-        return send_email(vendor_email, f"New Order Notification - {order_ref}", html_content)
+        return send_email_background(vendor_email, f"New Order Notification - {order_ref}", html_content)
     
     except Exception as e:
         print(f"[VENDOR-ORDER] Error sending vendor product ordered email: {str(e)}")
@@ -900,7 +990,7 @@ def send_low_stock_alert_email(vendor_email, vendor_name, store_name, low_stock_
         </html>
         """
         
-        return send_email(vendor_email, f"Low Stock Alert - {store_name if store_name else vendor_name}", html_content)
+        return send_email_background(vendor_email, f"Low Stock Alert - {store_name if store_name else vendor_name}", html_content)
     
     except Exception as e:
         print(f"[LOW-STOCK] Error sending low stock alert email: {str(e)}")
@@ -1285,52 +1375,49 @@ def all_categories():
 
 @app.route('/verify-gmail')
 def verify_gmail():
-    """Verify Gmail SMTP configuration"""
+    """Verify SendGrid email configuration"""
     try:
-        gmail_email = app.config.get('GMAIL_EMAIL')
-        gmail_password = app.config.get('GMAIL_PASSWORD')
-        
+        sendgrid_api_key = app.config.get('SENDGRID_API_KEY')
+        sendgrid_from = app.config.get('SENDGRID_FROM_EMAIL') or app.config.get('GMAIL_EMAIL')
+
         result = {
-            "gmail_email_configured": bool(gmail_email),
-            "gmail_email": gmail_email if gmail_email else "Not configured",
-            "gmail_password_configured": bool(gmail_password) and gmail_password != 'your-app-password-here'
+            "sendgrid_api_key_configured": bool(sendgrid_api_key),
+            "sendgrid_from_email": sendgrid_from if sendgrid_from else "Not configured"
         }
-        
-        if not gmail_email or not gmail_password:
+
+        if not sendgrid_api_key:
             return jsonify({
                 **result,
                 "status": "ERROR",
-                "message": "Gmail email or password is not configured"
+                "message": "SendGrid API key is not configured"
             }), 400
-        
-        if gmail_password == 'your-app-password-here':
+
+        if not sendgrid_from or '@' not in sendgrid_from:
             return jsonify({
                 **result,
                 "status": "ERROR",
-                "message": "Gmail password is still using placeholder. Please set GMAIL_PASSWORD environment variable.",
-                "note": "Use Gmail App Password (not your regular Gmail password)"
+                "message": "SendGrid from email is not configured or invalid"
             }), 400
-        
-        # Try to connect to Gmail SMTP
+
+        client = SendGridAPIClient(sendgrid_api_key)
+
         try:
-            server = smtplib.SMTP_SSL('smtp.gmail.com', 465, timeout=10)
-            server.login(gmail_email, gmail_password)
-            server.quit()
-            result["gmail_connection"] = "Successfully connected and authenticated"
+            client.client.user.account.get()
+            result["sendgrid_connection"] = "Successfully connected to SendGrid API"
         except Exception as e:
-            result["gmail_connection"] = f"ERROR: {str(e)}"
+            result["sendgrid_connection"] = f"ERROR: {str(e)}"
             return jsonify({
                 **result,
                 "status": "ERROR",
-                "message": f"Failed to connect to Gmail SMTP: {str(e)}"
+                "message": f"Failed to verify SendGrid API: {str(e)}"
             }), 400
-        
+
         return jsonify({
             **result,
             "status": "SUCCESS",
-            "message": "Gmail SMTP is configured correctly and connection successful"
+            "message": "SendGrid email configuration is valid"
         }), 200
-        
+
     except Exception as e:
         return jsonify({
             "status": "ERROR",
@@ -1340,69 +1427,51 @@ def verify_gmail():
 
 @app.route('/test-email')
 def test_email():
-    """Test email sending functionality via Gmail SMTP"""
+    """Test email sending functionality via Resend"""
     try:
         test_email_addr = request.args.get('email', 'test@example.com')
-        
+
         print(f"\n{'='*80}")
-        print(f"[TEST-EMAIL] ===== TESTING EMAIL FUNCTIONALITY =====" )
+        print(f"[TEST-EMAIL] ===== TESTING EMAIL FUNCTIONALITY =====")
         print(f"[TEST-EMAIL] Test recipient: {test_email_addr}")
-        
-        # Verify configuration first
-        gmail_email = app.config.get('GMAIL_EMAIL')
-        gmail_password = app.config.get('GMAIL_PASSWORD')
-        
-        if not gmail_email or not gmail_password:
+
+        sendgrid_api_key = app.config.get('SENDGRID_API_KEY')
+        sendgrid_from = app.config.get('SENDGRID_FROM_EMAIL') or app.config.get('GMAIL_EMAIL')
+
+        if not sendgrid_api_key:
             return jsonify({
                 'success': False,
-                'message': 'Gmail credentials not configured',
-                'debug_info': 'Check GMAIL_EMAIL and GMAIL_PASSWORD environment variables'
+                'message': 'SendGrid API key not configured',
+                'debug_info': 'Set SENDGRID_API_KEY environment variable'
             }), 500
-        
-        if gmail_password == 'your-app-password-here':
+
+        if not sendgrid_from or '@' not in sendgrid_from:
             return jsonify({
                 'success': False,
-                'message': 'Gmail password is using placeholder value',
-                'debug_info': 'Set GMAIL_PASSWORD environment variable to your Gmail App Password'
+                'message': 'SendGrid from email not configured or invalid',
+                'debug_info': 'Set SENDGRID_FROM_EMAIL or GMAIL_EMAIL environment variable'
             }), 500
-        
-        print(f"[TEST-EMAIL] Gmail email: {gmail_email}")
-        print(f"[TEST-EMAIL] Creating email message...")
-        
-        # Create test email message
-        message = MIMEMultipart('alternative')
-        message['Subject'] = 'Test Email - Ikeja Online'
-        message['From'] = f"Ikeja Online <{gmail_email}>"
-        message['To'] = test_email_addr
-        
-        html_content = '''<h2>Test Email - Ikeja Online</h2>
-        <p>If you received this, email sending is working correctly!</p>
-        <p>Timestamp: ''' + datetime.now().isoformat() + '''</p>'''
-        
-        html_part = MIMEText(html_content, 'html')
-        message.attach(html_part)
-        
-        print(f"[TEST-EMAIL] Message created, connecting to Gmail SMTP...")
-        
-        server = smtplib.SMTP_SSL('smtp.gmail.com', 465, timeout=10)
-        print(f"[TEST-EMAIL] Connected to Gmail SMTP")
-        
-        server.login(gmail_email, gmail_password)
-        print(f"[TEST-EMAIL] Logged in successfully")
-        
-        print(f"[TEST-EMAIL] Sending test email to {test_email_addr}...")
-        server.sendmail(gmail_email, test_email_addr, message.as_string())
-        server.quit()
-        
-        print(f"[TEST-EMAIL] Test email sent successfully")
+
+        print(f"[TEST-EMAIL] SendGrid from email: {sendgrid_from}")
+        html_content = f"<h2>Test Email - Ikeja Online</h2><p>If you received this, email sending is working correctly!</p><p>Timestamp: {datetime.now().isoformat()}</p>"
+
+        result = send_email(test_email_addr, 'Test Email - Ikeja Online', html_content)
+        if not result or not result.get('success'):
+            return jsonify({
+                'success': False,
+                'message': 'Error sending test email',
+                'debug_info': result
+            }), 500
+
+        print(f"[TEST-EMAIL] Test email sent successfully to {test_email_addr}")
         print(f"{'='*80}\n")
-        
+
         return jsonify({
             'success': True,
             'message': f'Test email sent successfully to {test_email_addr}',
-            'debug_info': f'Sent from: {gmail_email}'
+            'debug_info': result
         }), 200
-        
+
     except Exception as e:
         print(f"[TEST-EMAIL] EXCEPTION: {type(e).__name__}: {str(e)}")
         import traceback
@@ -1843,12 +1912,12 @@ def register():
                     subject = "Welcome to Ikeja Online - Registration Complete"
                 
                 # Send the welcome email
-                email_result = send_email(email, subject, html_content)
-                if email_result:
+                email_result = send_email_background(email, subject, html_content)
+                if email_result and email_result.get('success'):
                     email_sent_status = True
-                    print(f"✓ Welcome email sent to {email}")
+                    print(f"✓ Welcome email queued to {email}")
                 else:
-                    print(f"✗ Welcome email failed to send to {email}")
+                    print(f"✗ Welcome email failed to queue for {email}: {email_result}")
                 
             except Exception as email_error:
                 print(f"[REGISTRATION-EMAIL] Error sending welcome email: {str(email_error)}")
@@ -8753,4 +8822,5 @@ def testdashboard3():
     return render_template('dist/marketplace-dashboard.html')
 
 if __name__ == '__main__':
+    start_email_worker()
     app.run(debug=True)
