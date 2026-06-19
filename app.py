@@ -1323,8 +1323,57 @@ def home():
     return render_template('home/includes/ikeja-online-home.html')
 
 @app.route('/account-overview')
+@jwt_required(optional=True)
 def account_overview():
-    return render_template('home/account-overview.html')
+    user = None
+    customer = None
+    wallet = None
+    order_count = 0
+    total_spent = 0.0
+    pending_count = 0
+    recent_orders = []
+    saved_items = []
+
+    user_identity = get_jwt_identity()
+    if user_identity:
+        try:
+            user_id = int(user_identity)
+            user = Users.query.get(user_id)
+            if user and user.role and user.role.name == 'customer':
+                customer = Customers.query.filter_by(user_id=user.id).first()
+                if customer:
+                    wallet = Wallet.query.filter_by(customer_id=customer.id).first()
+                    orders_query = Orders.query.filter_by(customer_id=customer.id).order_by(Orders.created_at.desc())
+                    order_count = orders_query.count()
+                    total_spent = sum((order.total_amount or 0.0) for order in orders_query)
+                    pending_count = Orders.query.filter(
+                        Orders.customer_id == customer.id,
+                        Orders.shipping_status.in_(['pending', 'processing', 'shipped', 'en_route'])
+                    ).count()
+                    recent_orders = orders_query.limit(4).all()
+                    wishlist = Wishlists.query.filter_by(customer_id=customer.id).first()
+                    if wishlist and wishlist.items:
+                        saved_items = [
+                            {
+                                'name': item.product.name if item.product else 'Saved item',
+                                'price': item.product.price if item.product else 0.0,
+                                'icon': '🛍️'
+                            }
+                            for item in wishlist.items[:5]
+                        ]
+        except Exception as e:
+            print(f"[ACCOUNT-OVERVIEW] Error loading account data: {e}")
+
+    return render_template(
+        'home/account-overview.html',
+        user=user,
+        wallet=wallet,
+        order_count=order_count,
+        total_spent=total_spent,
+        pending_count=pending_count,
+        recent_orders=recent_orders,
+        saved_items=saved_items
+    )
 
 @app.route('/all-products')
 def all_products():

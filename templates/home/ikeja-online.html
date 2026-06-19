@@ -865,7 +865,7 @@
   {% endif %}
   <button class="bn-item" data-page="search" id="bn-search-btn" onclick="window.location.href='/search'"><i class="fa-solid fa-magnifying-glass"></i><span class="bl">Search</span></button>
   <a class="bn-item" data-page="wishlist" href="/wishlist" onclick="openWishlist(event)"><i class="fa-regular fa-heart"></i><span class="bl">Wishlist</span></a>
-  <a class="bn-item" data-page="account" href="/account-overview"><i class="fa-regular fa-user"></i><span class="bl">Account</span></a>
+  <button class="bn-item" data-page="cart" onclick="openCartDrawer()"><i class="fa-solid fa-cart-shopping"></i><span class="bl">Cart</span></button>
 </nav>
 
 <!-- AUTH MODAL -->
@@ -2390,18 +2390,26 @@ function restoreAuthState(){
   const token = localStorage.getItem('access_token');
   const first = localStorage.getItem('user_first_name');
   const email = localStorage.getItem('user_email');
-  if((token && first && email) || (first && email)){
+  if(token && first && email){
     currentUser = {
-      fname: first || 'User',
+      fname: first,
       lname: localStorage.getItem('user_last_name') || '',
-      email: email || '',
+      email: email,
       role: localStorage.getItem('user_role') || 'customer'
     };
     updateAuthButton();
     return true;
   }
+  currentUser = null;
+  updateAuthButton();
   return false;
 }
+
+window.addEventListener('storage', (event) => {
+  if(event.key === 'access_token' && !event.newValue){
+    doLogout();
+  }
+});
 
 function handleGoogleAuthLanding(){
   const params = new URLSearchParams(window.location.search);
@@ -2420,7 +2428,7 @@ function handleGoogleAuthLanding(){
 
 function doLogout(){
   currentUser = null;
-  ['access_token','user_role','user_first_name','user_last_name','user_email'].forEach(k=>localStorage.removeItem(k));
+  ['access_token','user_role','user_first_name','user_last_name','user_email','google_auth_pending'].forEach(k=>localStorage.removeItem(k));
   updateAuthButton();
   showAuthForm();
   showToast('You\'ve been signed out.', '👋');

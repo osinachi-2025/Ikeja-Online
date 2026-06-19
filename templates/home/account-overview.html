@@ -59,16 +59,19 @@
 <main class="page account-page">
   <section class="account-hero">
     <div class="hdr-eye">Account Overview</div>
-    <h1>Welcome back, <span id="account-name">Customer</span></h1>
-    <p>See your wallet balance, recent orders, saved items, and quick actions in one place.</p>
+    <h1>Welcome back, <span id="account-name">{{ user.first_name if user else 'Customer' }}</span></h1>
+    <p>{{ user.email if user else 'See your wallet balance, recent orders, saved items, and quick actions in one place.' }}</p>
+    {% if user and user.email %}
+      <p style="color:#475569;margin-top:10px;font-size:0.95rem;">Signed in as <strong>{{ user.email }}</strong></p>
+    {% endif %}
   </section>
 
-  <div id="account-content">
+  <div id="account-content" style="display: {{ 'block' if user else 'none' }};">
     <section class="account-panel wallet-card">
       <div class="wallet-header">
         <div>
           <div class="wallet-label">Wallet balance</div>
-          <div class="wallet-bal">₦48,500.00</div>
+          <div class="wallet-bal">₦{{ '{:,.2f}'.format(wallet.balance if wallet and wallet.balance is not none else 0.0) }}</div>
         </div>
       </div>
       <div class="wallet-note">Cashback earned this month: <strong>+₦1,200</strong></div>
@@ -81,18 +84,18 @@
     <section class="stat-grid">
       <div class="stat-card">
         <div class="stat-label">Orders</div>
-        <div class="stat-value">27</div>
-        <div class="stat-hint">4 this month</div>
+        <div class="stat-value">{{ order_count }}</div>
+        <div class="stat-hint">Lifetime orders</div>
       </div>
       <div class="stat-card">
         <div class="stat-label">Total Spent</div>
-        <div class="stat-value">₦312k</div>
+        <div class="stat-value">₦{{ '{:,.2f}'.format(total_spent or 0.0) }}</div>
         <div class="stat-hint">Lifetime</div>
       </div>
       <div class="stat-card">
         <div class="stat-label">Pending</div>
-        <div class="stat-value">3</div>
-        <div class="stat-hint">In transit</div>
+        <div class="stat-value">{{ pending_count }}</div>
+        <div class="stat-hint">Open shipments</div>
       </div>
     </section>
 
@@ -104,36 +107,50 @@
     </section>
 
     <section class="orders-card">
-      <div class="order-row">
-        <div class="order-icon">💻</div>
-        <div class="order-info"><div class="order-title">Lenovo IdeaPad 3 Laptop</div><div class="order-meta">#IKJ-00891 · Jun 18, 2026</div></div>
-        <div class="order-right"><div class="order-amt">₦285,000</div><span class="tag green">Delivered</span></div>
-      </div>
-      <div class="order-row">
-        <div class="order-icon">🎧</div>
-        <div class="order-info"><div class="order-title">Sony WH-1000XM5 Headphones</div><div class="order-meta">#IKJ-00882 · Jun 15, 2026</div></div>
-        <div class="order-right"><div class="order-amt">₦74,500</div><span class="tag blue">Shipped</span></div>
-      </div>
-      <div class="order-row">
-        <div class="order-icon">📱</div>
-        <div class="order-info"><div class="order-title">Tecno Spark 20 Pro</div><div class="order-meta">#IKJ-00874 · Jun 11, 2026</div></div>
-        <div class="order-right"><div class="order-amt">₦96,000</div><span class="tag blue">Shipped</span></div>
-      </div>
-      <div class="order-row">
-        <div class="order-icon">🔌</div>
-        <div class="order-info"><div class="order-title">Oraimo Fast Charger 65W</div><div class="order-meta">#IKJ-00861 · Jun 4, 2026</div></div>
-        <div class="order-right"><div class="order-amt">₦7,200</div><span class="tag yellow">Pending</span></div>
-      </div>
+      {% if recent_orders %}
+        {% for order in recent_orders %}
+          <div class="order-row">
+            <div class="order-icon">📦</div>
+            <div class="order-info">
+              <div class="order-title">{{ order.reference_number or 'Order #' }}</div>
+              <div class="order-meta">{{ order.created_at.strftime('%b %d, %Y') if order.created_at else '' }}</div>
+            </div>
+            <div class="order-right">
+              <div class="order-amt">₦{{ '{:,.2f}'.format(order.total_amount or 0.0) }}</div>
+              <span class="tag {% if order.shipping_status == 'delivered' %}green{% elif order.shipping_status in ['shipped', 'processing', 'en_route'] %}blue{% else %}yellow{% endif %}">{{ order.shipping_status.replace('_', ' ').title() }}</span>
+            </div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <div class="order-row">
+          <div class="order-icon">🛒</div>
+          <div class="order-info">
+            <div class="order-title">No recent orders yet</div>
+            <div class="order-meta">Start shopping to see your shipments here.</div>
+          </div>
+          <div class="order-right"><div class="order-amt">₹0</div></div>
+        </div>
+      {% endif %}
     </section>
 
     <section>
       <div class="saved-header"><h2>Saved for Later</h2></div>
       <div class="saved-scroll">
-        <div class="saved-card"><div class="saved-icon">🖥️</div><div class="saved-name">LG 27" 4K Monitor</div><div class="saved-price">₦189,000</div></div>
-        <div class="saved-card"><div class="saved-icon">⌨️</div><div class="saved-name">Keychron K2 Mechanical</div><div class="saved-price">₦42,500</div></div>
-        <div class="saved-card"><div class="saved-icon">🖱️</div><div class="saved-name">Logitech MX Master 3</div><div class="saved-price">₦38,000</div></div>
-        <div class="saved-card"><div class="saved-icon">📷</div><div class="saved-name">Canon EOS M50 II</div><div class="saved-price">₦390,000</div></div>
-        <div class="saved-card"><div class="saved-icon">🔋</div><div class="saved-name">Baseus 20K Power Bank</div><div class="saved-price">₦18,500</div></div>
+        {% if saved_items %}
+          {% for item in saved_items %}
+            <div class="saved-card">
+              <div class="saved-icon">{{ item.icon }}</div>
+              <div class="saved-name">{{ item.name }}</div>
+              <div class="saved-price">₦{{ '{:,.2f}'.format(item.price or 0.0) }}</div>
+            </div>
+          {% endfor %}
+        {% else %}
+          <div class="saved-card">
+            <div class="saved-icon">💾</div>
+            <div class="saved-name">Nothing saved yet</div>
+            <div class="saved-price">Add items to your wishlist.</div>
+          </div>
+        {% endif %}
       </div>
     </section>
   </div>
