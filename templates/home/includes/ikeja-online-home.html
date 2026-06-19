@@ -457,9 +457,12 @@ document.addEventListener('DOMContentLoaded',function(){
     var now=new Date(),diff=end-now;
     if(diff<=0){var c=document.getElementById('countdown');if(c)c.style.display='none';return;}
     var h=Math.floor(diff/3600000),m=Math.floor((diff%3600000)/60000),s=Math.floor((diff%60000)/1000);
-    document.getElementById('cd-h').textContent=pad(h);
-    document.getElementById('cd-m').textContent=pad(m);
-    document.getElementById('cd-s').textContent=pad(s);
+    var ch=document.getElementById('cd-h');
+    var cm=document.getElementById('cd-m');
+    var cs=document.getElementById('cd-s');
+    if(ch) ch.textContent=pad(h);
+    if(cm) cm.textContent=pad(m);
+    if(cs) cs.textContent=pad(s);
   }
   tick();setInterval(tick,1000);
 })();

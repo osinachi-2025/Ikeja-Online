@@ -144,6 +144,18 @@
   .rev-text{font-family:'Source Serif 4',serif;font-size:13.5px;color:var(--ink-3);line-height:1.7;}
   .rev-helpful{font-size:11.5px;color:var(--ink-4);margin-top:10px;}
   .rev-helpful a{color:var(--orange);cursor:pointer;}
+  .review-form{background:var(--white);border:1px solid var(--line);border-radius:14px;padding:20px 20px 18px;display:flex;flex-direction:column;gap:18px;margin-bottom:24px;}
+  .review-form-header{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;}
+  .review-form-title{font-size:15px;font-weight:800;color:var(--ink);}
+  .review-form-subtitle,.review-form-subtext{font-size:13px;color:var(--ink-3);line-height:1.6;}
+  .rating-input{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .rating-input .star-btn{width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:var(--cream2);color:var(--ink-3);font-size:16px;cursor:pointer;transition:all .18s;}
+  .rating-input .star-btn.on{background:var(--orange);border-color:var(--orange);color:#fff;}
+  .review-form textarea{width:100%;min-height:120px;border-radius:12px;border:1px solid var(--line);padding:14px 14px;font-family:'Lato',sans-serif;font-size:14px;color:var(--ink-2);resize:vertical;outline:none;transition:border-color .18s;background:var(--cream2);}
+  .review-form textarea:focus{border-color:var(--orange);background:#fff;}
+  .review-submit{width:min(220px,100%);border:none;border-radius:12px;padding:12px 16px;font-family:'Lato',sans-serif;font-weight:700;font-size:14px;color:#fff;background:var(--orange);cursor:pointer;transition:background .18s;}
+  .review-submit:hover{background:#1d4ed8;}
+  .review-login-prompt{align-items:flex-start;}
 
   /* Related */
   .section-heading{font-family:'Playfair Display',serif;font-weight:700;font-size:20px;color:var(--ink);margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--line);}
@@ -210,7 +222,7 @@
     .contact-vendor-meta{grid-template-columns:1fr;}
   }
   @media(max-width:480px){
-    .specs-grid{grid-template-columns:1fr;}
+    .specs-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 12px;}
     .inner{padding:18px 14px;}
     .page-body{padding-top:12px;padding-bottom:calc(var(--bnh) + 56px + 20px);}
   }
@@ -282,10 +294,6 @@
           </button>
         </div>
 
-        <div class="specs-box">
-          <div class="specs-title">Key Specifications</div>
-          <div class="specs-grid" id="p-specs"></div>
-        </div>
       </div>
     </div>
 
@@ -302,6 +310,7 @@
       <div class="specs-grid" style="max-width:640px;" id="tab-specs-grid"></div>
     </div>
     <div class="tab-panel" id="tab-reviews">
+      <div id="review-form-container"></div>
       <div class="review-summary">
         <div class="rev-big">
           <div class="score" id="rev-score">—</div>
@@ -360,6 +369,10 @@ async function loadProductDetails(productId) {
 function fmt(n){return n.toLocaleString('en-NG');}
 function renderStars(r){const v=Math.max(0,Math.min(5,Math.round(Number(r) || 0)));return '★'.repeat(v)+'☆'.repeat(5-v);}
 function strs(r){return renderStars(r);}
+function isCustomerLoggedIn(){try{return !!localStorage.getItem('access_token') && localStorage.getItem('user_role') === 'customer';}catch{return false;}}
+function setReviewRating(btn,rating=0){const form=document.getElementById('review-form-container');if(!form) return;form.querySelectorAll('.star-btn').forEach(b=>b.classList.toggle('on',Number(b.dataset.rating)<=rating));const ratingValue=form.querySelector('#review-rating-value');if(ratingValue) ratingValue.textContent=rating;form.dataset.reviewRating=rating;}
+function submitProductReview(){const form=document.getElementById('review-form-container');if(!form) return; if(!isCustomerLoggedIn()){ if(typeof openAuth==='function') openAuth(); return;} const rating=Number(form.dataset.reviewRating||0); const comment=form.querySelector('textarea')?.value.trim()||''; if(rating<1||rating>5){showToast('Please select a rating','x'); return;} const token=localStorage.getItem('access_token'); if(!token){ if(typeof openAuth==='function') openAuth(); return;} fetch(`/api/products/${currentId}/reviews`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({rating,comment})}).then(async res=>{const data=await res.json(); if(res.ok&&data.success){showToast(data.message||'Review submitted','check'); if(typeof loadProductDetails==='function') loadProductDetails(currentId);} else { showToast(data.message||data.error||'Unable to submit review','x'); if(res.status===401&&typeof openAuth==='function') openAuth(); }}).catch(err=>{console.error('Review submit failed',err); showToast('Could not submit review','x');});}
+function renderReviewForm(){const container=document.getElementById('review-form-container'); if(!container) return; if(isCustomerLoggedIn()){container.innerHTML=`<div class="review-form"><div class="review-form-header"><div><div class="review-form-title">Write a Review</div><div class="review-form-subtitle">Share your experience with this product.</div></div><div id="review-rating-value">0</div></div><div class="rating-input"><button type="button" class="star-btn" data-rating="1" onclick="setReviewRating(this,1)">★</button><button type="button" class="star-btn" data-rating="2" onclick="setReviewRating(this,2)">★</button><button type="button" class="star-btn" data-rating="3" onclick="setReviewRating(this,3)">★</button><button type="button" class="star-btn" data-rating="4" onclick="setReviewRating(this,4)">★</button><button type="button" class="star-btn" data-rating="5" onclick="setReviewRating(this,5)">★</button></div><textarea placeholder="Write your review here…" maxlength="500"></textarea><button type="button" class="review-submit" onclick="submitProductReview()">Submit Review</button></div>`;} else {container.innerHTML=`<div class="review-form review-login-prompt"><div class="review-form-title">Login to leave a review</div><div class="review-form-subtext">Only customers can submit product reviews.</div><button type="button" class="review-submit" onclick="openAuth()">Sign In</button></div>`;}} 
 function getWish(){
   try {
     if (window.wishlistManager) {
@@ -490,7 +503,6 @@ function renderProduct(p) {
     <div><div class="spec-k">${label}</div><div class="spec-v">${value}</div></div>
   `).join('');
 
-  document.getElementById('p-specs').innerHTML = specsHTML;
   document.getElementById('tab-specs-grid').innerHTML = specsHTML;
 
   const storageVariants = p.storage ? p.storage.split('/').map(item => item.trim()).filter(Boolean) : [];
@@ -539,6 +551,7 @@ function renderProduct(p) {
     `;
   }).join('') || '<div class="rev-card">No reviews yet for this product.</div>';
 
+  renderReviewForm();
   loadRelatedProducts(p.category_id, p.id);
 
   window.scrollTo({top: 0, behavior: 'smooth'});
@@ -669,11 +682,13 @@ async function toggleRelWish(id,btn){
 }
 function updateWishBtn(){
   const btn=document.getElementById('btn-wish');
+  const icon=document.getElementById('wish-icon');
+  if (!btn || !icon) return;
   if (window.wishlistManager) {
     wished = wishlistManager.isInWishlist(currentId);
   }
   btn.classList.toggle('on',wished);
-  document.getElementById('wish-icon').className=`fa-${wished?'solid':'regular'} fa-heart`;
+  icon.className=`fa-${wished?'solid':'regular'} fa-heart`;
 }
 
 function switchTab(tab,btn){

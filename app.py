@@ -1,9 +1,11 @@
-from flask import Flask, render_template, request, redirect, url_for, jsonify, send_from_directory, abort, flash, session, make_response, g, after_this_request, current_app,send_file
+from flask import Flask, render_template, request, redirect, url_for, jsonify, send_from_directory, abort, flash, session, make_response, g, after_this_request, current_app, send_file
 from flask_migrate import Migrate
 from sqlalchemy import text, or_
 import requests
+from urllib.parse import urlencode
 from io import BytesIO
 from flask_cors import CORS
+import uuid
 from models import db, Roles, Users, Vendors, Customers, Categories, Products, Product_Images, Orders, Order_Items, Reviews, VendorMessages, Payments, Wishlists, Wishlist_Items, Cart_Items, SaveForLater, SaveForLater_Items, Wallet, Deposits, VendorWallet, WalletTransaction, CustomerWalletTransaction, VendorWalletTransaction, VendorWithdrawal, VendorDeposit, CustomerAddress, DeliveryPreference
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
@@ -84,6 +86,14 @@ app.config['GMAIL_EMAIL'] = os.getenv('GMAIL_EMAIL')
 app.config['GMAIL_PASSWORD'] = os.getenv('GMAIL_PASSWORD')  # Use Gmail App Password, not regular password
 app.config['SENDGRID_API_KEY'] = os.getenv('SENDGRID_API_KEY')
 app.config['SENDGRID_FROM_EMAIL'] = os.getenv('SENDGRID_FROM_EMAIL', app.config['GMAIL_EMAIL'])
+
+# Google OAuth configuration
+app.config['GOOGLE_CLIENT_ID'] = os.getenv('GOOGLE_CLIENT_ID')
+app.config['GOOGLE_CLIENT_SECRET'] = os.getenv('GOOGLE_CLIENT_SECRET')
+app.config['GOOGLE_OAUTH_REDIRECT_URI'] = os.getenv('GOOGLE_OAUTH_REDIRECT_URI', '').strip() or None
+app.config['GOOGLE_AUTHORIZATION_ENDPOINT'] = 'https://accounts.google.com/o/oauth2/v2/auth'
+app.config['GOOGLE_TOKEN_ENDPOINT'] = 'https://oauth2.googleapis.com/token'
+app.config['GOOGLE_USERINFO_ENDPOINT'] = 'https://openidconnect.googleapis.com/v1/userinfo'
 
 # Enable CORS
 CORS(app, supports_credentials=True)
@@ -171,6 +181,7 @@ print(f"[STARTUP] SendGrid Configuration:")
 print(f"[STARTUP] SendGrid API Key configured: {'Yes' if app.config['SENDGRID_API_KEY'] else 'No'}")
 print(f"[STARTUP] SendGrid from email: {app.config['SENDGRID_FROM_EMAIL'] or 'Not configured'}")
 print(f"[STARTUP] Gmail Email (fallback from): {app.config['GMAIL_EMAIL'] or 'Not configured'}")
+print(f"[STARTUP] Google OAuth Redirect URI: {app.config['GOOGLE_OAUTH_REDIRECT_URI'] or 'Not configured (using callback URL)'}")
 
 
 def send_email(to_email, subject, html_content):
@@ -1311,6 +1322,10 @@ def save_vendor_logo_to_db(file, vendor):
 def home():
     return render_template('home/includes/ikeja-online-home.html')
 
+@app.route('/account-overview')
+def account_overview():
+    return render_template('home/account-overview.html')
+
 @app.route('/all-products')
 def all_products():
     """All products page - displays all available products with pagination"""
@@ -1914,6 +1929,134 @@ def register():
     
     return render_template('auth/register.html')
 
+def get_google_redirect_uri():
+    """Return the configured Google OAuth redirect URI or the app's callback URL."""
+    return app.config.get('GOOGLE_OAUTH_REDIRECT_URI') or url_for('google_callback', _external=True)
+
+@app.route('/auth/google')
+def google_login():
+    if not app.config.get('GOOGLE_CLIENT_ID') or not app.config.get('GOOGLE_CLIENT_SECRET'):
+        flash('Google login is not configured.', 'danger')
+        return redirect(url_for('login'))
+
+    state = uuid.uuid4().hex
+    session['oauth_state'] = state
+    params = {
+        'client_id': app.config['GOOGLE_CLIENT_ID'],
+        'response_type': 'code',
+        'scope': 'openid email profile',
+        'redirect_uri': get_google_redirect_uri(),
+        'state': state,
+        'access_type': 'offline',
+        'prompt': 'consent'
+    }
+    authorization_url = f"{app.config['GOOGLE_AUTHORIZATION_ENDPOINT']}?{urlencode(params)}"
+    return redirect(authorization_url)
+
+@app.route('/auth/google/callback')
+def google_callback():
+    error = request.args.get('error')
+    if error:
+        flash(f'Google authentication failed: {error}', 'danger')
+        return redirect(url_for('login'))
+
+    state = request.args.get('state')
+    if not state or state != session.pop('oauth_state', None):
+        flash('Invalid Google authentication state. Please try again.', 'danger')
+        return redirect(url_for('login'))
+
+    code = request.args.get('code')
+    if not code:
+        flash('Missing authorization code from Google.', 'danger')
+        return redirect(url_for('login'))
+
+    token_response = requests.post(
+        app.config['GOOGLE_TOKEN_ENDPOINT'],
+        data={
+            'code': code,
+            'client_id': app.config['GOOGLE_CLIENT_ID'],
+            'client_secret': app.config['GOOGLE_CLIENT_SECRET'],
+            'redirect_uri': get_google_redirect_uri(),
+            'grant_type': 'authorization_code'
+        },
+        headers={'Content-Type': 'application/x-www-form-urlencoded'}
+    )
+
+    if token_response.status_code != 200:
+        flash('Unable to complete Google login.', 'danger')
+        return redirect(url_for('login'))
+
+    token_data = token_response.json()
+    access_token = token_data.get('access_token')
+    if not access_token:
+        flash('Google login response did not include an access token.', 'danger')
+        return redirect(url_for('login'))
+
+    userinfo_response = requests.get(
+        app.config['GOOGLE_USERINFO_ENDPOINT'],
+        headers={'Authorization': f'Bearer {access_token}'}
+    )
+
+    if userinfo_response.status_code != 200:
+        flash('Unable to retrieve Google profile information.', 'danger')
+        return redirect(url_for('login'))
+
+    profile = userinfo_response.json()
+    email = profile.get('email')
+    if not email:
+        flash('Google account did not return an email address.', 'danger')
+        return redirect(url_for('login'))
+
+    first_name = profile.get('given_name', '')
+    last_name = profile.get('family_name', '')
+    picture = profile.get('picture')
+
+    user = Users.query.filter_by(email=email).first()
+    if not user:
+        customer_role = Roles.query.filter_by(name='customer').first()
+        if not customer_role:
+            customer_role = Roles(name='customer', description='Customer account')
+            db.session.add(customer_role)
+            db.session.commit()
+
+        random_password = os.urandom(24).hex()
+        user = Users(
+            first_name=first_name or 'Google',
+            last_name=last_name or 'User',
+            email=email,
+            passwordhash=generate_password_hash(random_password),
+            email_verified=True,
+            email_verified_at=datetime.utcnow(),
+            role_id=customer_role.id,
+            profile_image_url=picture
+        )
+        db.session.add(user)
+        db.session.commit()
+    else:
+        user.email_verified = True
+        user.email_verified_at = datetime.utcnow()
+        if picture:
+            user.profile_image_url = picture
+        db.session.commit()
+
+    jwt_token = create_access_token(identity=str(user.id), expires_delta=timedelta(hours=2))
+    response = make_response(render_template('home/google-auth-complete.html', access_token=jwt_token, user_info={
+        'user_id': user.id,
+        'first_name': user.first_name,
+        'last_name': user.last_name,
+        'role': user.role.name,
+        'email': user.email
+    }))
+    response.set_cookie('access_token', jwt_token, max_age=2*60*60, httponly=True, samesite='Lax', secure=not app.debug)
+    response.set_cookie('user_info', json.dumps({
+        'user_id': user.id,
+        'first_name': user.first_name,
+        'last_name': user.last_name,
+        'role': user.role.name,
+        'email': user.email
+    }), max_age=30*24*60*60, httponly=False, samesite='Lax', secure=not app.debug)
+    return response
+
 @app.route('/login', methods=['POST', 'GET'])
 def login():
     
@@ -2008,9 +2151,8 @@ def verify_account():
 
 @app.route('/vendor/dashboard')
 def vendor_dashboard():
-    # Check if token is in localStorage (frontend will handle this)
-    # No JWT required for page load since token is stored client-side
-    return render_template('vendor/vendor_dashboard.html')
+    # Redirect vendor dashboard route to the existing testingdashboard page
+    return redirect('/testingdashboard')
 
 
 @app.route('/vendor/earnings-summary')
@@ -6219,6 +6361,50 @@ def check_roles():
         return jsonify({'success': True, 'roles': roles_data, 'role_count': len(roles_data)}), 200
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/user/select-role', methods=['POST'])
+@jwt_required()
+def select_user_role():
+    try:
+        user_id = int(get_jwt_identity())
+        user = Users.query.get(user_id)
+        if not user:
+            return jsonify({'success': False, 'message': 'User not found'}), 404
+
+        data = request.get_json(silent=True) or {}
+        requested_role = (data.get('role') or '').strip().lower()
+        if requested_role not in ['customer', 'vendor']:
+            return jsonify({'success': False, 'message': 'Invalid role selected'}), 400
+
+        role_obj = Roles.query.filter_by(name=requested_role).first()
+        if not role_obj:
+            return jsonify({'success': False, 'message': 'Selected role is not available'}), 400
+
+        if user.role.name != requested_role:
+            user.role_id = role_obj.id
+            if requested_role == 'vendor':
+                if not Vendors.query.filter_by(user_id=user.id).first():
+                    store_slug = f"vendor-{user.id}"
+                    vendor = Vendors(user_id=user.id, store_name=None, store_slug=store_slug)
+                    db.session.add(vendor)
+            else:
+                if not Customers.query.filter_by(user_id=user.id).first():
+                    customer = Customers(user_id=user.id)
+                    db.session.add(customer)
+            db.session.commit()
+
+        return jsonify({
+            'success': True,
+            'message': 'Role selected successfully',
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+            'email': user.email,
+            'role': user.role.name
+        }), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
 
 
 @app.route('/api/admin/init-first-admin', methods=['POST'])

@@ -26,7 +26,11 @@
   .hd-search input{width:100%;font-family:'Lato',sans-serif;font-size:14px;background:var(--cream2);border:1px solid var(--line);border-radius:8px;padding:9px 12px 9px 36px;color:var(--ink);outline:none;transition:border-color .18s;-webkit-appearance:none;}
   .hd-search input:focus{border-color:var(--orange);background:white;}
   .hd-search input::placeholder{color:var(--ink-4);}
-  .s-ic{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--ink-4);pointer-events:none;font-size:13px;}
+  .s-ic{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--ink-4);pointer-events:auto;font-size:13px;cursor:pointer;}
+  .hd-search-close{position:absolute;top:50%;right:10px;transform:translateY(-50%);border:none;outline:none;background:var(--cream2);color:var(--ink-3);width:34px;height:34px;border-radius:50%;display:none;align-items:center;justify-content:center;cursor:pointer;transition:background .18s,color .18s;}
+  .hd-search-close i{font-size:13px;}
+  .hd-search-close:hover{background:var(--orange-bg);color:var(--orange);}
+  .hd-actions{margin-left:auto;display:flex;align-items:center;gap:10px;}
   .hd-icon-btn{flex-shrink:0;width:38px;height:38px;border-radius:50%;background:var(--cream2);border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ink-3);transition:all .18s;text-decoration:none;border:1.5px solid var(--line);}
   .hd-icon-btn:hover{border-color:var(--orange);color:var(--orange);background:var(--orange-bg);}
   .hd-icon-btn.active{background:var(--orange);border-color:var(--orange);color:white;}
@@ -38,6 +42,23 @@
   .wish-cnt.show{display:flex;}
   .hd-cart{flex-shrink:0;position:relative;width:40px;height:40px;background:var(--orange);border:none;border-radius:9px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:white;}
   .hd-cart i{font-size:15px;}
+  @media(max-width:720px){
+    .hd{padding:0 12px;height:52px;gap:8px;}
+    .logo{font-size:16px;}
+    .hd-actions{margin-left:auto;gap:8px;}
+    .hd-icon-btn,.hd-wish-btn{width:34px;height:34px;}
+    .hd-cart{width:36px;height:36px;}
+    .hd-icon-btn i,.hd-wish-btn i,.hd-cart i{font-size:13px;}
+    .hd-search{flex:0;min-width:auto;width:auto;max-width:42px;}
+    .hd-search input{width:0;opacity:0;visibility:hidden;border-color:transparent;background:transparent;padding-left:36px;pointer-events:none;}
+    .hd-search-close{display:none;}
+    .hd.search-open{justify-content:flex-start;}
+    .hd.search-open > :not(.hd-search){display:none;}
+    .hd.search-open .hd-search{flex:1;max-width:100%;}
+    .hd.search-open .hd-search input{width:100%;opacity:1;visibility:visible;border:1px solid var(--line);background:var(--cream2);border-radius:8px;padding:9px 12px 9px 36px;pointer-events:auto;}
+    .hd.search-open .hd-search-close{display:flex;}
+    .hd.search-open .s-ic{left:12px;}
+  }
   .cart-badge{position:absolute;top:-4px;right:-4px;background:var(--ink);color:white;font-size:9px;font-weight:900;min-width:16px;height:16px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 3px;}
 
   /* ── PAGE ── */
@@ -256,7 +277,7 @@
     .sticky-buy{display:flex;}
   }
   @media(max-width:480px){
-    .specs-grid{grid-template-columns:1fr;}
+    .specs-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 12px;}
     .inner{padding:18px 14px;}
   }
   .cart-overlay{display:none;position:fixed;inset:0;z-index:700;background:rgba(28,25,22,.4);backdrop-filter:blur(2px);}
@@ -302,18 +323,19 @@
   <div class="hd-search">
     <i class="fa-solid fa-magnifying-glass s-ic"></i>
     <input type="text" placeholder="Search products…" onkeydown="if(event.key==='Enter')window.location='/?q='+encodeURIComponent(this.value)">
+    <button type="button" class="hd-search-close" aria-label="Close search">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
   </div>
-  <a class="hd-wish-btn" href="ikeja-wishlist.html" title="Wishlist" id="hd-wish-btn">
-    <i class="fa-regular fa-heart"></i>
-    <div class="wish-cnt" id="wish-cnt" data-wishlist-badge>0</div>
-  </a>
-  <button class="hd-icon-btn" id="hd-user-btn" onclick="openAuth()" title="Account">
-    <i class="fa-regular fa-user"></i>
+  <div class="hd-actions">
+    <button class="hd-icon-btn" id="hd-user-btn" onclick="openAuth()" title="Account">
+      <i class="fa-regular fa-user"></i>
   </button>
   <button class="hd-cart" onclick="openCartDrawer()" title="Cart">
     <i class="fa-solid fa-cart-shopping"></i>
     <div class="cart-badge" id="cart-badge">0</div>
   </button>
+  </div>
 </header>
 
 <div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
@@ -444,10 +466,6 @@
           </button>
         </div>
 
-        <div class="specs-box">
-          <div class="specs-title">Key Specifications</div>
-          <div class="specs-grid" id="p-specs"></div>
-        </div>
       </div>
     </div>
 
@@ -497,11 +515,11 @@
 
 <!-- BOTTOM NAV -->
 <nav class="bottom-nav">
-  <a class="bn-item" href="/"><i class="fa-solid fa-house"></i><span class="bl">Home</span></a>
-  <a class="bn-item" href="/"><i class="fa-solid fa-bars"></i><span class="bl">Browse</span></a>
-  <button class="bn-item on" style="color:var(--orange)"><i class="fa-solid fa-box-open"></i><span class="bl" style="color:var(--orange)">Product</span></button>
-  <a class="bn-item" href="ikeja-wishlist.html"><i class="fa-regular fa-heart"></i><span class="bl">Wishlist</span></a>
-  <button class="bn-item" onclick="openCartDrawer()"><i class="fa-solid fa-cart-shopping"></i><span class="bl">Cart</span></button>
+  <a class="bn-item" data-page="home" href="/"><i class="fa-solid fa-house"></i><span class="bl">Home</span></a>
+  <a class="bn-item" data-page="browse" href="/"><i class="fa-solid fa-bars"></i><span class="bl">Browse</span></a>
+  <button class="bn-item" data-page="product"><i class="fa-solid fa-box-open"></i><span class="bl">Product</span></button>
+  <a class="bn-item" data-page="wishlist" href="ikeja-wishlist.html"><i class="fa-regular fa-heart"></i><span class="bl">Wishlist</span></a>
+  <button class="bn-item" data-page="cart" onclick="openCartDrawer()"><i class="fa-solid fa-cart-shopping"></i><span class="bl">Cart</span></button>
 </nav>
 
 <!-- AUTH MODAL -->
@@ -726,7 +744,6 @@ function renderProduct(p) {
     <div><div class="spec-k">${label}</div><div class="spec-v">${value}</div></div>
   `).join('');
 
-  document.getElementById('p-specs').innerHTML = specsHTML;
   document.getElementById('tab-specs-grid').innerHTML = specsHTML;
 
   const storageVariants = p.storage ? p.storage.split('/').map(item => item.trim()).filter(Boolean) : [];
@@ -1053,6 +1070,62 @@ loadProductDetails(urlId);
 if (window.cart && typeof cart.updateCartUI === 'function') {
   cart.updateCartUI();
 }
+</script>
+<script>
+  document.addEventListener('DOMContentLoaded', function(){
+    const hdSearch = document.querySelector('.hd-search');
+    const searchInput = hdSearch?.querySelector('input');
+    const searchClose = hdSearch?.querySelector('.hd-search-close');
+    const searchIcon = hdSearch?.querySelector('.s-ic');
+    const header = document.querySelector('.hd');
+
+    if(searchIcon && searchInput){
+      searchIcon.addEventListener('click', function(){
+        if(window.matchMedia('(max-width:720px)').matches){
+          header?.classList.add('search-open');
+          hdSearch?.classList.add('mobile-open');
+          searchInput.focus();
+        } else {
+          searchInput.focus();
+        }
+      });
+    }
+
+    searchClose?.addEventListener('click', function(){
+      header?.classList.remove('search-open');
+      hdSearch?.classList.remove('mobile-open');
+      searchInput?.blur();
+    });
+
+    setBottomNavActive(getBottomNavPage());
+  });
+
+  function openMobileSearch(){
+    const hdSearch = document.querySelector('.hd-search');
+    const searchInput = hdSearch?.querySelector('input');
+    const header = document.querySelector('.hd');
+    if(header){
+      header.classList.add('search-open');
+    }
+    hdSearch?.classList.add('mobile-open');
+    searchInput?.focus();
+  }
+
+  function getBottomNavPage(){
+    const path = window.location.pathname;
+    if (path === '/' || path === '') return 'home';
+    if (path.startsWith('/search')) return 'search';
+    if (path.startsWith('/wishlist') || path.startsWith('/customer/dashboard/wishlist')) return 'wishlist';
+    if (path.startsWith('/cart') || path.startsWith('/checkout')) return 'cart';
+    if (path.match(/\/product|\/products?|\/p\//)) return 'product';
+    return 'product';
+  }
+
+  function setBottomNavActive(page){
+    document.querySelectorAll('.bottom-nav .bn-item[data-page]').forEach(item => {
+      item.classList.toggle('on', item.dataset.page === page);
+    });
+  }
 </script>
 </body>
 </html>

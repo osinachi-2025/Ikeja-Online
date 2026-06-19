@@ -29,7 +29,10 @@
   .hd-search input{width:100%;font-family:'Lato',sans-serif;font-size:14px;background:var(--cream2);border:1px solid var(--line);border-radius:8px;padding:9px 12px 9px 36px;color:var(--ink);outline:none;transition:border-color .18s;-webkit-appearance:none;}
   .hd-search input:focus{border-color:var(--orange);background:white;}
   .hd-search input::placeholder{color:var(--ink-4);}
-  .s-ic{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--ink-4);pointer-events:none;font-size:13px;}
+  .s-ic{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--ink-4);pointer-events:auto;font-size:13px;cursor:pointer;}
+  .hd-search-close{position:absolute;top:50%;right:10px;transform:translateY(-50%);border:none;outline:none;background:var(--cream2);color:var(--ink-3);width:34px;height:34px;border-radius:50%;display:none;align-items:center;justify-content:center;cursor:pointer;transition:background .18s,color .18s;}
+  .hd-search-close i{font-size:13px;}
+  .hd-search-close:hover{background:var(--orange-bg);color:var(--orange);}
   .hd-icon-btn{flex-shrink:0;width:38px;height:38px;border-radius:50%;background:var(--cream2);border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ink-3);transition:all .18s;position:relative;}
   .hd-icon-btn:hover{border-color:var(--orange);color:var(--orange);background:var(--orange-bg);}
   .hd-icon-btn.active{background:var(--orange);border-color:var(--orange);color:white;}
@@ -450,6 +453,45 @@
   .role-pill{flex:1;min-width:110px;border:none;border-radius:10px;padding:10px 12px;background:transparent;font-family:'Lato',sans-serif;font-weight:700;color:var(--ink-3);cursor:pointer;transition:all .18s ease;}
   .role-pill.active{background:white;color:var(--ink);box-shadow:0 6px 16px rgba(28,25,22,0.08);}
   .role-pill:hover{color:var(--ink);}
+  .auth-alt-action{margin:18px 0 0;display:flex;justify-content:center;}
+  .social-auth-btn{width:100%;border:1px solid rgba(15,23,42,.12);border-radius:12px;background:#ffffff;color:#111827;padding:12px 14px;font-size:0.92rem;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 8px 18px rgba(15,23,42,.08);transition:transform .18s ease, box-shadow .18s ease, background .18s ease;}
+  .social-auth-btn i{font-size:1rem;color:#4285f4;}
+  .social-auth-btn:hover{transform:translateY(-1px);box-shadow:0 12px 22px rgba(15,23,42,.12);background:#f8fafc;}
+  .social-auth-btn:active{transform:translateY(0);box-shadow:0 8px 14px rgba(15,23,42,.1);}
+  .social-auth-btn .google-text{display:inline-flex;align-items:center;gap:5px;}
+  .social-auth-btn .google-brand{font-weight:800;background:linear-gradient(90deg,#4285f4 0%,#db4437 20%,#f4b400 40%,#0f9d58 60%,#4285f4 80%,#db4437 100%);-webkit-background-clip:text;color:transparent;}
+  .role-selection-grid{display:grid;gap:12px;margin:18px 0;grid-template-columns:repeat(2,minmax(0,1fr));}
+  .role-choice{border:1px solid rgba(37,99,235,.14);border-radius:20px;padding:18px;cursor:pointer;background:#ffffff;box-shadow:0 8px 24px rgba(15,23,42,.06);transition:all .22s ease, transform .22s ease;position:relative;overflow:hidden;}
+  .role-choice::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at top left, rgba(37,99,235,.08), transparent 48%);pointer-events:none;opacity:0;transition:opacity .22s ease;}
+  .role-choice:hover{transform:translateY(-2px);box-shadow:0 14px 32px rgba(15,23,42,.12);}
+  .role-choice:hover::before{opacity:1;}
+  .role-choice.active{border-color:#2563eb;background:linear-gradient(180deg,#f8fbff 0%,#eff6ff 100%);box-shadow:0 18px 40px rgba(37,99,235,.14);}
+  .role-choice .role-icon{width:40px;height:40px;border-radius:14px;display:grid;place-items:center;margin-bottom:14px;font-size:1rem;}
+  .role-choice .role-icon.role-icon-customer{background:rgba(37,99,235,.1);color:#2563eb;}
+  .role-choice .role-icon.role-icon-vendor{background:rgba(16,185,129,.12);color:#047857;}
+  .role-choice h4{margin:0 0 8px;font-size:1rem;color:#111827;letter-spacing:.015em;}
+  .role-choice p{margin:0;color:#475569;font-size:0.9rem;line-height:1.6;}
+  .role-panel-msg{margin-top:2px;font-size:0.95rem;color:#334155;line-height:1.6;}
+  .role-panel-note{margin-top:14px;font-size:0.88rem;color:#475569;font-weight:600;}
+  .auth-submit#role-confirm-btn{width:100%;border:none;border-radius:14px;padding:12px 16px;background:linear-gradient(135deg,#2563eb,#4f46e5);color:#fff;font-size:0.92rem;font-weight:800;box-shadow:0 14px 32px rgba(37,99,235,.18);transition:transform .18s ease,box-shadow .18s ease;}
+  .auth-submit#role-confirm-btn:hover{transform:translateY(-1px);box-shadow:0 18px 36px rgba(37,99,235,.22);}
+  .auth-submit#role-confirm-btn:active{transform:translateY(0);}
+
+  @media(max-width:720px){
+    .role-selection-grid{grid-template-columns:1fr;}
+    .role-choice{padding:16px;}
+    .role-choice .role-icon{width:38px;height:38px;margin-bottom:12px;font-size:0.98rem;}
+    .role-choice h4{font-size:0.98rem;}
+    .role-choice p{font-size:0.88rem;}
+    .auth-body{padding:18px 18px 22px;}
+    .auth-submit#role-confirm-btn{padding:12px 14px;font-size:0.9rem;}
+  }
+  .role-panel-msg{margin-top:6px;font-size:.98rem;color:#334155;line-height:1.6;}
+  .role-panel-note{margin-top:16px;font-size:.9rem;color:#475569;font-weight:600;}
+  .auth-submit#role-confirm-btn{width:100%;border:none;border-radius:14px;padding:14px 18px;background:linear-gradient(135deg,#2563eb,#4f46e5);color:#fff;font-size:0.96rem;font-weight:800;box-shadow:0 16px 36px rgba(37,99,235,.22);transition:transform .18s ease,box-shadow .18s ease;}
+  .auth-submit#role-confirm-btn:hover{transform:translateY(-1px);box-shadow:0 20px 42px rgba(37,99,235,.26);}
+  .auth-submit#role-confirm-btn:active{transform:translateY(0);}
+
   .auth-field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
   .auth-pw-wrap{position:relative;}
   .auth-pw-wrap input{padding-right:40px;}
@@ -585,6 +627,25 @@
     .page-body{padding-bottom:calc(var(--bnh) + 24px);}
     main{padding-bottom:calc(var(--bnh) + 24px)!important;}
   }
+  @media(max-width:720px){
+    .hd{padding:0 12px;height:52px;gap:8px;}
+    .logo{font-size:16px;}
+    .hd-icon-btn,.hd-wish-btn{width:34px;height:34px;}
+    .hd-cart{width:36px;height:36px;}
+    .hd-icon-btn i,.hd-wish-btn i,.hd-cart i{font-size:13px;}
+    .hd-search{flex:0;min-width:auto;width:auto;max-width:42px;}
+    .hd-search input{width:0;opacity:0;visibility:hidden;border-color:transparent;background:transparent;padding-left:36px;pointer-events:none;}
+    .hd-search-close{display:none;}
+    .hd.search-open{justify-content:flex-start;}
+    .hd.search-open > :not(.hd-search){display:none;}
+    .hd.search-open .hd-search{flex:1;max-width:100%;}
+    .hd.search-open .hd-search input{width:100%;opacity:1;visibility:visible;border:1px solid var(--line);background:var(--cream2);border-radius:8px;padding:9px 12px 9px 36px;pointer-events:auto;}
+    .hd.search-open .hd-search-close{display:flex;}
+    .hd.search-open .s-ic{left:12px;}
+    .pcard-body{padding:8px 9px 9px;}
+    .pcard-name{font-size:11px;}
+    .pcard-now{font-size:13px;}
+  }
   @media(max-width:480px){
     .hd{padding-bottom:6px;}
     .pgrid{grid-template-columns:repeat(2,1fr);gap:10px;}
@@ -595,6 +656,11 @@
     .pcard-body{padding:9px 10px 10px;}
     .pcard-name{font-size:12px;}
     .pcard-now{font-size:14px;}
+    .hd{padding:0 10px;}
+    .logo{font-size:15px;}
+    .hd-icon-btn,.hd-wish-btn{width:32px;height:32px;}
+    .hd-cart{width:34px;height:34px;}
+    .hd-icon-btn i,.hd-wish-btn i,.hd-cart i{font-size:12px;}
   }
 
   /* ── IKM SUB-MODALS (forgot / reset-code / verify-email) ── */
@@ -679,16 +745,18 @@
   <a class="logo" href="/">Ikeja<span class="dot">.</span>Online</a>
   {% if request.path == '/' %}
   <div class="hd-search">
-    <i class="fa-solid fa-magnifying-glass s-ic"></i>
-    
     <input type="text" id="q" placeholder="Search laptops, phones…" oninput="doSearch()">
+    <button type="button" class="hd-search-close" aria-label="Close search">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
   </div>
   {% endif %}
   <div class="hd-actions">
-    <a class="hd-wish-btn" href="/wishlist" title="Wishlist" id="hd-wish-btn" onclick="openWishlist(event)">
-      <i class="fa-regular fa-heart"></i>
-      <div class="wish-cnt" id="wish-cnt" data-wishlist-badge>0</div>
-    </a>
+    {% if request.path == '/' %}
+    <button class="hd-wish-btn" type="button" title="Search" aria-label="Open search" id="hd-search-btn" onclick="openMobileSearch()">
+      <i class="fa-solid fa-magnifying-glass"></i>
+    </button>
+    {% endif %}
     <button class="hd-icon-btn" id="hd-user-btn" onclick="openAuth()" aria-label="Account" title="Account">
       <i class="fa-regular fa-user"></i>
     </button>
@@ -791,13 +859,13 @@
 
 <!-- BOTTOM NAV -->
 <nav class="bottom-nav">
-  <a class="bn-item on" href="/"><i class="fa-solid fa-house"></i><span class="bl">Home</span></a>
+  <a class="bn-item" data-page="home" href="/"><i class="fa-solid fa-house"></i><span class="bl">Home</span></a>
   {% if request.path == '/' %}
-  <button class="bn-item" onclick="openDrawer()"><i class="fa-solid fa-bars"></i><span class="bl">Categories</span></button>
+  <button class="bn-item" data-page="categories" onclick="openDrawer()"><i class="fa-solid fa-bars"></i><span class="bl">Categories</span></button>
   {% endif %}
-  <button class="bn-item" id="bn-search-btn" onclick="window.location.href='/search'"><i class="fa-solid fa-magnifying-glass"></i><span class="bl">Search</span></button>
-  <a class="bn-item" href="/wishlist" onclick="openWishlist(event)"><i class="fa-regular fa-heart"></i><span class="bl">Wishlist</span></a>
-  <button class="bn-item" onclick="openCartDrawer()"><i class="fa-solid fa-cart-shopping"></i><span class="bl">Cart</span></button>
+  <button class="bn-item" data-page="search" id="bn-search-btn" onclick="window.location.href='/search'"><i class="fa-solid fa-magnifying-glass"></i><span class="bl">Search</span></button>
+  <a class="bn-item" data-page="wishlist" href="/wishlist" onclick="openWishlist(event)"><i class="fa-regular fa-heart"></i><span class="bl">Wishlist</span></a>
+  <a class="bn-item" data-page="account" href="/account-overview"><i class="fa-regular fa-user"></i><span class="bl">Account</span></a>
 </nav>
 
 <!-- AUTH MODAL -->
@@ -821,7 +889,9 @@
         <div class="auth-field"><label>Password</label><div class="auth-pw-wrap"><input type="password" id="li-pass" placeholder="Your password" autocomplete="current-password"><i class="fa-regular fa-eye pw-toggle" onclick="togglePw('li-pass',this)"></i></div></div>
         <div class="auth-forgot" onclick="openForgot()">Forgot password?</div>
         <button id="login-submit" class="auth-submit" onclick="doLogin()">Sign In</button>
-        <!-- Social login UI removed -->
+        <div class="auth-alt-action">
+          <button class="social-auth-btn" type="button" onclick="startGoogleAuth()"><i class="fa-brands fa-google"></i><span class="google-text">Continue with <span class="google-brand">Google</span></span></button>
+        </div>
         <div class="auth-switch">No account? <a onclick="switchAuthTab('register')">Create one</a></div>
       </div>
       <!-- REGISTER -->
@@ -839,6 +909,9 @@
         <div class="auth-field"><label>Password</label><div class="auth-pw-wrap"><input type="password" id="reg-pass" placeholder="Min. 8 characters" autocomplete="new-password"><i class="fa-regular fa-eye pw-toggle" onclick="togglePw('reg-pass',this)"></i></div></div>
         <div class="auth-field"><label>Confirm password</label><div class="auth-pw-wrap"><input type="password" id="reg-confirm-pass" placeholder="Re-enter password" autocomplete="new-password"><i class="fa-regular fa-eye pw-toggle" onclick="togglePw('reg-confirm-pass',this)"></i></div></div>
         <button id="register-submit" class="auth-submit" onclick="doRegister()">Create Account</button>
+        <div class="auth-alt-action">
+          <button class="social-auth-btn" type="button" onclick="startGoogleAuth()"><i class="fa-brands fa-google"></i><span class="google-text">Continue with <span class="google-brand">Google</span></span></button>
+        </div>
         <div class="auth-terms">By signing up you agree to our <a>Terms</a> &amp; <a>Privacy Policy</a>.</div>
         <div class="auth-switch">Have an account? <a onclick="switchAuthTab('login')">Sign in</a></div>
       </div>
@@ -858,9 +931,35 @@
     </div>
   </div>
 
+  <div class="auth-card" id="role-selection-panel" style="display:none;">
+    <div class="auth-top">
+      <div class="auth-logo">Choose Account Type</div>
+      <button class="auth-close" onclick="closeRoleSelectionModal()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="auth-body">
+      <div class="role-choice-group">
+        <p class="role-panel-msg">Select the role you want to use for this account. You can choose customer for shopping or vendor if you want to sell on Ikeja Online.</p>
+        <div class="role-selection-grid">
+          <button type="button" class="role-choice active" data-role="customer" onclick="selectRoleChoice('customer')">
+            <div class="role-icon role-icon-customer"><i class="fa-solid fa-shopping-bag"></i></div>
+            <h4>Customer</h4>
+            <p>Shop products, save items, and checkout faster.</p>
+          </button>
+          <button type="button" class="role-choice" data-role="vendor" onclick="selectRoleChoice('vendor')">
+            <div class="role-icon role-icon-vendor"><i class="fa-solid fa-store"></i></div>
+            <h4>Vendor</h4>
+            <p>Sell products, manage your store, and view orders.</p>
+          </button>
+        </div>
+        <div class="role-panel-note">This choice will set your dashboard and experience after signing in with Google.</div>
+        <button class="auth-submit" id="role-confirm-btn" onclick="confirmGoogleRole()">Continue</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ══════════════════════════════════════════════ -->
   <!--  SUB-MODAL 1: FORGOT PASSWORD (enter email)  -->
-  <!-- ══════════════════════════════════════════════ -->
+  <!-- ══════════════════════════════════════════════════════ -->
   <div class="ikm-card" id="forgot-panel" style="display:none;" role="dialog" aria-modal="true" aria-label="Forgot Password">
     <!-- accent strip -->
     <div class="ikm-strip ikm-strip--blue"></div>
@@ -1739,6 +1838,45 @@ function toggleSearchMode(active){
   }
 }
 
+function closeMobileSearch(){
+  const hdSearch = document.querySelector('.hd-search');
+  const header = document.querySelector('.hd');
+  if(header){
+    header.classList.remove('search-open');
+  }
+  if(!hdSearch) return;
+  hdSearch.classList.remove('mobile-open');
+}
+
+function openMobileSearch(){
+  const hdSearch = document.querySelector('.hd-search');
+  const header = document.querySelector('.hd');
+  const searchInput = hdSearch?.querySelector('input');
+  if(header){
+    header.classList.add('search-open');
+  }
+  if(hdSearch){
+    hdSearch.classList.add('mobile-open');
+  }
+  searchInput?.focus();
+}
+
+function getBottomNavPage(){
+  const path = window.location.pathname;
+  if (path === '/' || path === '') return 'home';
+  if (path.startsWith('/search')) return 'search';
+  if (path.startsWith('/wishlist') || path.startsWith('/customer/dashboard/wishlist')) return 'wishlist';
+  if (path.startsWith('/cart') || path.startsWith('/checkout')) return 'cart';
+  if (path.match(/\/product|\/products?|\/p\//)) return 'product';
+  return 'home';
+}
+
+function setBottomNavActive(page){
+  document.querySelectorAll('.bottom-nav .bn-item[data-page]').forEach(item => {
+    item.classList.toggle('on', item.dataset.page === page);
+  });
+}
+
 /* When Enter key is pressed in search */
 document.addEventListener('DOMContentLoaded', function(){
   const searchInput = document.getElementById('q');
@@ -1750,12 +1888,44 @@ document.addEventListener('DOMContentLoaded', function(){
       }
     });
   }
-  // Make header search icon navigate to homepage and keep bottom search available on all pages
-  const sIcon = document.querySelector('.s-ic');
-  if(sIcon){
-    sIcon.style.cursor = 'pointer';
-    sIcon.addEventListener('click', function(){ window.location.href = '/'; });
+
+  const hdSearch = document.querySelector('.hd-search');
+  const searchClose = document.querySelector('.hd-search-close');
+  if(hdSearch && searchInput){
+    const sIcon = hdSearch.querySelector('.s-ic');
+    const header = document.querySelector('.hd');
+    if(sIcon){
+      sIcon.style.cursor = 'pointer';
+      sIcon.addEventListener('click', function(){
+        if(window.matchMedia('(max-width:720px)').matches){
+          if(header){
+            header.classList.add('search-open');
+          }
+          hdSearch.classList.add('mobile-open');
+          searchInput.focus();
+        } else {
+          searchInput.focus();
+        }
+      });
+    }
+    if(searchClose){
+      searchClose.addEventListener('click', function(){
+        if(header){
+          header.classList.remove('search-open');
+        }
+        closeMobileSearch();
+        searchInput.blur();
+      });
+    }
+  } else {
+    const sIcon = document.querySelector('.s-ic');
+    if(sIcon){
+      sIcon.style.cursor = 'pointer';
+      sIcon.addEventListener('click', function(){ window.location.href = '/'; });
+    }
   }
+
+  setBottomNavActive(getBottomNavPage());
 });
 
 /* ── FILTER / SORT ── */
@@ -1972,11 +2142,14 @@ function closeAuth(){
 }
 function showAuthForm(){document.getElementById('auth-tabs-bar').style.display='flex';['panel-login','panel-register','panel-profile'].forEach(id=>document.getElementById(id).classList.remove('on'));document.getElementById('panel-login').classList.add('on');document.getElementById('tab-login').classList.add('on');document.getElementById('tab-register').classList.remove('on');}
 function showProfile(){document.getElementById('auth-tabs-bar').style.display='none';['panel-login','panel-register'].forEach(id=>document.getElementById(id).classList.remove('on'));document.getElementById('panel-profile').classList.add('on');document.getElementById('prof-name').textContent=currentUser.fname+' '+currentUser.lname;document.getElementById('prof-email').textContent=currentUser.email;}
+function showRoleSelectionModal(){ const role = currentUser?.role || localStorage.getItem('user_role') || 'customer'; selectRoleChoice(role); document.getElementById('auth-overlay').classList.add('open'); document.body.style.overflow='hidden'; document.getElementById('auth-main-card').style.display='none'; document.getElementById('role-selection-panel').style.display='block'; }
+function closeRoleSelectionModal(){ document.getElementById('role-selection-panel').style.display='none'; document.getElementById('auth-main-card').style.display='block'; }
+function selectRoleChoice(role){ selectedGoogleRole = role; const buttons = document.querySelectorAll('.role-choice'); buttons.forEach(btn => btn.classList.toggle('active', btn.dataset.role === role)); }
 function goDashboard(){
   const role = currentUser?.role || localStorage.getItem('user_role') || 'customer';
   let url = '/customer/dashboard/home';
   if (role === 'vendor') {
-    url = '/testingdashboard';
+    url = '/vendor/dashboard';
   } else if (role === 'super_admin') {
     url = '/admin/dashboard';
   }
@@ -2143,7 +2316,48 @@ function doRegister(){
     .finally(() => setButtonLoading(submit, false));
 }
 function socialAuth(p){currentUser={fname:'Guest',lname:'',email:'guest@'+p.toLowerCase()+'.com'};onLoginSuccess();}
+let selectedGoogleRole = 'customer';
+function startGoogleAuth(){ window.location.href = '/auth/google'; }
+function confirmGoogleRole(){
+  const submitButton = document.getElementById('role-confirm-btn');
+  setButtonLoading(submitButton, true, 'Saving...');
+  fetch('/api/user/select-role', {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    },
+    body: JSON.stringify({ role: selectedGoogleRole })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if(!data.success){
+      setMsg('login-msg', data.message || 'Could not set your role.', 'err');
+      return;
+    }
+    localStorage.setItem('user_role', selectedGoogleRole);
+    localStorage.setItem('user_first_name', data.first_name || currentUser?.fname || 'User');
+    localStorage.setItem('user_last_name', data.last_name || currentUser?.lname || '');
+    localStorage.setItem('user_email', data.email || currentUser?.email || '');
+    currentUser = { fname: data.first_name || currentUser?.fname || 'User', lname: data.last_name || currentUser?.lname || '', email: data.email || currentUser?.email || '', role: selectedGoogleRole };
+    updateAuthButton();
+    closeRoleSelectionModal();
+    showToast('Role selected: ' + selectedGoogleRole, 'check');
+    if(selectedGoogleRole === 'vendor') {
+      window.location.href = '/vendor/dashboard';
+    } else {
+      window.location.href = '/customer/dashboard/home';
+    }
+  })
+  .catch(err => {
+    console.error(err);
+    setMsg('login-msg','Could not save role selection. Try again later.','err');
+  })
+  .finally(() => setButtonLoading(submitButton, false));
+}
 function onLoginSuccess(){
+
   updateAuthButton();
   const role = currentUser?.role || localStorage.getItem('user_role') || 'customer';
   
@@ -2175,14 +2389,32 @@ function updateAuthButton(){
 function restoreAuthState(){
   const token = localStorage.getItem('access_token');
   const first = localStorage.getItem('user_first_name');
-  if(token && first){
+  const email = localStorage.getItem('user_email');
+  if((token && first && email) || (first && email)){
     currentUser = {
-      fname: first,
+      fname: first || 'User',
       lname: localStorage.getItem('user_last_name') || '',
-      email: localStorage.getItem('user_email') || '',
+      email: email || '',
       role: localStorage.getItem('user_role') || 'customer'
     };
     updateAuthButton();
+    return true;
+  }
+  return false;
+}
+
+function handleGoogleAuthLanding(){
+  const params = new URLSearchParams(window.location.search);
+  const pending = localStorage.getItem('google_auth_pending') === '1';
+  if(params.get('google_auth') === '1' || pending){
+    params.delete('google_auth');
+    const newUrl = window.location.pathname + (params.toString() ? `?${params.toString()}` : '');
+    window.history.replaceState({}, document.title, newUrl);
+    const restored = restoreAuthState();
+    localStorage.removeItem('google_auth_pending');
+    if(restored || pending){
+      showRoleSelectionModal();
+    }
   }
 }
 
@@ -2218,6 +2450,11 @@ window.switchAuthTab = switchAuthTab;
 window.togglePw = togglePw;
 window.doLogin = doLogin;
 window.doRegister = doRegister;
+window.startGoogleAuth = startGoogleAuth;
+window.confirmGoogleRole = confirmGoogleRole;
+window.showRoleSelectionModal = showRoleSelectionModal;
+window.closeRoleSelectionModal = closeRoleSelectionModal;
+window.selectRoleChoice = selectRoleChoice;
 window.socialAuth = socialAuth;
 window.doLogout = doLogout;
 window.openWishlist = openWishlist;
@@ -2228,6 +2465,7 @@ window.openCartDrawer = openCartDrawer;
 window.closeCartDrawer = closeCartDrawer;
 window.openForgot = openForgot;
 window.openVerify = openVerify;
+window.handleGoogleAuthLanding = handleGoogleAuthLanding;
 
 /* ── CHECKOUT ── */
 let selectedPaymentMethod = 'wallet';
@@ -2366,6 +2604,7 @@ document.addEventListener('DOMContentLoaded', async function() {
   initializeHomeCookieConsent();
   bindHomeCookieButtons();
   restoreAuthState();
+  handleGoogleAuthLanding();
   refreshWishCount();
   await loadCategories();
   

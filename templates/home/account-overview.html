@@ -1,0 +1,179 @@
+﻿{% extends "home/ikeja-online.html" %}
+{% block Content %}
+<style>
+  .account-page { max-width: 1180px; margin: 0 auto; padding: 24px 0 40px; }
+  .account-hero { margin-bottom: 28px; }
+  .hdr-eye { font-size: .75rem; font-weight: 700; letter-spacing: .22em; text-transform: uppercase; color: #64748b; margin-bottom: 10px; }
+  .account-hero h1 { font-size: clamp(2rem, 3.5vw, 3rem); line-height: 1.05; margin-bottom: 12px; color: #111827; }
+  .account-hero p { max-width: 760px; color: #475569; line-height: 1.75; }
+  .account-panel { background: #ffffff; border: 1px solid rgba(37, 99, 235, .12); border-radius: 24px; box-shadow: 0 20px 60px rgba(15, 23, 42, .06); padding: 26px; }
+  .wallet-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; margin-bottom: 18px; }
+  .wallet-label { font-size: .82rem; text-transform: uppercase; letter-spacing: .18em; color: #64748b; font-weight: 700; }
+  .wallet-bal { font-size: clamp(2.15rem, 4vw, 3.5rem); font-weight: 700; color: #0f172a; line-height: 1; }
+  .wallet-note { color: #475569; font-size: .95rem; line-height: 1.7; }
+  .account-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 20px; }
+  .btn { border: none; border-radius: 14px; padding: 12px 18px; font-weight: 700; cursor: pointer; transition: all .18s ease; }
+  .btn-primary { background: #2563eb; color: white; }
+  .btn-secondary { background: transparent; color: #2563eb; border: 1px solid rgba(37, 99, 235, .15); }
+  .btn:hover { opacity: .94; }
+  .stat-grid { display: grid; gap: 14px; margin-bottom: 32px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  @media (min-width: 720px) { .stat-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  .stat-card { background: #f8fbff; border-radius: 20px; padding: 20px; border: 1px solid rgba(37, 99, 235, .12); }
+  .stat-label { font-size: .75rem; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; color: #475569; margin-bottom: 10px; }
+  .stat-value { font-size: 1.7rem; font-weight: 800; color: #111827; line-height: 1; }
+  .stat-hint { margin-top: 8px; color: #2563eb; font-size: .88rem; }
+  .quick-actions { display: grid; gap: 12px; margin-bottom: 36px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  @media (min-width: 760px) { .quick-actions { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+  .quick-card { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 18px; border-radius: 20px; border: 1px solid rgba(148, 163, 184, .18); background: #ffffff; text-decoration: none; color: #0f172a; }
+  .quick-card .quick-icon { width: 42px; height: 42px; border-radius: 14px; display: grid; place-items: center; background: rgba(37, 99, 235, .08); color: #2563eb; font-size: 1.2rem; }
+  .quick-card .quick-label { font-size: .9rem; font-weight: 700; }
+  .orders-card { background: #ffffff; border-radius: 24px; padding: 0; border: 1px solid rgba(37, 99, 235, .12); overflow: hidden; }
+  .order-row { display: grid; grid-template-columns: 42px 1fr auto; gap: 16px; align-items: center; padding: 18px 22px; border-bottom: 1px solid rgba(148, 163, 184, .12); }
+  .order-row:last-child { border-bottom: none; }
+  .order-icon { width: 42px; height: 42px; border-radius: 14px; display: grid; place-items: center; background: rgba(37, 99, 235, .08); color: #2563eb; font-size: 1.1rem; }
+  .order-info { display: grid; gap: 6px; }
+  .order-title { font-size: .95rem; font-weight: 700; color: #111827; }
+  .order-meta { color: #64748b; font-size: .86rem; line-height: 1.6; }
+  .order-right { text-align: right; display: grid; gap: 10px; }
+  .order-amt { font-weight: 700; color: #111827; }
+  .tag { display: inline-flex; align-items: center; padding: 5px 10px; border-radius: 999px; font-size: .74rem; font-weight: 800; }
+  .tag.green { background: #d1fae5; color: #166534; }
+  .tag.blue { background: #dbeafe; color: #1d4ed8; }
+  .tag.yellow { background: #fef3c7; color: #b45309; }
+  .saved-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .saved-header h2 { font-size: 1rem; font-weight: 700; margin: 0; }
+  .saved-scroll { display: flex; gap: 14px; overflow-x: auto; padding-bottom: 6px; }
+  .saved-card { min-width: 120px; background: #ffffff; border: 1px solid rgba(148, 163, 184, .18); border-radius: 22px; padding: 18px 14px; text-align: center; flex-shrink: 0; }
+  .saved-card .saved-icon { font-size: 1.5rem; margin-bottom: 12px; }
+  .saved-name { font-size: .86rem; font-weight: 700; color: #111827; margin-bottom: 8px; }
+  .saved-price { color: #2563eb; font-weight: 700; }
+  .gate { display: grid; place-items: center; gap: 20px; margin-top: 30px; background: rgba(37, 99, 235, .05); border: 1px solid rgba(37, 99, 235, .12); border-radius: 26px; padding: 40px 28px; text-align: center; }
+  .gate h2 { font-size: clamp(1.5rem, 2.5vw, 2rem); margin-bottom: 12px; line-height: 1.1; color: #0f172a; }
+  .gate p { max-width: 520px; margin: 0 auto; color: #475569; line-height: 1.8; }
+  .gate-actions { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
+  .gate-benefits { display: grid; gap: 10px; max-width: 520px; margin: 0 auto; }
+  .gate-benefit { display: inline-flex; align-items: center; gap: 10px; justify-content: center; color: #475569; font-size: .92rem; }
+  .gate-benefit svg { color: #2563eb; min-width: 16px; min-height: 16px; }
+</style>
+
+<main class="page account-page">
+  <section class="account-hero">
+    <div class="hdr-eye">Account Overview</div>
+    <h1>Welcome back, <span id="account-name">Customer</span></h1>
+    <p>See your wallet balance, recent orders, saved items, and quick actions in one place.</p>
+  </section>
+
+  <div id="account-content">
+    <section class="account-panel wallet-card">
+      <div class="wallet-header">
+        <div>
+          <div class="wallet-label">Wallet balance</div>
+          <div class="wallet-bal">₦48,500.00</div>
+        </div>
+      </div>
+      <div class="wallet-note">Cashback earned this month: <strong>+₦1,200</strong></div>
+      <div class="account-actions">
+        <button class="btn btn-primary">Fund Wallet</button>
+        <button class="btn btn-secondary">Withdraw</button>
+      </div>
+    </section>
+
+    <section class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-label">Orders</div>
+        <div class="stat-value">27</div>
+        <div class="stat-hint">4 this month</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total Spent</div>
+        <div class="stat-value">₦312k</div>
+        <div class="stat-hint">Lifetime</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Pending</div>
+        <div class="stat-value">3</div>
+        <div class="stat-hint">In transit</div>
+      </div>
+    </section>
+
+    <section class="quick-actions">
+      <a class="quick-card" href="#"><div class="quick-icon">📦</div><div class="quick-label">My Orders</div></a>
+      <a class="quick-card" href="#"><div class="quick-icon">📍</div><div class="quick-label">Addresses</div></a>
+      <a class="quick-card" href="#"><div class="quick-icon">💳</div><div class="quick-label">Payments</div></a>
+      <a class="quick-card" href="#"><div class="quick-icon">⚙️</div><div class="quick-label">Settings</div></a>
+    </section>
+
+    <section class="orders-card">
+      <div class="order-row">
+        <div class="order-icon">💻</div>
+        <div class="order-info"><div class="order-title">Lenovo IdeaPad 3 Laptop</div><div class="order-meta">#IKJ-00891 · Jun 18, 2026</div></div>
+        <div class="order-right"><div class="order-amt">₦285,000</div><span class="tag green">Delivered</span></div>
+      </div>
+      <div class="order-row">
+        <div class="order-icon">🎧</div>
+        <div class="order-info"><div class="order-title">Sony WH-1000XM5 Headphones</div><div class="order-meta">#IKJ-00882 · Jun 15, 2026</div></div>
+        <div class="order-right"><div class="order-amt">₦74,500</div><span class="tag blue">Shipped</span></div>
+      </div>
+      <div class="order-row">
+        <div class="order-icon">📱</div>
+        <div class="order-info"><div class="order-title">Tecno Spark 20 Pro</div><div class="order-meta">#IKJ-00874 · Jun 11, 2026</div></div>
+        <div class="order-right"><div class="order-amt">₦96,000</div><span class="tag blue">Shipped</span></div>
+      </div>
+      <div class="order-row">
+        <div class="order-icon">🔌</div>
+        <div class="order-info"><div class="order-title">Oraimo Fast Charger 65W</div><div class="order-meta">#IKJ-00861 · Jun 4, 2026</div></div>
+        <div class="order-right"><div class="order-amt">₦7,200</div><span class="tag yellow">Pending</span></div>
+      </div>
+    </section>
+
+    <section>
+      <div class="saved-header"><h2>Saved for Later</h2></div>
+      <div class="saved-scroll">
+        <div class="saved-card"><div class="saved-icon">🖥️</div><div class="saved-name">LG 27" 4K Monitor</div><div class="saved-price">₦189,000</div></div>
+        <div class="saved-card"><div class="saved-icon">⌨️</div><div class="saved-name">Keychron K2 Mechanical</div><div class="saved-price">₦42,500</div></div>
+        <div class="saved-card"><div class="saved-icon">🖱️</div><div class="saved-name">Logitech MX Master 3</div><div class="saved-price">₦38,000</div></div>
+        <div class="saved-card"><div class="saved-icon">📷</div><div class="saved-name">Canon EOS M50 II</div><div class="saved-price">₦390,000</div></div>
+        <div class="saved-card"><div class="saved-icon">🔋</div><div class="saved-name">Baseus 20K Power Bank</div><div class="saved-price">₦18,500</div></div>
+      </div>
+    </section>
+  </div>
+
+  <div class="gate" id="account-gate" style="display:none;">
+    <div>
+      <h2>Sign in to your account</h2>
+      <p>Access orders, wallet details, saved items, and account settings with your Ikeja Online account.</p>
+    </div>
+    <div class="gate-actions">
+      <button class="btn btn-primary" onclick="openAuth(); switchAuthTab('login')">Log in</button>
+      <button class="btn btn-secondary" onclick="openAuth(); switchAuthTab('register')">Create account</button>
+    </div>
+    <div class="gate-benefits">
+      <div class="gate-benefit"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Track orders</div>
+      <div class="gate-benefit"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Save wishlists</div>
+      <div class="gate-benefit"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Faster checkout</div>
+      <div class="gate-benefit"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Manage preferences</div>
+    </div>
+  </div>
+</main>
+
+<script>
+  function renderAccountOverview() {
+    const name = currentUser?.fname || localStorage.getItem('user_first_name') || 'Customer';
+    const token = localStorage.getItem('access_token');
+    const isLoggedIn = Boolean(token);
+    const content = document.getElementById('account-content');
+    const gate = document.getElementById('account-gate');
+    const accountName = document.getElementById('account-name');
+
+    if (accountName) { accountName.textContent = name; }
+    if (content) { content.style.display = isLoggedIn ? '' : 'none'; }
+    if (gate) { gate.style.display = isLoggedIn ? 'none' : 'grid'; }
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    renderAccountOverview();
+    setTimeout(renderAccountOverview, 100);
+  });
+  window.renderAccountOverview = renderAccountOverview;
+</script>
+{% endblock Content %}
