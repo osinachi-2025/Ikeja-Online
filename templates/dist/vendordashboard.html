@@ -584,6 +584,34 @@
       text-align:center; line-height:1.2;
     }
     .quick-action:hover .quick-action-label { color:var(--ik-green); }
+    .quick-actions-grid {
+      margin: -0.5rem;
+    }
+    .quick-actions-grid .col-6 {
+      padding: 0.5rem;
+    }
+    .quick-actions-grid .quick-action {
+      min-height:110px;
+      justify-content:center;
+    }
+    .recent-transactions-card {
+      max-width: 100%;
+    }
+    .recent-transactions-card .table-card-body {
+      padding: .85rem;
+    }
+    .recent-transactions-card .table-responsive {
+      overflow-x: auto;
+    }
+    .recent-transactions-card .table {
+      width: 100%;
+      min-width: 0;
+      table-layout: auto;
+    }
+    .recent-transactions-card .table th,
+    .recent-transactions-card .table td {
+      white-space: normal;
+    }
 
     /* legacy dashboard cards & controls */
     .card {
@@ -756,6 +784,27 @@
     }
     .table-card:hover { box-shadow: var(--shadow-md); }
     .table-card-body { padding: 0; }
+    .recent-transactions-card {
+      padding: 0 !important;
+      margin: 0 !important;
+      max-width: 100%;
+    }
+    .recent-transactions-card .table-card-body {
+      padding: 0 !important;
+    }
+    .recent-transactions-card .table-responsive {
+      min-height: 0 !important;
+      max-height: none !important;
+    }
+    .recent-transactions-card .table {
+      margin-bottom: 0;
+      width: 100%;
+      min-width: 0;
+    }
+    .recent-transactions-card .table th,
+    .recent-transactions-card .table td {
+      padding: .45rem .35rem;
+    }
     .ik-table {
       width: 100%;
       min-width: 0;
@@ -912,9 +961,183 @@
       .ik-content .quick-action {
         width: 100%;
       }
+      .ik-content .quick-actions-grid > .col-6,
+      .ik-content .quick-actions-grid > .col-sm-6,
+      .ik-content .quick-actions-grid > .col-md-4,
+      .ik-content .quick-actions-grid > .col-sm-4 {
+        flex: 0 0 50% !important;
+        max-width: 50% !important;
+      }
+      .ik-content .quick-actions-grid .quick-action {
+        width: 100%;
+      }
+      .recent-transactions-card {
+        width: 100%;
+        max-width: 100%;
+      }
+      .recent-transactions-card .table-card,
+      .recent-transactions-card .table-card-body,
+      .recent-transactions-card .table-responsive {
+        min-height: 0 !important;
+        max-height: none !important;
+      }
+      .recent-transactions-card .table-responsive {
+        overflow-x: auto;
+      }
+      .recent-transactions-card .table {
+        width: 100%;
+        min-width: 0;
+        table-layout: auto;
+        margin-bottom: 0;
+      }
+      .recent-transactions-card .table th,
+      .recent-transactions-card .table td {
+        white-space: normal;
+      }
       .ik-content .table-card,
       .ik-content .table-responsive {
-        min-height: 280px;
+        min-height: auto !important;
+      }
+      .recent-transactions-card,
+      .recent-transactions-card .table-card,
+      .recent-transactions-card .table-card-body,
+      .recent-transactions-card .table-responsive {
+        min-height: 0 !important;
+      }
+      .recent-transactions-card .table-card-body {
+        padding: 0 !important;
+      }
+      .stat-card,
+      .ik-card,
+      .card,
+      .small-box {
+        padding: 1rem;
+      }
+      .stat-icon {
+        width: 38px;
+        height: 38px;
+        font-size: 1rem;
+        margin-bottom: .75rem;
+      }
+      .stat-label { font-size: .65rem; }
+      .stat-value { font-size: 1.4rem; }
+      .stat-change { font-size: .72rem; }
+      .ik-card-body { padding: 1rem; }
+      .welcome-banner { padding: 1.3rem 1rem; }
+      .welcome-title { font-size: 1.1rem; }
+      .welcome-sub { font-size: .82rem; }
+      .ik-card-title,
+      .card-title { font-size: .82rem; }
+      .card-head { padding: .85rem 1rem .5rem; }
+      .card-body { padding: .95rem; }
+      .table-card-body { padding: .85rem; }
+      .table th,
+      .table td,
+      .ik-table th,
+      .ik-table td {
+        padding: .65rem .5rem;
+        font-size: .74rem;
+      }
+      .table thead th { font-size: .72rem; }
+      .table-card,
+      .table-responsive { overflow-x: auto; }
+      .ik-navbar { padding: .5rem .75rem; }
+      .ik-search { width: 180px; font-size: .78rem; }
+      .ik-user-name { font-size: .75rem; }
+      .quick-actions-grid .col-6,
+      .quick-actions-grid .col-sm-4 {
+        flex: 0 0 50% !important;
+        max-width: 50% !important;
+      }
+      .quick-actions-grid .quick-action {
+        min-height: 100px;
+      }
+      .quick-actions-grid .quick-action .quick-action-icon {
+        width: 34px;
+        height: 34px;
+      }
+      .recent-transactions-card {
+        width: 100%;
+        max-width: 100%;
+      }
+      .recent-transactions-card .table-card-body {
+        padding: .75rem;
+      }
+      .recent-transactions-card .table-responsive {
+        overflow-x: auto;
+      }
+      .recent-transactions-card .table {
+        width: 100%;
+        min-width: 0;
+        table-layout: auto;
+      }
+      .recent-transactions-card {
+        width: 100%;
+        max-width: 100%;
+        padding: 0;
+      }
+      .recent-transactions-card .table-card-body {
+        padding: 0;
+      }
+      .recent-transactions-card .table {
+        margin-bottom: 0;
+      }
+      .recent-transactions-card .table th,
+      .recent-transactions-card .table td {
+        padding: .45rem .35rem;
+        font-size: .72rem;
+        white-space: normal;
+      }
+      .recent-transactions-card .table thead th:nth-child(4),
+      .recent-transactions-card .table tbody td:nth-child(4) {
+        display: none;
+      }
+      .recent-transactions-card .table thead th:nth-child(5),
+      .recent-transactions-card .table tbody td:nth-child(5) {
+        min-width: 70px;
+      }
+      .recent-transactions-card .table-responsive {
+        overflow-x: auto;
+      }
+    }
+
+    @media (max-width:540px) {
+      .ik-navbar { padding: .45rem .65rem; }
+      .ik-search { width: 140px; font-size: .75rem; }
+      .ik-brand-mobile { font-size: .9rem; }
+      .welcome-banner { padding: 1rem .85rem; }
+      .welcome-title { font-size: 1rem; }
+      .ik-card-body { padding: .85rem; }
+      .card-head { padding: .75rem .95rem .5rem; }
+      .card-footer { padding: .75rem .95rem; }
+      .table th,
+      .table td,
+      .ik-table th,
+      .ik-table td {
+        padding: .5rem .4rem;
+        font-size: .72rem;
+      }
+      .ik-table { min-width: auto; }
+      .table-card,
+      .table-responsive { min-height: auto; }
+      .stat-icon { width: 34px; height: 34px; font-size: .95rem; }
+      .stat-value { font-size: 1.25rem; }
+      .stat-label { font-size: .64rem; }
+
+      .recent-transactions-card .table th,
+      .recent-transactions-card .table td {
+        padding: .45rem .35rem;
+      }
+      .recent-transactions-card .table thead th:nth-child(4),
+      .recent-transactions-card .table tbody td:nth-child(4) {
+        display: none;
+      }
+      .recent-transactions-card .table thead th:nth-child(5),
+      .recent-transactions-card .table tbody td:nth-child(5) {
+        min-width: 75px;
+      }
+      .quick-actions-grid .quick-action {
+        padding: .75rem .6rem;
       }
     }
 
@@ -1258,38 +1481,38 @@
             <div class="ik-card">
               <div class="ik-card-hdr"><span class="ik-card-title">Quick Actions</span></div>
               <div class="ik-card-body">
-                <div class="row g-2">
-                  <div class="col-4 col-sm-2">
+                <div class="row g-2 quick-actions-grid">
+                  <div class="col-6 col-sm-4 col-md-2">
                     <a href="/vendor/orders" class="quick-action">
                       <div class="quick-action-icon" style="background:var(--ik-green-light);color:var(--ik-green);"><i class="bi bi-clipboard-check"></i></div>
                       <span class="quick-action-label">All Orders</span>
                     </a>
                   </div>
-                  <div class="col-4 col-sm-2">
+                  <div class="col-6 col-sm-4 col-md-2">
                     <a href="/vendor/products" class="quick-action">
                       <div class="quick-action-icon" style="background:var(--ik-orange-light);color:var(--ik-orange);"><i class="bi bi-box-seam"></i></div>
                       <span class="quick-action-label">Products</span>
                     </a>
                   </div>
-                  <div class="col-4 col-sm-2">
+                  <div class="col-6 col-sm-4 col-md-2">
                     <a href="/vendor/earnings-summary" class="quick-action">
                       <div class="quick-action-icon" style="background:#FFFBEB;color:var(--ik-gold);"><i class="bi bi-wallet2"></i></div>
                       <span class="quick-action-label">Earnings</span>
                     </a>
                   </div>
-                  <div class="col-4 col-sm-2">
+                  <div class="col-6 col-sm-4 col-md-2">
                     <a href="/vendor/transactions" class="quick-action">
                       <div class="quick-action-icon" style="background:#EFF6FF;color:#3B82F6;"><i class="bi bi-receipt"></i></div>
                       <span class="quick-action-label">Transactions</span>
                     </a>
                   </div>
-                  <div class="col-4 col-sm-2">
+                  <div class="col-6 col-sm-4 col-md-2">
                     <a href="/vendor/shipping-status" class="quick-action">
                       <div class="quick-action-icon" style="background:#FEF9C3;color:#D97706;"><i class="bi bi-truck-front"></i></div>
                       <span class="quick-action-label">Shipping</span>
                     </a>
                   </div>
-                  <div class="col-4 col-sm-2">
+                  <div class="col-6 col-sm-4 col-md-2">
                     <a href="/vendor/store-profile" class="quick-action">
                       <div class="quick-action-icon" style="background:#F5F3FF;color:#7C3AED;"><i class="bi bi-shop"></i></div>
                       <span class="quick-action-label">Store</span>

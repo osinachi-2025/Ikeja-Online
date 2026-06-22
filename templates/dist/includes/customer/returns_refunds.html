@@ -214,6 +214,16 @@
     }
   }
 
+  function normalizeStatus(status) {
+    if (!status) return 'pending';
+    return status.toString().toLowerCase();
+  }
+
+  function formatStatusText(status) {
+    if (!status) return 'Pending';
+    return status.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  }
+
   async function loadRefundStatus() {
     const refundStatusBody = document.getElementById('refundStatusBody');
     const refundStatusAlert = document.getElementById('refundStatusAlert');
@@ -223,9 +233,36 @@
 
     try {
       const token = localStorage.getItem('access_token');
-      // This would fetch return/refund records, but endpoint needs to be created
-      refundStatusBody.innerHTML = '<tr><td colspan="5" class="text-center py-5 text-muted">No active refunds at the moment.</td></tr>';
+      const response = await fetch('/api/orders', {
+        headers: {
+          'Authorization': 'Bearer ' + token
+        }
+      });
+      if (!response.ok) {
+        throw new Error('Unable to load orders.');
+      }
+
+      const data = await response.json();
+      const orders = (data.orders || []).filter(order => order.cancellation_request_status && order.cancellation_request_status !== 'approved');
+
+      if (!orders.length) {
+        refundStatusBody.innerHTML = '<tr><td colspan="5" class="text-center py-5 text-muted">No active return or refund requests at the moment.</td></tr>';
+        return;
+      }
+
+      refundStatusBody.innerHTML = orders.map(order => {
+        return `
+          <tr>
+            <td>Order #${order.id}</td>
+            <td>${new Date(order.cancellation_requested_at).toLocaleDateString() || 'N/A'}</td>
+            <td><span class="badge bg-info">${formatStatusText(order.cancellation_request_status)}</span></td>
+            <td>₦${Number(order.total_amount).toLocaleString()}</td>
+            <td>${order.cancellation_approved_at ? new Date(order.cancellation_approved_at).toLocaleDateString() : 'Pending'}</td>
+          </tr>
+        `;
+      }).join('');
     } catch (error) {
+      refundStatusBody.innerHTML = '<tr><td colspan="5" class="text-center py-5 text-danger">Could not load refund status.</td></tr>';
       refundStatusAlert.textContent = error.message;
       refundStatusAlert.classList.remove('d-none');
     }
@@ -240,9 +277,36 @@
 
     try {
       const token = localStorage.getItem('access_token');
-      // This would fetch completed refund records, but endpoint needs to be created
-      historyBody.innerHTML = '<tr><td colspan="4" class="text-center py-5 text-muted">No refund history available.</td></tr>';
+      const response = await fetch('/api/orders', {
+        headers: {
+          'Authorization': 'Bearer ' + token
+        }
+      });
+      if (!response.ok) {
+        throw new Error('Unable to load orders.');
+      }
+
+      const data = await response.json();
+      const orders = (data.orders || []).filter(order => order.status === 'cancelled' || order.payment_status === 'refunded');
+
+      if (!orders.length) {
+        historyBody.innerHTML = '<tr><td colspan="4" class="text-center py-5 text-muted">No refund history available.</td></tr>';
+        return;
+      }
+
+      historyBody.innerHTML = orders.map(order => {
+        const method = order.payment_status === 'refunded' ? 'Wallet/Paystack' : 'N/A';
+        return `
+          <tr>
+            <td>Order #${order.id}</td>
+            <td>${new Date(order.cancellation_approved_at || order.created_at).toLocaleDateString()}</td>
+            <td>₦${Number(order.total_amount).toLocaleString()}</td>
+            <td>${method}</td>
+          </tr>
+        `;
+      }).join('');
     } catch (error) {
+      historyBody.innerHTML = '<tr><td colspan="4" class="text-center py-5 text-danger">Could not load refund history.</td></tr>';
       historyAlert.textContent = error.message;
       historyAlert.classList.remove('d-none');
     }

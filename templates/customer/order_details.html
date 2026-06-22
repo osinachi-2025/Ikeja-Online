@@ -128,25 +128,41 @@ function createBadge(text, badgeClass) {
   return `<span class="badge ${badgeClass}">${text}</span>`;
 }
 
+function normalizeStatus(status) {
+  if (!status) return 'pending';
+  const normalized = status.toString().toLowerCase();
+  if (normalized === 'paid') return 'completed';
+  if (normalized === 'shipped') return 'en_route';
+  return normalized;
+}
+
+function formatStatusText(status) {
+  if (!status) return 'Pending';
+  return status.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+
 function getStatusClasses(status, type) {
-  const normalized = status?.toLowerCase() || 'pending';
+  const normalized = normalizeStatus(status);
   const classes = {
     order: {
       completed: 'bg-success',
       pending: 'bg-warning',
       processing: 'bg-info',
-      cancelled: 'bg-danger'
+      cancelled: 'bg-danger',
+      return_requested: 'bg-primary'
     },
     payment: {
       completed: 'bg-success',
       pending: 'bg-warning',
-      failed: 'bg-danger'
+      failed: 'bg-danger',
+      refunded: 'bg-info'
     },
     shipping: {
       delivered: 'bg-success',
       shipped: 'bg-info',
       en_route: 'bg-primary',
-      pending: 'bg-warning'
+      pending: 'bg-warning',
+      cancelled: 'bg-danger'
     }
   };
   return classes[type][normalized] || 'bg-secondary';
@@ -196,18 +212,22 @@ function renderItems(items) {
 function updateOrderDetails(data) {
   document.getElementById('orderReference').textContent = data.reference_number || 'N/A';
   document.getElementById('orderDate').textContent = formatDate(data.created_at);
-  document.getElementById('orderStatusText').textContent = data.status?.toUpperCase() || 'PENDING';
-  document.getElementById('paymentStatusText').textContent = data.payment_status?.toUpperCase() || 'PENDING';
-  document.getElementById('shippingStatusText').textContent = data.shipping_status?.replace('_', ' ').toUpperCase() || 'PENDING';
+  const normalizedOrderStatus = normalizeStatus(data.status);
+  const normalizedPaymentStatus = normalizeStatus(data.payment_status);
+  const normalizedShippingStatus = normalizeStatus(data.shipping_status);
+
+  document.getElementById('orderStatusText').textContent = formatStatusText(normalizedOrderStatus);
+  document.getElementById('paymentStatusText').textContent = formatStatusText(normalizedPaymentStatus);
+  document.getElementById('shippingStatusText').textContent = formatStatusText(normalizedShippingStatus);
   document.getElementById('customerName').textContent = data.customer_name || 'N/A';
   document.getElementById('customerEmail').textContent = data.customer_email || 'N/A';
   document.getElementById('customerPhone').textContent = data.customer_phone || 'N/A';
   document.getElementById('orderTotal').textContent = formatCurrency(data.total_amount);
 
-  document.getElementById('orderStatusBadge').innerHTML = createBadge(data.status?.toUpperCase() || 'PENDING', getStatusClasses(data.status, 'order'));
-  document.getElementById('paymentStatusBadge').innerHTML = createBadge(data.payment_status?.toUpperCase() || 'PENDING', getStatusClasses(data.payment_status, 'payment'));
-  document.getElementById('shippingStatusText').className = `badge ${getStatusClasses(data.shipping_status, 'shipping')}`;
-  document.getElementById('shippingStatusText').textContent = data.shipping_status?.replace('_', ' ')?.toUpperCase() || 'PENDING';
+  document.getElementById('orderStatusBadge').innerHTML = createBadge(formatStatusText(normalizedOrderStatus), getStatusClasses(normalizedOrderStatus, 'order'));
+  document.getElementById('paymentStatusBadge').innerHTML = createBadge(formatStatusText(normalizedPaymentStatus), getStatusClasses(normalizedPaymentStatus, 'payment'));
+  document.getElementById('shippingStatusText').className = `badge ${getStatusClasses(normalizedShippingStatus, 'shipping')}`;
+  document.getElementById('shippingStatusText').textContent = formatStatusText(normalizedShippingStatus);
 
   renderItems(data.items);
 

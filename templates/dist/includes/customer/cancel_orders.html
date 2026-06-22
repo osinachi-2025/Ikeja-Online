@@ -90,14 +90,21 @@
 
       cancelBody.innerHTML = orders.map(order => {
         const orderDate = new Date(order.created_at).toLocaleDateString();
-        const statusClass = order.status?.toLowerCase() === 'pending' ? 'bg-warning' : 'bg-info';
+        const normalizedStatus = normalizeStatus(order.status);
+      const statusClass = {
+        'pending': 'bg-warning',
+        'processing': 'bg-info',
+        'completed': 'bg-success',
+        'cancelled': 'bg-danger',
+        'return_requested': 'bg-primary'
+      }[normalizedStatus] || 'bg-secondary';
 
         return `
           <tr>
             <td><strong>#${order.id}</strong></td>
             <td>${orderDate}</td>
             <td><strong>₦${Number(order.total_amount).toLocaleString()}</strong></td>
-            <td><span class="badge ${statusClass}">${order.status || 'Pending'}</span></td>
+            <td><span class="badge ${statusClass}">${formatStatusText(normalizedStatus)}</span></td>
             <td><span class="badge bg-light">${order.items_count || 'N/A'}</span></td>
             <td>
               <button class="btn btn-sm btn-danger" onclick="requestCancelOrder(${order.id})">
@@ -113,6 +120,19 @@
       cancelAlert.classList.remove('d-none');
       console.error(error);
     }
+  }
+
+  function normalizeStatus(status) {
+    if (!status) return 'pending';
+    const normalized = status.toString().toLowerCase();
+    if (normalized === 'paid') return 'completed';
+    if (normalized === 'shipped') return 'en_route';
+    return normalized;
+  }
+
+  function formatStatusText(status) {
+    if (!status) return 'Pending';
+    return status.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
   }
 
   async function requestCancelOrder(orderId) {

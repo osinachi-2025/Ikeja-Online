@@ -469,6 +469,20 @@
             localStorage.removeItem('user_id');
             window.location.href = '{{ url_for("login") }}';
         }
+
+        function normalizeStatus(status) {
+            if (!status) return 'pending';
+            const normalized = status.toString().toLowerCase();
+            if (normalized === 'paid') return 'completed';
+            if (normalized === 'shipped') return 'en_route';
+            return normalized;
+        }
+
+        function formatStatusText(status) {
+            if (!status) return 'Pending';
+            return status.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+        }
+
                 window.addEventListener('DOMContentLoaded', loadCustomerStats);
                 
                 // Load orders dynamically
@@ -498,21 +512,18 @@
                         
                         if (data.success && data.orders && data.orders.length > 0) {
                             tbody.innerHTML = data.orders.slice(0, 8).map(order => {
-                                const statusBadge = {
-                                    'shipped': 'success',
-                                    'Shipped': 'success',
-                                    'pending': 'warning',
-                                    'Pending': 'warning',
-                                    'processing': 'info',
-                                    'Processing': 'info',
-                                    'delivered': 'danger',
-                                    'Delivered': 'danger',
-                                    'cancelled': 'secondary',
-                                    'Cancelled': 'secondary'
-                                }[order.status] || 'secondary';
-                                
-                                // Get first product name from items
-                                const productName = order.items && order.items.length > 0 ? order.items[0].product_name : 'Product';
+                                const normalizedStatus = normalizeStatus(order.status);
+                            const statusBadge = {
+                                'pending': 'warning',
+                                'processing': 'info',
+                                'en_route': 'primary',
+                                'delivered': 'success',
+                                'cancelled': 'secondary',
+                                'return_requested': 'info'
+                            }[normalizedStatus] || 'secondary';
+                            
+                            // Get first product name from items
+                            const productName = order.items && order.items.length > 0 ? order.items[0].product_name : 'Product';
                                 
                                 // Format order total as currency
                                 const total = order.total || order.grand_total || 0;
@@ -524,7 +535,7 @@
                                     <tr>
                                         <td><a href="/my-orders/${order.id}" class="link-primary link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover">OR${order.id}</a></td>
                                         <td>${productName}</td>
-                                        <td><span class="badge text-bg-${statusBadge}">${order.status || 'Unknown'}</span></td>
+                                        <td><span class="badge text-bg-${statusBadge}">${formatStatusText(normalizedStatus)}</span></td>
                                         <td class="fw-bold text-dark" style="filter: none; text-shadow: none; opacity: 1; font-weight: 700 !important;">${formattedTotal}</td>
                                     </tr>
                                 `;

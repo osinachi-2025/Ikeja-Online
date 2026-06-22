@@ -1,54 +1,156 @@
 {% extends "admin/base.html" %}
 
-{% block title %}Dashboard - Admin{% endblock %}
+{% block title %}Dashboard - Ikeja Admin{% endblock %}
 {% block page_title %}Dashboard{% endblock %}
 
 {% block extra_styles %}
-<style>
-    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 1.5rem; margin-bottom: 2rem; }
-    .stat-card { background: var(--surface); border-radius: var(--radius); padding: 1.5rem;
-        box-shadow: var(--shadow); border-left: 4px solid var(--c1); }
-    .stat-card:nth-child(2) { border-left-color: var(--c2); }
-    .stat-card:nth-child(3) { border-left-color: var(--c3); }
-    .stat-card:nth-child(4) { border-left-color: var(--c4); }
-    .stat-label { color: var(--text2); font-size: .85rem; font-weight: 600;
-        text-transform: uppercase; letter-spacing: .5px; margin-bottom: .5rem; }
-    .stat-value { font-size: 2rem; font-weight: 800; color: var(--text); }
-    .stat-change { font-size: .75rem; color: var(--text2); margin-top: .5rem; }
-</style>
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 1.2rem;
+        margin-bottom: 2rem;
+    }
+    .stat-card {
+        border-radius: var(--radius); padding: 1.4rem;
+        color: white; position: relative; overflow: hidden;
+        cursor: default; transition: transform .2s, box-shadow .2s;
+    }
+    .stat-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
+    .stat-card::before {
+        content: ''; position: absolute; top: -30px; right: -30px;
+        width: 100px; height: 100px; border-radius: 50%;
+        background: rgba(255,255,255,.12);
+    }
+    .stat-card::after {
+        content: ''; position: absolute; bottom: -20px; right: 20px;
+        width: 60px; height: 60px; border-radius: 50%;
+        background: rgba(255,255,255,.08);
+    }
+    .stat-card.c1 { background: linear-gradient(135deg,#6C63FF,#9d97ff); box-shadow: 0 8px 24px rgba(108,99,255,.35); }
+    .stat-card.c2 { background: linear-gradient(135deg,#FF5E78,#ff8da0); box-shadow: 0 8px 24px rgba(255,94,120,.35); }
+    .stat-card.c3 { background: linear-gradient(135deg,#00C9A7,#00e8c1); box-shadow: 0 8px 24px rgba(0,201,167,.35); }
+    .stat-card.c4 { background: linear-gradient(135deg,#FFB800,#ffcd55); box-shadow: 0 8px 24px rgba(255,184,0,.35); }
+    .stat-card.c5 { background: linear-gradient(135deg,#3B9EFF,#76c0ff); box-shadow: 0 8px 24px rgba(59,158,255,.35); }
+    .stat-card.c6 { background: linear-gradient(135deg,#FF7B54,#ffaa8a); box-shadow: 0 8px 24px rgba(255,123,84,.35); }
+    .stat-icon { font-size: 1.6rem; opacity: .9; margin-bottom: .6rem; }
+    .stat-label {
+        font-size: .72rem; font-weight: 600; text-transform: uppercase;
+        letter-spacing: 1px; opacity: .8;
+    }
+    .stat-value {
+        font-size: 2.2rem; font-weight: 800; line-height: 1;
+        margin-top: .2rem; font-family: 'DM Mono', monospace;
+    }
+    .stat-sub { font-size: .72rem; opacity: .7; margin-top: .4rem; }
+
+    .recent-card {
+        background: var(--surface); border-radius: var(--radius);
+        border: 1px solid var(--border); box-shadow: var(--shadow-sm); overflow: hidden;
+    }
+    .recent-card .card-header { padding: 1.2rem 1.5rem; border-bottom: 1px solid var(--border); }
+    .empty-hint {
+        text-align: center; padding: 3rem 2rem; color: var(--text2);
+    }
+    .empty-hint i { font-size: 2.5rem; display: block; margin-bottom: .8rem; opacity: .4; }
+    .empty-hint p { font-size: .9rem; margin-bottom: .5rem; }
+    .empty-hint span { font-size: .8rem; color: var(--text3); }
+
+    @media (max-width: 992px) {
+        .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .9rem; }
+        .stat-card { padding: 1.2rem; }
+        .stat-value { font-size: 1.8rem; }
+    }
+    @media (max-width: 768px) {
+        .stats-grid {
+            display: grid !important;
+            width: 100% !important;
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            grid-auto-columns: minmax(0, 1fr) !important;
+            grid-auto-rows: auto !important;
+            gap: .8rem !important;
+        }
+        .stats-grid > .stat-card {
+            min-width: 0 !important;
+            max-width: none !important;
+            width: 100% !important;
+        }
+        .stat-card { padding: 1rem; }
+        .stat-icon { font-size: 1.4rem; }
+        .stat-value { font-size: 1.6rem; }
+        .stat-label, .stat-sub { font-size: .68rem; }
+    }
+    @media (max-width: 480px) {
+        .stats-grid {
+            display: grid !important;
+            width: 100% !important;
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            grid-auto-columns: minmax(0, 1fr) !important;
+            grid-auto-rows: auto !important;
+            gap: .65rem !important;
+        }
+        .stats-grid > .stat-card {
+            min-width: 0 !important;
+            max-width: none !important;
+            width: 100% !important;
+        }
+        .stat-card { padding: .9rem; }
+        .stat-icon { font-size: 1.3rem; }
+        .stat-value { font-size: 1.4rem; }
+        .stat-label, .stat-sub { font-size: .64rem; }
+    }
 {% endblock %}
 
 {% block content %}
 <div class="stats-grid">
-    <div class="stat-card">
+    <div class="stat-card c1">
+        <div class="stat-icon"><i class="fas fa-users"></i></div>
         <div class="stat-label">Total Users</div>
         <div class="stat-value" id="stat-users">–</div>
+        <div class="stat-sub">Registered accounts</div>
     </div>
-    <div class="stat-card">
+    <div class="stat-card c2">
+        <div class="stat-icon"><i class="fas fa-store"></i></div>
         <div class="stat-label">Total Vendors</div>
         <div class="stat-value" id="stat-vendors">–</div>
+        <div class="stat-sub">Active storefronts</div>
     </div>
-    <div class="stat-card">
-        <div class="stat-label">Total Orders</div>
+    <div class="stat-card c3">
+        <div class="stat-icon"><i class="fas fa-user-check"></i></div>
+        <div class="stat-label">Customers</div>
+        <div class="stat-value" id="stat-customers">–</div>
+        <div class="stat-sub">Verified buyers</div>
+    </div>
+    <div class="stat-card c4">
+        <div class="stat-icon"><i class="fas fa-box"></i></div>
+        <div class="stat-label">Products</div>
+        <div class="stat-value" id="stat-products">–</div>
+        <div class="stat-sub">Listed items</div>
+    </div>
+    <div class="stat-card c5">
+        <div class="stat-icon"><i class="fas fa-layer-group"></i></div>
+        <div class="stat-label">Categories</div>
+        <div class="stat-value" id="stat-categories">–</div>
+        <div class="stat-sub">Product groups</div>
+    </div>
+    <div class="stat-card c6">
+        <div class="stat-icon"><i class="fas fa-receipt"></i></div>
+        <div class="stat-label">Orders</div>
         <div class="stat-value" id="stat-orders">–</div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-label">Total Revenue</div>
-        <div class="stat-value" id="stat-revenue">–</div>
+        <div class="stat-sub">Total transactions</div>
     </div>
 </div>
 
-<div class="content-card">
+<div class="recent-card">
     <div class="card-header">
         <div class="card-title">
             <span class="card-title-dot" style="background:var(--c1)"></span>
             Recent Activity
         </div>
     </div>
-    <div style="text-align: center; padding: 2rem; color: var(--text2);">
-        <p style="font-size: .95rem">Dashboard overview loaded successfully.</p>
-        <p style="font-size: .85rem; margin-top: 1rem">Use the sidebar navigation to manage orders, customers, vendors, products, and categories.</p>
+    <div class="empty-hint">
+        <i class="fas fa-chart-line"></i>
+        <p>Dashboard loaded successfully.</p>
+        <span>Use the sidebar to manage orders, customers, vendors, products and categories.</span>
     </div>
 </div>
 {% endblock %}
@@ -61,14 +163,18 @@
             const d = await r.json();
             if (d.success) {
                 const s = d.stats;
-                document.getElementById('stat-users').textContent = s.total_users || 0;
-                document.getElementById('stat-vendors').textContent = s.total_vendors || 0;
-                document.getElementById('stat-orders').textContent = s.total_orders || 0;
-                document.getElementById('stat-revenue').textContent = '₦' + parseFloat(s.total_revenue || 0).toLocaleString();
+                const map = {
+                    users: s.total_users, vendors: s.total_vendors,
+                    customers: s.total_customers, products: s.total_products,
+                    categories: s.total_categories, orders: s.total_orders
+                };
+                Object.entries(map).forEach(([k,v]) => {
+                    const el = document.getElementById('stat-' + k);
+                    if (el) el.textContent = v ?? 0;
+                });
             }
         } catch(e) { console.error(e); }
     }
-
     loadStats();
 </script>
 {% endblock %}

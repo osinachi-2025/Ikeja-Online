@@ -140,11 +140,13 @@
         day: 'numeric'
       });
 
+      const normalizedPaymentStatus = normalizeStatus(order.payment_status);
       const paymentBadgeClass = {
         'pending': 'bg-warning',
         'completed': 'bg-success',
-        'failed': 'bg-danger'
-      }[order.payment_status] || 'bg-secondary';
+        'failed': 'bg-danger',
+        'refunded': 'bg-info'
+      }[normalizedPaymentStatus] || 'bg-secondary';
 
       return `
         <tr>
@@ -152,7 +154,7 @@
           <td>${orderDate}</td>
           <td><strong>₦${Number(order.total_amount).toLocaleString()}</strong></td>
           <td class="text-center"><span class="badge bg-light">${order.items_count ?? order.items?.length ?? 'N/A'}</span></td>
-          <td><span class="badge ${paymentBadgeClass}">${order.payment_status || 'Pending'}</span></td>
+          <td><span class="badge ${paymentBadgeClass}">${formatStatusText(normalizedPaymentStatus)}</span></td>
           <td>
             <a href="/customer/my-orders/${order.id}" class="btn btn-sm btn-outline-primary">View</a>
           </td>
@@ -176,6 +178,19 @@
     if (nextButton) {
       nextButton.parentElement.classList.toggle('disabled', currentPage === totalPages);
     }
+  }
+
+  function normalizeStatus(status) {
+    if (!status) return 'pending';
+    const normalized = status.toString().toLowerCase();
+    if (normalized === 'paid') return 'completed';
+    if (normalized === 'shipped') return 'en_route';
+    return normalized;
+  }
+
+  function formatStatusText(status) {
+    if (!status) return 'Pending';
+    return status.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
   }
 
   function previousPage() {

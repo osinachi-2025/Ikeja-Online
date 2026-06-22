@@ -73,7 +73,7 @@
   }
 
   function getShippingBadge(status) {
-    const normalized = (status || 'pending').toLowerCase().replace('_', '-');
+    const normalized = (status || 'pending').toLowerCase();
     const classes = {
       pending: 'badge bg-warning',
       shipped: 'badge bg-primary',

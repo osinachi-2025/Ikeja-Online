@@ -51,7 +51,7 @@
                 </tr>
             </thead>
             <tbody id="ordersTableBody">
-                <tr><td class="loading-cell" colspan="8"><div class="spinner"></div></td></tr>
+                <tr><td class="loading-cell" colspan="9"><div class="spinner"></div></td></tr>
             </tbody>
         </table>
     </div>
@@ -79,7 +79,7 @@
                     const ss = o.shipping_status || 'pending';
                     const ssLabel = ss === 'en_route' ? 'En Route' : ss.charAt(0).toUpperCase() + ss.slice(1);
                     const ssBadge = ss === 'delivered' ? 'badge-green' : ss === 'en_route' ? 'badge-blue' : 'badge-amber';
-                    const pBadge  = o.payment_status === 'paid' ? 'badge-green' : o.payment_status === 'failed' ? 'badge-red' : 'badge-amber';
+                    const pBadge  = o.payment_status === 'completed' ? 'badge-green' : o.payment_status === 'failed' || o.payment_status === 'refunded' ? 'badge-red' : 'badge-amber';
 
                     tbody.insertAdjacentHTML('beforeend', `
                     <tr>
@@ -89,11 +89,22 @@
                         <td style="font-weight:700">₦${parseFloat(o.total_amount).toLocaleString()}</td>
                         <td><span class="badge ${pBadge}">${o.payment_status}</span></td>
                         <td><span class="badge ${ssBadge}">${ssLabel}</span></td>
+                        <td><span class="badge ${o.funds_released ? 'badge-green' : 'badge-amber'}">${o.funds_released ? 'Released' : 'Held'}</span></td>
                         <td style="color:var(--text2)">${new Date(o.created_at).toLocaleDateString()}</td>
                         <td style="display:flex;gap:.5rem;align-items:center">
                             <button class="action-btn view-btn" onclick="viewOrderDetails(${o.id})" title="View Details">
                                 <i class="fas fa-eye"></i>
                             </button>
+                            ${o.payment_status === 'completed' && ss !== 'delivered' ? `
+                            <button class="action-btn reverse-btn" onclick="reverseOrderFunds(${o.id})" title="Reverse Funds">
+                                <i class="fas fa-undo"></i>
+                            </button>
+                            ` : ''}
+                            ${o.payment_status === 'completed' && !o.funds_released ? `
+                            <button class="action-btn view-btn" onclick="updateShippingStatus(${o.id}, 'delivered')" title="Confirm Delivery">
+                                <i class="fas fa-check"></i>
+                            </button>
+                            ` : ''}
                             <select class="status-select" onchange="updateShippingStatus(${o.id}, this.value)" title="Update Status" style="padding:.35rem .65rem;border:1.5px solid var(--border);border-radius:8px;background:var(--surface2);color:var(--text);font-family:inherit;font-size:.78rem;cursor:pointer;outline:none">
                                 <option value="pending"   ${o.shipping_status==='pending'   ? 'selected':''}>Pending</option>
                                 <option value="en_route"  ${o.shipping_status==='en_route'  ? 'selected':''}>En Route</option>
@@ -103,7 +114,7 @@
                     </tr>`);
                 });
             } else {
-                tbody.innerHTML = '<tr><td colspan="8" class="loading-cell" style="color:var(--text3)">No orders found</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="9" class="loading-cell" style="color:var(--text3)">No orders found</td></tr>';
             }
         } catch(e) { console.error(e); }
     }
@@ -177,7 +188,7 @@
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
                         <div>
                             <div style="color:var(--text2);font-size:.85rem;margin-bottom:.5rem;font-weight:600">Payment Status</div>
-                            <div><span class="badge ${o.payment_status === 'completed' ? 'badge-green' : 'badge-amber'}">${o.payment_status}</span></div>
+                            <div><span class="badge ${o.payment_status === 'completed' ? 'badge-green' : o.payment_status === 'refunded' ? 'badge-red' : 'badge-amber'}">${o.payment_status}</span></div>
                         </div>
                         <div>
                             <div style="color:var(--text2);font-size:.85rem;margin-bottom:.5rem;font-weight:600">Shipping Status</div>
@@ -193,11 +204,37 @@
                         </div>
                     </div>
                 </div>
+                ${o.payment_status === 'completed' && o.shipping_status !== 'delivered' && o.shipping_status !== 'cancelled' ? `
+                <div class="address-block" style="border-left-color:var(--c8)">
+                    <button class="action-btn reverse-btn" onclick="reverseOrderFunds(${o.id}, this)" style="width:100%;justify-content:center;margin-top:.5rem">
+                        <i class="fas fa-undo"></i> Reverse Funds to Customer Wallet
+                    </button>
+                </div>
+                ` : ''}
             </div>`;
             
             document.body.appendChild(modal);
             modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
         } catch(e) { console.error(e); alert('Error loading order details'); }
+    }
+
+    async function reverseOrderFunds(id, btn) {
+        if (!confirm('Reverse this order and refund the customer wallet?')) return;
+        try {
+            const r = await fetch(`/api/admin/orders/${id}/reverse-funds`, {
+                method: 'POST',
+                headers: { ...authH(), 'Content-Type': 'application/json' },
+                body: JSON.stringify({})
+            });
+            const d = await r.json();
+            if (d.success) {
+                alert('✓ ' + (d.message || 'Order funds reversed successfully'));
+                if (btn) btn.disabled = true;
+                loadOrders();
+            } else {
+                alert('Error: ' + (d.message || 'Unknown error'));
+            }
+        } catch(e) { console.error(e); alert('Error reversing funds'); }
     }
 
     async function updateShippingStatus(id, status) {

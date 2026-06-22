@@ -73,7 +73,7 @@
       let orders = data.orders || [];
       
       // Filter completed orders
-      orders = orders.filter(order => order.status?.toLowerCase() === 'completed');
+      orders = orders.filter(order => normalizeStatus(order.status) === 'completed');
       
       // Sort by date (newest first)
       orders.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
@@ -113,7 +113,7 @@
   async function viewHistoryDetails(orderId) {
     try {
       const token = localStorage.getItem('access_token');
-      const response = await fetch(`/api/order/${orderId}`, {
+      const response = await fetch(`/api/orders/${orderId}`, {
         headers: {
           'Authorization': 'Bearer ' + token
         }
@@ -198,6 +198,14 @@
       historyAlert.classList.remove('d-none');
       console.error(error);
     }
+  }
+
+  function normalizeStatus(status) {
+    if (!status) return 'pending';
+    const normalized = status.toString().toLowerCase();
+    if (normalized === 'paid') return 'completed';
+    if (normalized === 'shipped') return 'en_route';
+    return normalized;
   }
 
   document.addEventListener('DOMContentLoaded', loadOrderHistory);

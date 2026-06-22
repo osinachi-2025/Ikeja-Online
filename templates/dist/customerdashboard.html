@@ -826,16 +826,55 @@
   .bot-row{display:grid;grid-template-columns:1.6fr 1fr;gap:1rem}
   @media(max-width:800px){.bot-row{grid-template-columns:1fr}}
 
+  @media(max-width:800px){
+    .welcome-banner { padding: 1.2rem 1rem; }
+    .welcome-title { font-size: 1.05rem; }
+    .welcome-sub { font-size: .78rem; }
+    .stat-card, .ik-card, .card { padding: 1rem; }
+    .stat-icon { width: 38px; height: 38px; font-size: 1rem; margin-bottom: .75rem; }
+    .stat-label { font-size: .65rem; }
+    .stat-value { font-size: 1.35rem; }
+    .stat-change { font-size: .7rem; }
+    .qa-ico { width: 32px; height: 32px; font-size: .95rem; }
+    .qa-lbl { font-size: .64rem; }
+    .ik-card-title, .card-title { font-size: .82rem; }
+    .card-head { padding: .75rem 1rem 0; }
+    .card-body { padding: .95rem; }
+    .ik-table { min-width: auto; }
+    .ik-table th, .ik-table td { padding: .6rem .45rem; font-size: .72rem; }
+    .ik-table th { font-size: .65rem; }
+    .ik-table td { font-size: .7rem; }
+    .table-responsive { min-height: auto; overflow-x: auto; }
+  }
+
   /* Hide table cols on small screens */
   @media(max-width:540px){
     .hide-sm{display:none}
+    .welcome-banner { padding: 1rem .9rem; }
+    .welcome-title { font-size: .95rem; }
+    .welcome-sub { font-size: .75rem; }
+    .stat-card, .ik-card, .card { border-radius: 14px; padding: .92rem; }
+    .stat-icon { width: 34px; height: 34px; }
+    .stat-value { font-size: 1.25rem; }
+    .quick-action { gap: .5rem; }
+    .quick-action-icon { width: 34px; height: 34px; font-size: .95rem; }
+    .quick-action-label { font-size: .65rem; }
+    .ik-table th, .ik-table td { padding: .55rem .4rem; font-size: .68rem; }
+    .bot-row { gap: .75rem; }
   }
 
   /* Content padding adjust */
   @media(max-width:480px){
-    .content{padding:.85rem}
-    .welcome{padding:1rem 1.1rem}
-    .welcome-title{font-size:1.05rem}
+    .content{padding:.75rem}
+    .welcome{padding:.9rem 1rem}
+    .welcome-title{font-size:.95rem}
+    .welcome-sub{font-size:.74rem}
+    .stat-card, .ik-card, .card { padding: .85rem; }
+    .stat-label { font-size:.63rem; }
+    .stat-change { font-size:.66rem; }
+    .card-footer{padding:.75rem 1rem;}
+    .view-all { font-size:.7rem; }
+    .table-responsive { min-height: auto; }
   }
 </style>
 </head>
@@ -1294,7 +1333,7 @@ async function loadUser(){
   const token = localStorage.getItem('access_token');
   if(!token) return;
   try{
-    const res = await fetch('/api/user/profile',{headers:{'Authorization':'Bearer '+token}});
+    const res = await fetch('/api/customer/profile',{headers:{'Authorization':'Bearer '+token}});
     if(!res.ok) return;
     const d = await res.json();
     const u = d.user||d;

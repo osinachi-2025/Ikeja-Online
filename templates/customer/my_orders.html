@@ -100,9 +100,13 @@ async function loadOrders() {
         day: 'numeric'
       });
 
-      const statusBadge = getStatusBadge(order.status);
-      const paymentBadge = getPaymentBadge(order.payment_status);
-      const shippingBadge = getShippingBadge(order.shipping_status);
+      const normalizedOrderStatus = normalizeStatus(order.status);
+      const normalizedPaymentStatus = normalizeStatus(order.payment_status);
+      const normalizedShippingStatus = normalizeStatus(order.shipping_status);
+
+      const statusBadge = getStatusBadge(normalizedOrderStatus);
+      const paymentBadge = getPaymentBadge(normalizedPaymentStatus);
+      const shippingBadge = getShippingBadge(normalizedShippingStatus);
 
       return `
         <tr>
@@ -131,15 +135,28 @@ async function loadOrders() {
   }
 }
 
+function normalizeStatus(status) {
+  if (!status) return 'pending';
+  const normalized = status.toString().toLowerCase();
+  if (normalized === 'paid') return 'completed';
+  if (normalized === 'shipped') return 'en_route';
+  return normalized;
+}
+
+function formatStatusText(status) {
+  if (!status) return 'Pending';
+  return status.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+
 function getStatusBadge(status) {
   const statusMap = {
     'pending': 'badge bg-warning',
     'processing': 'badge bg-info',
-    'shipped': 'badge bg-primary',
-    'delivered': 'badge bg-success',
-    'cancelled': 'badge bg-danger'
+    'completed': 'badge bg-success',
+    'cancelled': 'badge bg-danger',
+    'return_requested': 'badge bg-primary'
   };
-  return `<span class="${statusMap[status] || 'badge bg-secondary'}">${status.charAt(0).toUpperCase() + status.slice(1)}</span>`;
+  return `<span class="${statusMap[status] || 'badge bg-secondary'}">${formatStatusText(status)}</span>`;
 }
 
 function getPaymentBadge(status) {
@@ -149,18 +166,18 @@ function getPaymentBadge(status) {
     'failed': 'badge bg-danger',
     'refunded': 'badge bg-info'
   };
-  return `<span class="${statusMap[status] || 'badge bg-secondary'}">${status.charAt(0).toUpperCase() + status.slice(1)}</span>`;
+  return `<span class="${statusMap[status] || 'badge bg-secondary'}">${formatStatusText(status)}</span>`;
 }
 
 function getShippingBadge(status) {
   const statusMap = {
     'pending': 'badge bg-secondary',
     'processing': 'badge bg-info',
-    'shipped': 'badge bg-primary',
+    'en_route': 'badge bg-primary',
     'delivered': 'badge bg-success',
     'cancelled': 'badge bg-danger'
   };
-  return `<span class="${statusMap[status] || 'badge bg-secondary'}">${status.charAt(0).toUpperCase() + status.slice(1)}</span>`;
+  return `<span class="${statusMap[status] || 'badge bg-secondary'}">${formatStatusText(status)}</span>`;
 }
 
 document.addEventListener('DOMContentLoaded', loadOrders);

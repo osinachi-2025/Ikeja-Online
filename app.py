@@ -960,6 +960,81 @@ def send_low_stock_alert_email(vendor_email, vendor_name, store_name, low_stock_
         print(f"[LOW-STOCK] Error sending low stock alert email: {str(e)}")
         return None
 
+
+def send_order_notifications(order, customer_user, order_items, include_customer=True):
+    """Send order creation vendor notifications and low stock alerts; optionally include the customer confirmation email."""
+    try:
+        vendors_low_stock = {}
+        for item in order_items:
+            if item['product'].stock_quantity < 5:
+                vendor_id = item['product'].vendor_id
+                vendors_low_stock.setdefault(vendor_id, []).append({
+                    'product_name': item['product'].name,
+                    'stock_quantity': item['product'].stock_quantity,
+                    'price': item['product'].price
+                })
+
+        for vendor_id, low_stock_products in vendors_low_stock.items():
+            vendor = Vendors.query.get(vendor_id)
+            if vendor and vendor.user and vendor.user.email:
+                send_low_stock_alert_email(
+                    vendor.user.email,
+                    vendor.user.first_name,
+                    vendor.store_name or vendor.user.first_name,
+                    low_stock_products
+                )
+                print(f"[ORDER-NOTIFY] Low stock alert email sent to {vendor.user.email}")
+
+        if include_customer:
+            items_details = [
+                {
+                    'product_name': item['product'].name,
+                    'quantity': item['quantity'],
+                    'price_at_purchase': item['price_at_purchase']
+                }
+                for item in order_items
+            ]
+
+            send_order_confirmation_email(
+                customer_user.email,
+                customer_user.first_name,
+                order.reference_number,
+                items_details,
+                order.total_amount
+            )
+            print(f"[ORDER-NOTIFY] Order confirmation email sent to {customer_user.email}")
+
+        vendors_orders = {}
+        for item in order_items:
+            vendor_id = item['product'].vendor_id
+            vendors_orders.setdefault(vendor_id, []).append(item)
+
+        for vendor_id, vendor_items in vendors_orders.items():
+            vendor = Vendors.query.get(vendor_id)
+            if vendor and vendor.user and vendor.user.email:
+                products_info = [
+                    {
+                        'product_name': item['product'].name,
+                        'quantity': item['quantity'],
+                        'price': item['price_at_purchase']
+                    }
+                    for item in vendor_items
+                ]
+                send_product_ordered_email(
+                    vendor.user.email,
+                    vendor.user.first_name,
+                    vendor.store_name or vendor.user.first_name,
+                    products_info,
+                    order.reference_number,
+                    f"{customer_user.first_name} {customer_user.last_name}",
+                    order.total_amount
+                )
+                print(f"[ORDER-NOTIFY] Vendor order email sent to {vendor.user.email}")
+
+    except Exception as e:
+        print(f"[ORDER-NOTIFY] Error sending order notifications: {str(e)}")
+
+
 def ensure_order_schema():
     """Ensure the orders table has all required workflow columns.
     This function is database-agnostic and works with both SQLite and PostgreSQL."""
@@ -1161,6 +1236,13 @@ def initialize_database():
         init_db()
         app.db_initialized = True
 
+@app.before_request
+def auto_cancel_pending_orders_before_request():
+    """Auto cancel stale pending orders before handling requests."""
+    if request.path.startswith('/static') or request.path.startswith('/favicon.ico'):
+        return
+    cancel_stale_pending_orders()
+
 # Also initialize when app context is available
 with app.app_context():
     init_db()
@@ -1225,6 +1307,12 @@ def distribute_funds_to_vendors(order_id):
             print(f"[FUND-DIST] No vendors found for order {order_id}")
             return False
         
+        # Check if funds have already been distributed for this order
+        existing_credit = VendorWalletTransaction.query.filter_by(reference_id=order_id, transaction_type='credit').first()
+        if existing_credit:
+            print(f"[FUND-DIST] Funds already distributed for order {order_id}")
+            return True
+
         # Distribute funds to each vendor
         for vendor_id, amount in vendor_shares.items():
             try:
@@ -1270,6 +1358,94 @@ def distribute_funds_to_vendors(order_id):
         import traceback
         traceback.print_exc()
         return False
+
+
+def reverse_order_funds(order_id):
+    """Reverse order funds back to the customer and debit any vendor wallet credits."""
+    try:
+        order = Orders.query.get(order_id)
+        if not order:
+            print(f"[FUND-REVERSAL] Order {order_id} not found")
+            return False, 'Order not found'
+
+        payment = Payments.query.filter_by(order_id=order_id).first()
+        if not payment:
+            print(f"[FUND-REVERSAL] No payment record found for order {order_id}")
+            return False, 'No payment record found for this order'
+
+        if payment.status == 'refunded':
+            print(f"[FUND-REVERSAL] Order {order_id} already refunded")
+            return False, 'Funds have already been reversed for this order'
+
+        if payment.status != 'completed':
+            print(f"[FUND-REVERSAL] Order {order_id} payment not completed. Status: {payment.status}")
+            return False, 'Order payment has not completed yet'
+
+        customer = Customers.query.get(order.customer_id)
+        if not customer:
+            print(f"[FUND-REVERSAL] Customer not found for order {order_id}")
+            return False, 'Customer profile not found'
+
+        wallet = Wallet.query.filter_by(customer_id=customer.id).first()
+        if not wallet:
+            wallet = Wallet(customer_id=customer.id, balance=0.0)
+            db.session.add(wallet)
+            db.session.flush()
+
+        total_refund_amount = 0.0
+        vendor_credit_transactions = VendorWalletTransaction.query.filter_by(reference_id=order_id, transaction_type='credit').all()
+        if vendor_credit_transactions:
+            for credit_txn in vendor_credit_transactions:
+                vendor_wallet = VendorWallet.query.get(credit_txn.vendor_wallet_id)
+                if not vendor_wallet:
+                    print(f"[FUND-REVERSAL] Vendor wallet {credit_txn.vendor_wallet_id} not found")
+                    continue
+
+                vendor_wallet.balance -= float(credit_txn.amount)
+                vendor_wallet.total_earned -= float(credit_txn.amount)
+
+                reversal_txn = VendorWalletTransaction(
+                    vendor_wallet_id=vendor_wallet.id,
+                    transaction_type='debit',
+                    amount=credit_txn.amount,
+                    description=f'Refund reversal for order {order.reference_number}',
+                    reference_id=order_id,
+                    status='completed'
+                )
+                db.session.add(reversal_txn)
+                total_refund_amount += float(credit_txn.amount)
+
+        if total_refund_amount == 0.0:
+            total_refund_amount = float(order.total_amount)
+
+        wallet.balance += total_refund_amount
+        wallet.updated_at = datetime.utcnow()
+
+        refund_transaction = CustomerWalletTransaction(
+            wallet_id=wallet.id,
+            transaction_type='credit',
+            amount=total_refund_amount,
+            description=f'Refund for order {order.reference_number}',
+            reference_id=order_id,
+            status='completed'
+        )
+        db.session.add(refund_transaction)
+
+        payment.status = 'refunded'
+        order.status = 'cancelled'
+        order.shipping_status = 'cancelled'
+        order.cancellation_reason = f'Super admin reversed funds for order {order.reference_number}'
+
+        db.session.commit()
+        print(f"[FUND-REVERSAL] Successfully reversed ₦{total_refund_amount} for order {order_id}")
+        return True, total_refund_amount
+    except Exception as e:
+        db.session.rollback()
+        print(f"[FUND-REVERSAL] Error reversing funds for order {order_id}: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return False, str(e)
+
 
 def save_image_to_db(file, product_id=None, is_primary=False):
     """Save uploaded file to Cloudinary and create database record"""
@@ -2061,7 +2237,9 @@ def google_callback():
     picture = profile.get('picture')
 
     user = Users.query.filter_by(email=email).first()
+    is_new_user = False
     if not user:
+        is_new_user = True
         customer_role = Roles.query.filter_by(name='customer').first()
         if not customer_role:
             customer_role = Roles(name='customer', description='Customer account')
@@ -2095,7 +2273,7 @@ def google_callback():
         'last_name': user.last_name,
         'role': user.role.name,
         'email': user.email
-    }))
+    }, is_new_user=is_new_user))
     response.set_cookie('access_token', jwt_token, max_age=2*60*60, httponly=True, samesite='Lax', secure=not app.debug)
     response.set_cookie('user_info', json.dumps({
         'user_id': user.id,
@@ -3369,50 +3547,9 @@ def verify_payment(reference):
             db.session.add(payment)
         
         # Update order status to completed (payment received successfully)
-        # Only distribute funds if payment wasn't already processed
+        # Vendor funds will be released only when the order is marked delivered by super admin
         if order.status != 'completed':
             order.status = 'completed'
-            
-            # Distribute funds to vendors
-            order_items = Order_Items.query.filter_by(order_id=order.id).all()
-            
-            for item in order_items:
-                product = item.product
-                vendor = product.vendor
-                vendor_amount = item.price_at_purchase * item.quantity
-                
-                # Get or create vendor wallet
-                vendor_wallet = VendorWallet.query.filter_by(vendor_id=vendor.id).first()
-                if not vendor_wallet:
-                    vendor_wallet = VendorWallet(vendor_id=vendor.id, balance=0.0, total_earned=0.0)
-                    db.session.add(vendor_wallet)
-                    db.session.flush()
-                
-                # Add amount to vendor wallet
-                vendor_wallet.balance += vendor_amount
-                vendor_wallet.total_earned += vendor_amount
-                vendor_wallet.updated_at = datetime.utcnow()
-                
-                # Create wallet transaction records
-                transaction = WalletTransaction(
-                    vendor_id=vendor.id,
-                    order_id=order.id,
-                    amount=vendor_amount,
-                    transaction_type='payment',
-                    status='completed'
-                )
-                db.session.add(transaction)
-                
-                # Also create VendorWalletTransaction for transaction history
-                vendor_transaction = VendorWalletTransaction(
-                    vendor_wallet_id=vendor_wallet.id,
-                    transaction_type='credit',
-                    amount=vendor_amount,
-                    description=f'Payment from order {order.reference_number}',
-                    reference_id=order.id,
-                    status='completed'
-                )
-                db.session.add(vendor_transaction)
         
         db.session.commit()
         
@@ -3502,53 +3639,12 @@ def payment_callback():
                         db.session.add(payment)
                     
                     # Update order status to completed (payment received successfully)
-                    # Only distribute funds if payment wasn't already processed
+                    # Vendor funds will be released only when the order is marked delivered by super admin
                     if order.status != 'completed':
                         order.status = 'completed'
-                        
-                        # Distribute funds to vendors
-                        order_items = Order_Items.query.filter_by(order_id=order.id).all()
-                        
-                        for item in order_items:
-                            product = item.product
-                            vendor = product.vendor
-                            vendor_amount = item.price_at_purchase * item.quantity
-                            
-                            # Get or create vendor wallet
-                            vendor_wallet = VendorWallet.query.filter_by(vendor_id=vendor.id).first()
-                            if not vendor_wallet:
-                                vendor_wallet = VendorWallet(vendor_id=vendor.id, balance=0.0, total_earned=0.0)
-                                db.session.add(vendor_wallet)
-                                db.session.flush()
-                            
-                            # Add amount to vendor wallet
-                            vendor_wallet.balance += vendor_amount
-                            vendor_wallet.total_earned += vendor_amount
-                            vendor_wallet.updated_at = datetime.utcnow()
-                            
-                            # Create wallet transaction record
-                            transaction = WalletTransaction(
-                                vendor_id=vendor.id,
-                                order_id=order.id,
-                                amount=vendor_amount,
-                                transaction_type='payment',
-                                status='completed'
-                            )
-                            db.session.add(transaction)
-                            
-                            # Also create VendorWalletTransaction for transaction history
-                            vendor_transaction = VendorWalletTransaction(
-                                vendor_wallet_id=vendor_wallet.id,
-                                transaction_type='credit',
-                                amount=vendor_amount,
-                                description=f'Payment from order {order.reference_number}',
-                                reference_id=order.id,
-                                status='completed'
-                            )
-                            db.session.add(vendor_transaction)
                     
                     db.session.commit()
-                    print(f"Order {order_id} updated to completed status and vendor payments distributed")
+                    print(f"Order {order_id} updated to completed status. Vendor funds remain held until super admin delivery confirmation.")
                     
                     # Send order and payment confirmation emails
                     try:
@@ -4405,6 +4501,12 @@ def get_customer_profile():
 
 
 
+@app.route('/api/user/profile', methods=['GET'])
+@jwt_required()
+def get_user_profile_alias():
+    return get_customer_profile()
+
+
 @app.route('/api/customer/change-password', methods=['POST'])
 @jwt_required()
 def change_customer_password():
@@ -4644,7 +4746,8 @@ def pay_with_wallet(order_id):
         wallet.balance -= order.total_amount
         wallet.updated_at = datetime.utcnow()
         
-        # Update order status
+        # Update order status to completed (payment received successfully)
+        # Vendor funds will be released only when the order is marked delivered by super admin
         order.status = 'completed'
         
         # Create payment record
@@ -4656,47 +4759,6 @@ def pay_with_wallet(order_id):
             status='completed'
         )
         db.session.add(payment)
-        
-        # Distribute funds to vendors
-        order_items = Order_Items.query.filter_by(order_id=order.id).all()
-        
-        for item in order_items:
-            product = item.product
-            vendor = product.vendor
-            vendor_amount = item.price_at_purchase * item.quantity
-            
-            # Get or create vendor wallet
-            vendor_wallet = VendorWallet.query.filter_by(vendor_id=vendor.id).first()
-            if not vendor_wallet:
-                vendor_wallet = VendorWallet(vendor_id=vendor.id, balance=0.0, total_earned=0.0)
-                db.session.add(vendor_wallet)
-                db.session.flush()
-            
-            # Add amount to vendor wallet
-            vendor_wallet.balance += vendor_amount
-            vendor_wallet.total_earned += vendor_amount
-            vendor_wallet.updated_at = datetime.utcnow()
-            
-            # Create wallet transaction record
-            transaction = WalletTransaction(
-                vendor_id=vendor.id,
-                order_id=order.id,
-                amount=vendor_amount,
-                transaction_type='payment',
-                status='completed'
-            )
-            db.session.add(transaction)
-            
-            # Also create VendorWalletTransaction for transaction history
-            vendor_transaction = VendorWalletTransaction(
-                vendor_wallet_id=vendor_wallet.id,
-                transaction_type='credit',
-                amount=vendor_amount,
-                description=f'Payment from order {order.reference_number}',
-                reference_id=order.id,
-                status='completed'
-            )
-            db.session.add(vendor_transaction)
         
         # Commit all changes
         db.session.commit()
@@ -5015,25 +5077,35 @@ def get_vendor_stats():
         else:
             orders = []
         
-        # Filter for paid orders only
-        paid_orders = []
+        # Count only released order revenue, not all completed payments.
+        released_orders = []
         total_revenue = 0.0
         
         for order in orders:
             payment = Payments.query.filter_by(order_id=order.id).first()
-            if payment and payment.status == 'completed':
-                paid_orders.append(order)
-                
-                # Calculate this vendor's portion of the order
-                vendor_order_items = Order_Items.query.filter(
-                    Order_Items.order_id == order.id,
-                    Order_Items.product_id.in_(product_ids)
-                ).all()
-                
-                for item in vendor_order_items:
-                    total_revenue += item.price_at_purchase * item.quantity
+            if not payment or payment.status != 'completed':
+                continue
+
+            # Determine whether this order's vendor funds have actually been released.
+            funds_released = VendorWalletTransaction.query.filter_by(
+                reference_id=order.id,
+                transaction_type='credit'
+            ).first() is not None
+            if not funds_released:
+                continue
+
+            released_orders.append(order)
+            
+            # Calculate this vendor's portion of the released order
+            vendor_order_items = Order_Items.query.filter(
+                Order_Items.order_id == order.id,
+                Order_Items.product_id.in_(product_ids)
+            ).all()
+            
+            for item in vendor_order_items:
+                total_revenue += item.price_at_purchase * item.quantity
         
-        total_orders = len(paid_orders)
+        total_orders = len(released_orders)
         
         # Get or create vendor wallet
         wallet = VendorWallet.query.filter_by(vendor_id=vendor.id).first()
@@ -5747,8 +5819,8 @@ def get_vendor_orders():
                     if item.product and item.product.vendor_id == vendor.id:
                         vendor_revenue += item.quantity * item.price_at_purchase
                 
-                # Determine if funds have been released (order must be delivered)
-                funds_released = order.shipping_status == 'delivered'
+                # Determine if funds have been released by checking vendor wallet credit transactions
+                funds_released = VendorWalletTransaction.query.filter_by(reference_id=order.id, transaction_type='credit').first() is not None
                 
                 order_data = {
                     'id': order.id,
@@ -6432,16 +6504,18 @@ def select_user_role():
 
         if user.role.name != requested_role:
             user.role_id = role_obj.id
-            if requested_role == 'vendor':
-                if not Vendors.query.filter_by(user_id=user.id).first():
-                    store_slug = f"vendor-{user.id}"
-                    vendor = Vendors(user_id=user.id, store_name=None, store_slug=store_slug)
-                    db.session.add(vendor)
-            else:
-                if not Customers.query.filter_by(user_id=user.id).first():
-                    customer = Customers(user_id=user.id)
-                    db.session.add(customer)
-            db.session.commit()
+
+        if requested_role == 'vendor':
+            if not Vendors.query.filter_by(user_id=user.id).first():
+                store_slug = f"vendor-{user.id}"
+                vendor = Vendors(user_id=user.id, store_name=None, store_slug=store_slug)
+                db.session.add(vendor)
+        else:
+            if not Customers.query.filter_by(user_id=user.id).first():
+                customer = Customers(user_id=user.id)
+                db.session.add(customer)
+
+        db.session.commit()
 
         return jsonify({
             'success': True,
@@ -6830,6 +6904,7 @@ def admin_get_all_orders():
                 if first_item.product:
                     vendor = Vendors.query.get(first_item.product.vendor_id)
             
+            funds_released = VendorWalletTransaction.query.filter_by(reference_id=order.id, transaction_type='credit').first() is not None
             order_dict = {
                 'id': order.id,
                 'customer_id': order.customer_id,
@@ -6841,6 +6916,7 @@ def admin_get_all_orders():
                 'status': order.status,
                 'payment_status': payment_status,
                 'shipping_status': order.shipping_status or 'pending',
+                'funds_released': funds_released,
                 'delivery_address_id': order.delivery_address_id,
                 'delivery_address': get_order_delivery_address(order),
                 'cancellation_request_status': order.cancellation_request_status,
@@ -6889,6 +6965,9 @@ def admin_get_order_details(order_id):
         payment = Payments.query.filter_by(order_id=order.id).first()
         payment_status = payment.status if payment else 'pending'
         payment_method = payment.payment_method if payment else 'Unknown'
+        funds_released = VendorWalletTransaction.query.filter_by(reference_id=order.id, transaction_type='credit').first() is not None
+        funds_refunded = payment.status == 'refunded' if payment else False
+        reversal_allowed = bool(payment and payment.status == 'completed' and not funds_refunded)
         
         # Get delivery address details (if available)
         delivery_address_data = None
@@ -6967,6 +7046,13 @@ def admin_get_order_details(order_id):
             'vendors': [{'vendor_id': v[0], 'vendor_name': v[1]} for v in vendors_involved]
         }
         
+        order_dict.update({
+            'payment_method': payment_method,
+            'funds_released': funds_released,
+            'funds_refunded': funds_refunded,
+            'reversal_allowed': reversal_allowed
+        })
+
         return jsonify({
             'success': True,
             'order': order_dict
@@ -6975,6 +7061,36 @@ def admin_get_order_details(order_id):
         print(f"[ADMIN-ORDER-DETAILS] Error: {str(e)}")
         import traceback
         traceback.print_exc()
+        return jsonify({'success': False, 'error': 'Server Error', 'message': str(e)}), 500
+
+
+@app.route('/api/admin/orders/<int:order_id>/reverse-funds', methods=['POST'])
+@jwt_required()
+def admin_reverse_order_funds(order_id):
+    """Reverse funds from vendor/customer and credit back to customer wallet."""
+    try:
+        admin_id = int(get_jwt_identity())
+        admin = Users.query.get(admin_id)
+        if not admin or admin.role.name != 'super_admin':
+            return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+
+        order = Orders.query.get(order_id)
+        if not order:
+            return jsonify({'success': False, 'error': 'Order not found'}), 404
+
+        success, result = reverse_order_funds(order_id)
+        if not success:
+            return jsonify({'success': False, 'error': 'Reversal failed', 'message': result}), 400
+
+        return jsonify({
+            'success': True,
+            'message': f'Funds reversed and refunded to customer wallet successfully. Amount: ₦{result}',
+            'order_id': order_id,
+            'refunded_amount': float(result)
+        }), 200
+    except Exception as e:
+        db.session.rollback()
+        print(f"[ADMIN-REVERSE-FUNDS] Error: {str(e)}")
         return jsonify({'success': False, 'error': 'Server Error', 'message': str(e)}), 500
 
 
@@ -6996,9 +7112,12 @@ def admin_update_shipping_status(order_id):
             return jsonify({'success': False, 'error': 'shipping_status is required'}), 400
         
         # Valid statuses
-        valid_statuses = ['pending', 'en_route', 'delivered', 'cancelled']
+        valid_statuses = ['pending', 'en_route', 'shipped', 'delivered', 'cancelled']
         if new_status not in valid_statuses:
             return jsonify({'success': False, 'error': f'Invalid status. Must be one of: {", ".join(valid_statuses)}'}), 400
+
+        if new_status == 'shipped':
+            new_status = 'en_route'
         
         order = Orders.query.get(order_id)
         if not order:
@@ -8051,6 +8170,38 @@ def get_order_delivery_address(order):
     return 'Not provided'
 
 
+def cancel_stale_pending_orders(max_age_hours=24):
+    """Cancel pending orders that were created more than max_age_hours ago and restore stock."""
+    try:
+        cutoff = datetime.utcnow() - timedelta(hours=max_age_hours)
+        stale_orders = Orders.query.filter(
+            Orders.status == 'pending',
+            Orders.created_at < cutoff
+        ).all()
+
+        for order in stale_orders:
+            # If any completed payment exists, skip cancellation.
+            completed_payment = Payments.query.filter_by(order_id=order.id, status='completed').first()
+            if completed_payment:
+                continue
+
+            print(f"[ORDER-CANCEL] Cancelling stale pending order {order.id} (ref={order.reference_number})")
+            for item in order.items:
+                if item.product:
+                    item.product.stock_quantity = (item.product.stock_quantity or 0) + item.quantity
+
+            order.status = 'cancelled'
+            order.shipping_status = 'cancelled'
+            order.updated_at = datetime.utcnow()
+
+        if stale_orders:
+            db.session.commit()
+
+    except Exception as e:
+        db.session.rollback()
+        print(f"[ORDER-CANCEL] Error cancelling stale pending orders: {str(e)}")
+
+
 def build_invoice_pdf(order):
     if not FPDF:
         raise RuntimeError('PDF generation library is not installed. Install fpdf to enable PDF invoices.')
@@ -8450,6 +8601,28 @@ def checkout_and_pay():
         return jsonify({'success': False, 'error': 'Server Error', 'message': str(e)}), 500
 
 
+def restore_stock_for_order(order):
+    """Restore reserved stock quantities for an order."""
+    for item in order.items:
+        if item.product:
+            item.product.stock_quantity = (item.product.stock_quantity or 0) + item.quantity
+
+
+def cancel_order_and_restore_stock(order, cancellation_reason=None):
+    """Cancel an order and restore reserved stock."""
+    restore_stock_for_order(order)
+    order.status = 'cancelled'
+    order.shipping_status = 'cancelled'
+    order.cancellation_request_status = 'approved'
+    order.cancellation_reason = cancellation_reason or 'Order automatically cancelled'
+    order.cancellation_approved_at = datetime.utcnow()
+
+    payment = Payments.query.filter_by(order_id=order.id).first()
+    if payment and payment.status in ['pending', 'failed']:
+        payment.status = 'cancelled'
+    db.session.commit()
+
+
 def process_wallet_payment(order, user, customer):
     """Process payment using customer wallet"""
     try:
@@ -8462,6 +8635,7 @@ def process_wallet_payment(order, user, customer):
         
         # Check if wallet has sufficient balance
         if wallet.balance < order.total_amount:
+            cancel_order_and_restore_stock(order, f'Insufficient wallet balance for order {order.reference_number}')
             return jsonify({
                 'success': False,
                 'message': 'Insufficient wallet balance',
@@ -8483,8 +8657,8 @@ def process_wallet_payment(order, user, customer):
         )
         db.session.add(payment)
         
-        # Update order status to paid
-        order.status = 'paid'
+        # Update order status to completed
+        order.status = 'completed'
         
         # Create wallet transaction record
         wallet_transaction = CustomerWalletTransaction(
@@ -8498,7 +8672,28 @@ def process_wallet_payment(order, user, customer):
         db.session.add(wallet_transaction)
         
         db.session.commit()
-        
+
+        try:
+            order_items = [
+                {
+                    'product': item.product,
+                    'quantity': item.quantity,
+                    'price_at_purchase': item.price_at_purchase
+                }
+                for item in order.items
+            ]
+            send_order_notifications(order, user, order_items)
+            send_payment_confirmation_email(
+                user.email,
+                user.first_name,
+                order.reference_number,
+                order.total_amount,
+                'Wallet'
+            )
+            print(f"[WALLET-PAYMENT] Order and payment emails sent to {user.email}")
+        except Exception as email_error:
+            print(f"[WALLET-PAYMENT] Error sending wallet payment emails: {str(email_error)}")
+
         return jsonify({
             'success': True,
             'message': 'Payment completed using wallet',
@@ -8566,6 +8761,20 @@ def process_paystack_payment(order, user):
             db.session.add(payment)
             db.session.commit()
             
+            try:
+                order_items = [
+                    {
+                        'product': item.product,
+                        'quantity': item.quantity,
+                        'price_at_purchase': item.price_at_purchase
+                    }
+                    for item in order.items
+                ]
+                send_order_notifications(order, user, order_items, include_customer=False)
+                print(f"[PAYSTACK-PAYMENT] Vendor and low stock emails sent to {user.email}")
+            except Exception as email_error:
+                print(f"[PAYSTACK-PAYMENT] Error sending order notification emails: {str(email_error)}")
+
             return jsonify({
                 'success': True,
                 'message': 'Order created and payment initialized',
@@ -8579,7 +8788,7 @@ def process_paystack_payment(order, user):
             }), 200
         else:
             error_msg = response_data.get('message', 'Payment initialization failed')
-            # Order was created but payment init failed
+            cancel_order_and_restore_stock(order, f'Payment initialization failed for order {order.reference_number}')
             return jsonify({
                 'success': False,
                 'message': 'Order created but payment initialization failed',
@@ -8591,7 +8800,7 @@ def process_paystack_payment(order, user):
             }), 400
             
     except requests.exceptions.Timeout:
-        # Order was created but payment init timed out
+        cancel_order_and_restore_stock(order, f'Payment service timeout for order {order.reference_number}')
         return jsonify({
             'success': False, 
             'message': 'Payment service timeout. Order created but payment not initialized. Please try paying from your orders page.',
@@ -8601,7 +8810,7 @@ def process_paystack_payment(order, user):
             }
         }), 504
     except requests.exceptions.RequestException as e:
-        # Order was created but payment service error
+        cancel_order_and_restore_stock(order, f'Payment service error for order {order.reference_number}')
         return jsonify({
             'success': False, 
             'message': 'Payment service error. Order created but payment not initialized. Please try paying from your orders page.',
@@ -8787,6 +8996,113 @@ def get_order_details(order_id):
         import traceback
         traceback.print_exc()
         return jsonify({'success': False, 'error': 'Server Error', 'message': str(e)}), 500
+
+@app.route('/api/order/<int:order_id>/cancel', methods=['POST'])
+@jwt_required()
+def customer_request_order_cancellation(order_id):
+    """Request order cancellation or cancel immediately for unpaid/processing orders."""
+    try:
+        user_id = int(get_jwt_identity())
+        user = Users.query.get(user_id)
+        if not user or user.role.name != 'customer':
+            return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+
+        customer = Customers.query.filter_by(user_id=user_id).first()
+        if not customer:
+            return jsonify({'success': False, 'message': 'Customer profile not found'}), 404
+
+        order = Orders.query.get(order_id)
+        if not order or order.customer_id != customer.id:
+            return jsonify({'success': False, 'message': 'Order not found or unauthorized'}), 404
+
+        if order.status in ['cancelled', 'refunded']:
+            return jsonify({'success': False, 'message': 'Order is already cancelled or refunded'}), 400
+
+        if order.shipping_status == 'delivered':
+            return jsonify({'success': False, 'message': 'Delivered orders cannot be cancelled. Please request a return instead.'}), 400
+
+        payment = Payments.query.filter_by(order_id=order.id).first()
+        reason = request.get_json().get('reason', 'Customer requested order cancellation') if request.get_json() else 'Customer requested order cancellation'
+
+        if payment and payment.status == 'completed':
+            order.cancellation_request_status = 'pending'
+            order.cancellation_reason = reason
+            order.cancellation_requested_at = datetime.utcnow()
+            order.status = 'processing'
+            db.session.commit()
+            return jsonify({
+                'success': True,
+                'message': 'Cancellation request submitted. Our team will review it shortly.',
+                'cancellation_request_status': order.cancellation_request_status
+            }), 200
+
+        cancel_order_and_restore_stock(order, f'Customer cancelled before payment: {reason}')
+        return jsonify({
+            'success': True,
+            'message': 'Order cancelled successfully and stock restored.',
+            'order_status': order.status,
+            'shipping_status': order.shipping_status
+        }), 200
+    except Exception as e:
+        db.session.rollback()
+        print(f"[CANCEL-ORDER] Error: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'message': 'Server Error', 'error': str(e)}), 500
+
+@app.route('/api/order/<int:order_id>/return', methods=['POST'])
+@jwt_required()
+def customer_request_order_return(order_id):
+    """Request a return/refund for a delivered order."""
+    try:
+        user_id = int(get_jwt_identity())
+        user = Users.query.get(user_id)
+        if not user or user.role.name != 'customer':
+            return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+
+        customer = Customers.query.filter_by(user_id=user_id).first()
+        if not customer:
+            return jsonify({'success': False, 'message': 'Customer profile not found'}), 404
+
+        order = Orders.query.get(order_id)
+        if not order or order.customer_id != customer.id:
+            return jsonify({'success': False, 'message': 'Order not found or unauthorized'}), 404
+
+        if order.status in ['cancelled', 'refunded']:
+            return jsonify({'success': False, 'message': 'Order cannot be returned because it is already cancelled or refunded'}), 400
+
+        if order.shipping_status != 'delivered':
+            return jsonify({'success': False, 'message': 'Only delivered orders can be returned.'}), 400
+
+        if order.cancellation_request_status in ['pending', 'return_requested', 'approved']:
+            return jsonify({'success': False, 'message': 'A return or cancellation request already exists for this order.'}), 400
+
+        created_at = order.created_at or datetime.utcnow()
+        if created_at < datetime.utcnow() - timedelta(days=30):
+            return jsonify({'success': False, 'message': 'Return window has expired.'}), 400
+
+        data = request.get_json() or {}
+        reason = data.get('reason', 'Customer return request')
+        comments = data.get('comments', '')
+
+        order.cancellation_request_status = 'return_requested'
+        order.cancellation_reason = f'{reason}. {comments}'.strip()
+        order.cancellation_requested_at = datetime.utcnow()
+        order.status = 'return_requested'
+        db.session.commit()
+
+        return jsonify({
+            'success': True,
+            'message': 'Return request submitted successfully. We will review your request shortly.',
+            'order_status': order.status,
+            'cancellation_request_status': order.cancellation_request_status
+        }), 200
+    except Exception as e:
+        db.session.rollback()
+        print(f"[RETURN-ORDER] Error: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'message': 'Server Error', 'error': str(e)}), 500
 
 @app.route('/api/orders/track/<order_ref>', methods=['GET'])
 def track_order_by_reference(order_ref):

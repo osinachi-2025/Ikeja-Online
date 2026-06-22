@@ -142,17 +142,15 @@
         day: 'numeric'
       });
 
+      const normalizedShipping = normalizeStatus(order.shipping_status);
       const shippingBadgeClass = {
         'pending': 'bg-warning',
-        'shipped': 'bg-info',
         'en_route': 'bg-primary',
         'delivered': 'bg-success',
         'cancelled': 'bg-danger'
-      }[order.shipping_status?.toLowerCase()] || 'bg-secondary';
+      }[normalizedShipping] || 'bg-secondary';
 
-      const shippingStatusDisplay = order.shipping_status 
-        ? order.shipping_status.charAt(0).toUpperCase() + order.shipping_status.slice(1).replace('_', ' ')
-        : 'Pending';
+      const shippingStatusDisplay = formatStatusText(normalizedShipping);
 
       return `
         <tr>
@@ -184,6 +182,18 @@
     if (nextButton) {
       nextButton.parentElement.classList.toggle('disabled', currentPage === totalPages);
     }
+  }
+
+  function normalizeStatus(status) {
+    if (!status) return 'pending';
+    const normalized = status.toString().toLowerCase();
+    if (normalized === 'shipped') return 'en_route';
+    return normalized;
+  }
+
+  function formatStatusText(status) {
+    if (!status) return 'Pending';
+    return status.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
   }
 
   function previousPage() {

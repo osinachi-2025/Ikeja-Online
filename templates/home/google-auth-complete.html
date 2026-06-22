@@ -23,8 +23,17 @@
       localStorage.setItem('user_first_name', userInfo.first_name || 'User');
       localStorage.setItem('user_last_name', userInfo.last_name || '');
       localStorage.setItem('user_email', userInfo.email || '');
-      localStorage.setItem('google_auth_pending', '1');
-      window.location.replace('/?google_auth=1');
+      const isNewUser = {{ is_new_user|tojson|safe }};
+      if (isNewUser) {
+        localStorage.setItem('google_auth_pending', '1');
+        window.location.replace('/?google_auth=1');
+      } else {
+        if (userInfo.role === 'vendor') {
+          window.location.replace('/vendor/dashboard');
+        } else {
+          window.location.replace('/customer/dashboard/home');
+        }
+      }
     } catch (err) {
       console.error(err);
     }
